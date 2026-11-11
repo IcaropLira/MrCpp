@@ -47,7 +47,7 @@ export default function ExportLibraryDialog({ sections, onClose }: Props) {
       const facts = sheet.facts.map((x) => '<li>' + esc(x) + '</li>').join('');
       const formulas = sheet.formula.map((x) => '<li>' + esc(x) + '</li>').join('');
       const entries = sheet.entries.map((entry, i) =>
-        '<article class="fiche"><div class="fiche-k">VARIANTE ' + String(i + 1).padStart(2, '0') + '</div>' +
+        '<article class="fiche"><div class="fiche-k">' + esc(sheet.title.toUpperCase()) + ' · VARIANTE ' + String(i + 1).padStart(2, '0') + '</div>' +
         '<h2>' + esc(entry.title) + '</h2><p class="purpose">' + esc(entry.purpose) + '</p>' +
         '<div class="fiche-grid"><div><b>UTILIDADE</b><p>' + esc(entry.when) + '</p></div>' +
         '<div><b>COMPLEXIDADE</b><p>' + esc(entry.complexity) + '</p></div></div>' +
@@ -89,7 +89,7 @@ export default function ExportLibraryDialog({ sections, onClose }: Props) {
     };
     const body = almanacSheets.map((sheet) => {
       const entries = sheet.entries.map((e) =>
-        '\\clearpage\n\\subsection*{' + texAlmanac(e.title) + '}\n' +
+        '\\clearpage\n\\subsection*{' + texAlmanac(sheet.title) + ' — ' + texAlmanac(e.title) + '}\n' +
         '\\textbf{Utilidade.} ' + texAlmanac(e.when) + '\\par\n' +
         '\\textbf{Finalidade.} ' + texAlmanac(e.purpose) + '\\par\n' +
         '\\textbf{Complexidade.} ' + texAlmanac(e.complexity) + '\\par\n' +
