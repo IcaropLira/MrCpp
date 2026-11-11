@@ -354,7 +354,7 @@ export const segmentTreeSheet: AlmanacSheet = {
   ]
 };
 
-const fenwickPoint = String.raw\`struct Fenwick {
+const fenwickPoint = String.raw`struct Fenwick {
     int n;
     vector<long long> bit;
 
@@ -373,9 +373,9 @@ const fenwickPoint = String.raw\`struct Fenwick {
     long long query(int l,int r) {
         return sum(r) - (l ? sum(l-1) : 0);
     }
-};\`;
+};`;
 
-const fenwickKth = String.raw\`struct Fenwick {
+const fenwickKth = String.raw`struct Fenwick {
     int n;
     vector<int> bit;
 
@@ -396,9 +396,9 @@ const fenwickKth = String.raw\`struct Fenwick {
         }
         return p; // índice zero-based do k-ésimo elemento
     }
-};\`;
+};`;
 
-const fenwickRangePoint = String.raw\`struct Fenwick {
+const fenwickRangePoint = String.raw`struct Fenwick {
     int n;
     vector<long long> bit;
 
@@ -420,9 +420,9 @@ const fenwickRangePoint = String.raw\`struct Fenwick {
     }
 
     long long point(int i) { return sum(i); }
-};\`;
+};`;
 
-const fenwickRangeSum = String.raw\`struct Fenwick {
+const fenwickRangeSum = String.raw`struct Fenwick {
     int n;
     vector<long long> bit;
     Fenwick(int n=0) : n(n), bit(n+1,0) {}
@@ -457,9 +457,9 @@ struct FenwickRange {
     long long query(int l,int r) {
         return prefix(r) - prefix(l-1);
     }
-};\`;
+};`;
 
-const fenwick2d = String.raw\`struct Fenwick2D {
+const fenwick2d = String.raw`struct Fenwick2D {
     int n,m;
     vector<vector<long long>> bit;
 
@@ -482,9 +482,9 @@ const fenwick2d = String.raw\`struct Fenwick2D {
     long long query(int x1,int y1,int x2,int y2) {
         return sum(x2,y2)-sum(x1-1,y2)-sum(x2,y1-1)+sum(x1-1,y1-1);
     }
-};\`;
+};`;
 
-const sparseMin = String.raw\`struct SparseTable {
+const sparseMin = String.raw`struct SparseTable {
     int n, LOG;
     vector<int> lg;
     vector<vector<int>> st;
@@ -505,9 +505,9 @@ const sparseMin = String.raw\`struct SparseTable {
         int j=lg[r-l+1];
         return min(st[j][l],st[j][r-(1<<j)+1]);
     }
-};\`;
+};`;
 
-const disjointSparse = String.raw\`template<class T,class F>
+const disjointSparse = String.raw`template<class T,class F>
 struct DisjointSparseTable {
     int n, LOG;
     vector<T> a;
@@ -540,7 +540,7 @@ struct DisjointSparseTable {
         int k = 31-__builtin_clz(l^r);
         return op(st[k][l],st[k][r]);
     }
-};\`;
+};`;
 
 const fenwickSheet: AlmanacSheet = {
   title: 'Fenwick Tree (BIT)',
