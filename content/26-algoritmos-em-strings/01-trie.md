@@ -82,7 +82,63 @@ Só remova se `has(s)` for verdadeiro. Diminua `fim` no nó terminal e `pref` na
 
 ## Trie binária para XOR máximo
 
-Cada número vira uma sequência de bits, do mais significativo ao menos significativo. Para maximizar `x XOR y`, em cada bit tentamos seguir o bit oposto de `x`; se não existir, seguimos o mesmo bit. Use bits 30..0 para valores não negativos até `2^31-1`, ou ajuste a largura para o limite do problema.
+Cada número vira uma sequência de bits, do mais significativo ao menos significativo. Para maximizar `x XOR y`, em cada bit tentamos seguir o bit oposto de `x`; se não existir, seguimos o mesmo bit. Abaixo, cada nó tem dois filhos e a consulta devolve o valor máximo de XOR encontrado.
+
+```cpp
+struct TrieXor {
+    struct Node { int filho[2] = {-1, -1}; };
+    vector<Node> t;
+
+    TrieXor() { t.push_back(Node()); }
+
+    void add(int x) {
+        int u = 0;
+        for (int b = 30; b >= 0; b--) {
+            int bit = (x >> b) & 1;
+            if (t[u].filho[bit] == -1) {
+                t[u].filho[bit] = t.size();
+                t.push_back(Node());
+            }
+            u = t[u].filho[bit];
+        }
+    }
+
+    int max_xor(int x) {
+        int u = 0, ans = 0;
+        for (int b = 30; b >= 0; b--) {
+            int bit = (x >> b) & 1, want = bit ^ 1;
+            if (t[u].filho[want] != -1) {
+                ans |= (1 << b);
+                u = t[u].filho[want];
+            } else u = t[u].filho[bit];
+        }
+        return ans;
+    }
+};
+```
+
+Insira pelo menos um número antes de consultar. Para achar o maior XOR de um par do vetor, consulte cada elemento contra a trie dos anteriores e só depois insira o atual. Assim não pareamos um elemento consigo mesmo.
+
+```cpp
+TrieXor tr;
+int ans = 0;
+for (int x : a) {
+    if (tr.t.size() > 1) ans = max(ans, tr.max_xor(x));
+    tr.add(x);
+}
+```
+
+Use bits 30..0 para valores não negativos até `2^31-1`; para `long long`, percorra 62..0 e use `1LL << b`.
+
+### Variações recorrentes
+
+- **XOR máximo com um valor dado:** trie binária, escolhendo o bit oposto sempre que possível.
+- **XOR mínimo:** faça o contrário: prefira o mesmo bit.
+- **Maior XOR de um par:** percorra o vetor, consulte os anteriores e insira o atual.
+- **Subarray com XOR máximo:** use prefix XOR; o XOR de `[l,r]` é `pref[r+1] ^ pref[l]`, e a trie busca o prefixo anterior que maximiza o resultado.
+- **XOR menor que K:** armazene contagem de elementos por nó e conte os caminhos que ficam abaixo do limite bit a bit.
+- **XOR de caminho em árvore:** calcule `xr[v] = xr[pai[v]] ^ peso(pai[v],v)`; então `xorPath(u,v) = xr[u] ^ xr[v]` em árvore.
+
 
 ## Erros comuns
 
