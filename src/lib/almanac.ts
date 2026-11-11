@@ -311,7 +311,8 @@ export const segmentTreeSheet: AlmanacSheet = {
   title: 'Segment Tree',
   subtitle: 'Consultas e atualizações em intervalos por decomposição hierárquica',
   facts: [
-    'Construção: O(n) · consulta: O(log n) · atualização pontual: O(log n)',\n    'Snippets C++ pressupõem #include <bits/stdc++.h> e using namespace std;',
+    'Construção: O(n) · consulta: O(log n) · atualização pontual: O(log n)',
+    'Snippets C++ pressupõem #include <bits/stdc++.h> e using namespace std;',
     'Árvore recursiva: normalmente 4n posições; iterativa: 2n posições',
     'A operação de combinação deve ser associativa e possuir identidade para consultas iterativas',
     'Convenção desta ficha: índices zero-based e intervalos semiabertos [l,r), salvo indicação'
@@ -321,7 +322,10 @@ export const segmentTreeSheet: AlmanacSheet = {
     'Soma: combine(a,b)=a+b · identidade: 0',
     'Mínimo: combine(a,b)=min(a,b) · identidade: +∞',
     'Máximo: combine(a,b)=max(a,b) · identidade: −∞',
-    'XOR: combine(a,b)=a XOR b · identidade: 0'
+    'XOR: combine(a,b)=a XOR b · identidade: 0',
+    'Prefixos: soma[l,r) = pref[r] − pref[l]',
+    'Lazy + Soma: soma do nó += valor × comprimento do segmento',
+    'Lazy + XOR: XOR do nó muda somente quando o comprimento é ímpar'
   ],
   entries: [
     { title:'Soma', purpose:'Guardar a soma de cada segmento e responder consultas de soma.', complexity:'O(n) construção; O(log n) consulta e atualização pontual.', when:'Somas de intervalos com alterações pontuais.', notes:['Use 0 como identidade.','Para vetor estático, prefix sums respondem em O(1).'], code:soma },
