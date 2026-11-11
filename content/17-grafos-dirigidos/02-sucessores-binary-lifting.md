@@ -8,17 +8,17 @@ tags: grafos dirigidos, binary lifting, sucessores, ciclos funcionais
 
 ## A ideia
 
-Quando cada vértice tem exatamente um próximo estado, podemos pré-calcular para cada vértice onde chegamos após (2^j) passos.
+Quando cada vértice tem exatamente um próximo estado, podemos pré-calcular para cada vértice onde chegamos após `2^j` passos.
 
-- `up[j][v]`: vértice alcançado partindo de `v` e seguindo a função exatamente (2^j) vezes.
+- `up[j][v]`: vértice alcançado partindo de `v` e seguindo a função exatamente `2^j` vezes.
 - `up[0][v] = prox[v]`.
 - `up[j][v] = up[j-1][up[j-1][v]]`.
 
-A consulta de (k)-ésimo sucessor vira a decomposição binária de (k). Não é necessário simular os (k) passos.
+A consulta de `k`-ésimo sucessor vira a decomposição binária de `k`. Não é necessário simular os `k` passos.
 
 ## Código — k-ésimo sucessor
 
-Use `LOG = 60` quando (k) pode chegar a (10^{18}). Se o limite for menor, ajuste o número de níveis.
+Use `LOG = 60` quando `k` pode chegar a (10^{18}). Se o limite for menor, ajuste o número de níveis.
 
 ```cpp
 const int LOG = 60;
@@ -72,13 +72,13 @@ int distance(int u, int v) {
 ## Quando usar
 
 - Consultas de k-ésimo sucessor em grafo funcional.
-- Encontrar o vértice após (k) movimentos em uma simulação determinística.
+- Encontrar o vértice após `k` movimentos em uma simulação determinística.
 - K-ésimo ancestral, LCA, distância e k-ésimo vértice de um caminho em árvore.
 - Encontrar ciclos em grafos funcionais combinando binary lifting com decomposição dos ciclos.
 
 ## Cuidados
 
 - O grafo funcional precisa ter um sucessor definido para todo vértice; trate estados sem saída com um vértice sentinela.
-- `LOG` precisa cobrir o maior bit de (k). Para (10^{18}), 60 níveis bastam.
-- DFS recursiva pode estourar a pilha em uma árvore com (2\cdot10^5) vértices; considere DFS iterativa.
+- `LOG` precisa cobrir o maior bit de `k`. Para (10^{18}), 60 níveis bastam.
+- DFS recursiva pode estourar a pilha em uma árvore com `2*10^5` vértices; considere DFS iterativa.
 - Não confunda k-ésimo sucessor com LCA: a tabela é a mesma ideia, mas a interpretação e as pré-condições são diferentes.

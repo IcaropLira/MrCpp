@@ -44,7 +44,7 @@ Não pare no LCA. Com `depth` e `up`, você ganha de graça:
 - **K-ésimo vértice no caminho:** encontre `w = LCA(u,v)`. Seja `a = depth[u]-depth[w]` e `b = depth[v]-depth[w]`. Se `k <= a`, suba `k` a partir de `u`; caso contrário, suba `a+b-k` a partir de `v`. Aqui `k=0` representa o próprio `u`.
 - **Ancestralidade:** com tempos de entrada/saída da DFS, confira se `tin[u] <= tin[v] && tout[v] <= tout[u]`.
 
-Adicione estes métodos ao struct, mantendo `up[j][v]` como o ancestral a (2^j) passos:
+Adicione estes métodos ao struct, mantendo `up[j][v]` como o ancestral a `2^j` passos:
 
 ```cpp
 int kth_ancestor(int v, int k) {
