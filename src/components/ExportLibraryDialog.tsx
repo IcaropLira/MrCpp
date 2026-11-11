@@ -4,7 +4,7 @@ import ReactMarkdown from 'react-markdown';
 import rehypeHighlight from 'rehype-highlight';
 import remarkGfm from 'remark-gfm';
 import type { Section, Topic } from '../types';
-import { segmentTreeSheet } from '../lib/almanac';
+import { almanacSheets } from '../lib/almanac';
 
 type Props = { sections: Section[]; onClose: () => void };
 
@@ -43,18 +43,23 @@ export default function ExportLibraryDialog({ sections, onClose }: Props) {
 
   const toggle = (slug: string) => setSelected((old) => old.includes(slug) ? old.filter((x) => x !== slug) : [...old, slug]);
   const almanacHtml = () => {
-    const sheet = segmentTreeSheet;
-    const facts = sheet.facts.map((x) => '<li>' + esc(x) + '</li>').join('');
-    const formulas = sheet.formula.map((x) => '<li>' + esc(x) + '</li>').join('');
-    const entries = sheet.entries.map((entry, i) =>
-      '<article class="fiche"><div class="fiche-k">VARIANTE ' + String(i + 1).padStart(2, '0') + '</div>' +
-      '<h2>' + esc(entry.title) + '</h2><p class="purpose">' + esc(entry.purpose) + '</p>' +
-      '<div class="fiche-grid"><div><b>UTILIDADE</b><p>' + esc(entry.when) + '</p></div>' +
-      '<div><b>COMPLEXIDADE</b><p>' + esc(entry.complexity) + '</p></div></div>' +
-      '<div class="notes"><b>OBSERVAÇÕES</b><ul>' + entry.notes.map((n) => '<li>' + esc(n) + '</li>').join('') + '</ul></div>' +
-      '<h3>IMPLEMENTAÇÃO</h3><p class="implementation-note">Código essencial, compacto e pronto para copiar.</p>' +
-      '<pre><code>' + esc(entry.code) + '</code></pre></article>'
-    ).join('');
+    const contents = almanacSheets.map((sheet) => {
+      const facts = sheet.facts.map((x) => '<li>' + esc(x) + '</li>').join('');
+      const formulas = sheet.formula.map((x) => '<li>' + esc(x) + '</li>').join('');
+      const entries = sheet.entries.map((entry, i) =>
+        '<article class="fiche"><div class="fiche-k">VARIANTE ' + String(i + 1).padStart(2, '0') + '</div>' +
+        '<h2>' + esc(entry.title) + '</h2><p class="purpose">' + esc(entry.purpose) + '</p>' +
+        '<div class="fiche-grid"><div><b>UTILIDADE</b><p>' + esc(entry.when) + '</p></div>' +
+        '<div><b>COMPLEXIDADE</b><p>' + esc(entry.complexity) + '</p></div></div>' +
+        '<div class="notes"><b>OBSERVAÇÕES</b><ul>' + entry.notes.map((n) => '<li>' + esc(n) + '</li>').join('') + '</ul></div>' +
+        '<h3>IMPLEMENTAÇÃO</h3><p class="implementation-note">Código essencial, compacto e pronto para copiar.</p>' +
+        '<pre><code>' + esc(entry.code) + '</code></pre></article>'
+      ).join('');
+      return '<section class="reference"><h2>' + esc(sheet.title) + ' — Ficha de consulta</h2><p>' + esc(sheet.subtitle) +
+        '</p><h3>COMPLEXIDADE E PROPRIEDADES</h3><ul>' + facts + '</ul><h3>FÓRMULAS E IDENTIDADES</h3><ul>' +
+        formulas + '</ul><h3>VARIANTES E IMPLEMENTAÇÕES</h3><ul>' +
+        sheet.entries.map((e) => '<li>' + esc(e.title) + '</li>').join('') + '</ul></section>' + entries;
+    }).join('');
     return '<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>' + esc(title) + '</title><style>' +
       '@page{size:A4 portrait;margin:13mm 14mm 15mm}*{box-sizing:border-box}body{font:9pt/1.35 Arial,sans-serif;color:#17233b;margin:0}' +
       '.cover{height:260mm;display:flex;flex-direction:column;justify-content:center;border-left:6px solid #9c6b12;padding:18mm;background:linear-gradient(120deg,#eef2f9,#fff)}' +
@@ -65,15 +70,13 @@ export default function ExportLibraryDialog({ sections, onClose }: Props) {
       '.fiche-grid b,.notes>b{font:7.5pt monospace;letter-spacing:.1em;color:#9c6b12}.fiche-grid p{margin:4px 0 0}.notes ul{margin:5px 0;padding-left:17px}.notes li{margin:3px 0}.fiche h3{font-size:13pt;color:#16264a;margin:15px 0 2px}' +
       '.implementation-note{color:#536078;margin:2px 0 7px}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f8f9fb;border:1px solid #d7dce6;border-left:3px solid #16264a;padding:9px;font:7pt/1.28 "DejaVu Sans Mono",monospace;color:#1b2540;break-inside:avoid}code{font-family:monospace}' +
       '@media screen{body{max-width:850px;margin:24px auto;padding:20px}.cover{height:620px}.reference,.fiche{padding:22px 0}}</style></head><body>' +
-      '<header class="cover"><div class="eyebrow">MR. C++ · ALMANAQUE DE REFERÊNCIA</div><h1>' + esc(title) + '</h1><p>' + esc(sheet.title) + '</p><p>' + esc(sheet.subtitle) + '</p></header>' +
-      '<section class="reference"><h2>' + esc(sheet.title) + ' — Ficha de consulta</h2><p>' + esc(sheet.subtitle) + '</p><h3>COMPLEXIDADE E PROPRIEDADES</h3><ul>' + facts +
-      '</ul><h3>FÓRMULAS E IDENTIDADES</h3><ul>' + formulas + '</ul><h3>VARIANTES E IMPLEMENTAÇÕES</h3><ul>' +
-      sheet.entries.map((e) => '<li>' + esc(e.title) + '</li>').join('') + '</ul></section>' + entries +
+      '<header class="cover"><div class="eyebrow">MR. C++ · ALMANAQUE DE REFERÊNCIA</div><h1>' + esc(title) + '</h1><p>' +
+      almanacSheets.length + ' estruturas · ' + almanacSheets.reduce((n,s) => n+s.entries.length,0) + ' implementações</p>' +
+      '<p>Fórmulas, variantes e códigos essenciais para programação competitiva.</p></header>' + contents +
       '<footer>Mr. C++ · ' + esc(author) + '</footer><script>window.addEventListener("load",()=>setTimeout(()=>window.print(),350));</script></body></html>';
   };
 
   const almanacLatex = () => {
-    const sheet = segmentTreeSheet;
     const texAlmanac = (s: string) => {
       let out = tex(s);
       out = out.replaceAll('≤', '\\ensuremath{\\leq}');
@@ -84,14 +87,21 @@ export default function ExportLibraryDialog({ sections, onClose }: Props) {
       out = out.replaceAll('·', '\\textbullet{}');
       return out;
     };
-    const entries = sheet.entries.map((e) =>
-      '\\clearpage\n\\section*{' + texAlmanac(e.title) + '}\n' +
-      '\\textbf{Utilidade.} ' + texAlmanac(e.when) + '\\par\n' +
-      '\\textbf{Finalidade.} ' + texAlmanac(e.purpose) + '\\par\n' +
-      '\\textbf{Complexidade.} ' + texAlmanac(e.complexity) + '\\par\n' +
-      '\\textbf{Observações.} ' + e.notes.map(texAlmanac).join(' · ') + '\\par\\medskip\n' +
-      '\\textbf{Implementação}\\par\n\\begin{lstlisting}\n' + e.code.trim() + '\n\\end{lstlisting}\n'
-    ).join('\n');
+    const body = almanacSheets.map((sheet) => {
+      const entries = sheet.entries.map((e) =>
+        '\\clearpage\n\\subsection*{' + texAlmanac(e.title) + '}\n' +
+        '\\textbf{Utilidade.} ' + texAlmanac(e.when) + '\\par\n' +
+        '\\textbf{Finalidade.} ' + texAlmanac(e.purpose) + '\\par\n' +
+        '\\textbf{Complexidade.} ' + texAlmanac(e.complexity) + '\\par\n' +
+        '\\textbf{Observações.} ' + e.notes.map(texAlmanac).join(' · ') + '\\par\\medskip\n' +
+        '\\textbf{Implementação}\\par\n\\begin{lstlisting}\n' + e.code.trim() + '\n\\end{lstlisting}\n'
+      ).join('\n');
+      return '\\clearpage\n\\section*{' + texAlmanac(sheet.title) + '}\n' +
+        texAlmanac(sheet.subtitle) + '\\par\\medskip\n' +
+        '\\textbf{Propriedades}\\begin{itemize}' + sheet.facts.map(x => '\\item ' + texAlmanac(x)).join('') + '\\end{itemize}\n' +
+        '\\textbf{Fórmulas e identidades}\\begin{itemize}' + sheet.formula.map(x => '\\item ' + texAlmanac(x)).join('') + '\\end{itemize}\n' +
+        entries;
+    }).join('\n');
     return '% Mr. C++ — Almanaque de referência\n' +
       '\\documentclass[9pt,a4paper]{article}\n\\usepackage[margin=14mm]{geometry}\n' +
       '\\usepackage[T1]{fontenc}\\usepackage[utf8]{inputenc}\\usepackage{xcolor,amsmath,enumitem,listings,titlesec}\n' +
@@ -99,10 +109,8 @@ export default function ExportLibraryDialog({ sections, onClose }: Props) {
       '\\titleformat{\\section}{\\Large\\bfseries\\color{navy}}{}{0pt}{}\n' +
       '\\lstset{language=C++,basicstyle=\\ttfamily\\footnotesize,breaklines=true,columns=fullflexible,keepspaces=true,showstringspaces=false,frame=single}\n' +
       '\\setlength{\\parindent}{0pt}\\setlength{\\parskip}{4pt}\\begin{document}\n' +
-      '{\\Huge\\bfseries\\color{navy} ' + texAlmanac(title) + '}\\par{\\Large ' + texAlmanac(sheet.title) + '}\\par' + texAlmanac(sheet.subtitle) + '\\par\\medskip\n' +
-      '\\section*{Ficha de consulta}\\textbf{Propriedades}\\begin{itemize}' + sheet.facts.map(x => '\\item ' + texAlmanac(x)).join('') + '\\end{itemize}\n' +
-      '\\textbf{Fórmulas e identidades}\\begin{itemize}' + sheet.formula.map(x => '\\item ' + texAlmanac(x)).join('') + '\\end{itemize}\n' +
-      entries + '\\end{document}\n';
+      '{\\Huge\\bfseries\\color{navy} ' + texAlmanac(title) + '}\\par' +
+      '\\textit{' + texAlmanac(author) + '}\\par\\medskip\n' + body + '\\end{document}\n';
   };
 
   const html = () => {
