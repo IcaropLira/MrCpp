@@ -311,7 +311,7 @@ export const segmentTreeSheet: AlmanacSheet = {
   title: 'Segment Tree',
   subtitle: 'Consultas e atualizações em intervalos por decomposição hierárquica',
   facts: [
-    'Construção: O(n) · consulta: O(log n) · atualização pontual: O(log n)',
+    'Construção: O(n) · consulta: O(log n) · atualização pontual: O(log n)',\n    'Snippets C++ pressupõem #include <bits/stdc++.h> e using namespace std;',
     'Árvore recursiva: normalmente 4n posições; iterativa: 2n posições',
     'A operação de combinação deve ser associativa e possuir identidade para consultas iterativas',
     'Convenção desta ficha: índices zero-based e intervalos semiabertos [l,r), salvo indicação'
