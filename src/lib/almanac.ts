@@ -41,7 +41,7 @@ const soma = String.raw`struct SegTree {
     }
 };`;
 
-const extremos = String.raw\`struct Node {
+const extremos = String.raw`struct Node {
     long long mn, mx;
     int imn, imx;
 };
@@ -94,7 +94,7 @@ struct SegTreeExtremos {
 
     void set(int p,long long v) { set(p,v,1,0,n-1); }
     Node query(int l,int r) { return query(l,r,1,0,n-1); }
-};\`;
+};`;
 
 const xor = String.raw`struct SegTreeXor {
     int n;
@@ -277,7 +277,7 @@ const mergeSort = String.raw`struct MergeSortTree {
     }
 };`;
 
-const dynamic = String.raw\`struct DynamicSegTree {
+const dynamic = String.raw`struct DynamicSegTree {
     struct Node { long long sum = 0; int l = 0, r = 0; };
     vector<Node> t = {Node()};
     static const int LO = 0, HI = 1000000000;
@@ -305,7 +305,7 @@ const dynamic = String.raw\`struct DynamicSegTree {
              + query(t[x].r,m+1,r,a,b);
     }
 };
-// raiz começa em 0; raiz = add(raiz, LO, HI, pos, delta);\`;
+// raiz começa em 0; raiz = add(raiz, LO, HI, pos, delta);`;
 
 export const segmentTreeSheet: AlmanacSheet = {
   title: 'Segment Tree',
