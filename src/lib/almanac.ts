@@ -232,8 +232,8 @@ const persistente = String.raw`struct PersistentSegTree {
         t.push_back(t[old]);
         if (l == r) { t[cur].sum += v; return cur; }
         int m = (l+r)/2;
-        if (p <= m) t[cur].l = update(t[old].l,l,m,p,v);
-        else t[cur].r = update(t[old].r,m+1,r,p,v);
+        if (p <= m) { int child = update(t[old].l,l,m,p,v); t[cur].l = child; }
+        else { int child = update(t[old].r,m+1,r,p,v); t[cur].r = child; }
         t[cur].sum = t[t[cur].l].sum + t[t[cur].r].sum;
         return cur;
     }
