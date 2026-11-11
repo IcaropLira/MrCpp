@@ -275,6 +275,16 @@ const mergeSort = String.raw`struct MergeSortTree {
         return count_le(a,b,k,2*x,l,m)
              + count_le(a,b,k,2*x+1,m+1,r);
     }
+
+    int kth(int l,int r,int k,const vector<int>& valores) {
+        int lo = 0, hi = (int)valores.size()-1;
+        while (lo < hi) {
+            int m = (lo+hi)/2;
+            if (count_le(l,r,valores[m],1,0,n-1) >= k) hi = m;
+            else lo = m+1;
+        }
+        return valores[lo];
+    }
 };`;
 
 const dynamic = String.raw`struct DynamicSegTree {
@@ -339,7 +349,7 @@ export const segmentTreeSheet: AlmanacSheet = {
     { title:'Lazy + Soma', purpose:'Adicionar v a todos os elementos de [l,r] e consultar a soma de qualquer intervalo.', complexity:'O(log n) por atualização e consulta.', when:'Range add + range sum.', notes:['Construa com st.build(a,1,0,n-1).','add(l,r,v) e query(l,r) usam [l,r] inclusivo.','Ao adicionar v em um nó de comprimento len, soma += v*len.','Tags de adição se compõem por soma.'], code:lazySoma },
     { title:'Lazy + XOR', purpose:'Aplicar XOR com uma máscara em todo o intervalo e consultar o XOR resultante.', complexity:'O(log n) por atualização e consulta.', when:'Inverter um ou vários bits em intervalo e consultar XOR.', notes:['Construa com st.build(a,1,0,n-1).','update(l,r,mask) e query(l,r) usam [l,r] inclusivo.','Se o tamanho do segmento é ímpar, seg ^= máscara.','Se é par, o XOR agregado não muda.','A tag se compõe por XOR.'], code:lazyXor },
     { title:'Persistente', purpose:'Criar uma nova raiz após cada atualização, preservando as versões anteriores por cópia dos nós alterados.', complexity:'O(log n) nós novos por atualização; O(log n) consulta.', when:'Consultas em versões anteriores, prefixos de versões ou comparar estados históricos.', notes:['Cada raiz identifica uma versão imutável.','update(raiz_antiga,0,n-1,pos,delta) devolve a nova raiz.','query(raiz,0,n-1,l,r) usa [l,r] inclusivo.','O exemplo soma deltas em uma posição; adapte a folha para atribuição quando necessário.'], code:persistente },
-    { title:'Merge Sort Tree', purpose:'Guardar um vetor ordenado em cada nó para contar valores que satisfazem um limite dentro de [l,r].', complexity:'O(n log n) construção e memória; O(log² n) consulta.', when:'Contar elementos ≤ x, k-ésimo valor (com busca binária) ou estatísticas de ordem em intervalo estático.', notes:['count_le(l,r,x,1,0,n-1) conta valores ≤ x em [l,r] inclusivo.','Cada consulta visita O(log n) nós e faz upper_bound em cada lista.','Atualizações não são baratas nesta estrutura.'], code:mergeSort },
+    { title:'Merge Sort Tree', purpose:'Guardar um vetor ordenado em cada nó para contar valores que satisfazem um limite dentro de [l,r].', complexity:'O(n log n) construção/memória; O(log² n) contagem; O(log U · log² n) k-ésimo valor.', when:'Contar elementos ≤ x ou encontrar o k-ésimo menor em um intervalo estático.', notes:['count_le(l,r,x,1,0,n-1) conta valores ≤ x em [l,r] inclusivo.','kth(l,r,k,valores) retorna o k-ésimo menor; k é 1-based e valores deve estar ordenado e sem duplicatas.','Cada consulta visita O(log n) nós e faz upper_bound em cada lista.','Atualizações não são baratas nesta estrutura.'], code:mergeSort },
     { title:'Dynamic', purpose:'Criar nós apenas nos caminhos efetivamente visitados, sem alocar toda a árvore do domínio.', complexity:'O(log U) por operação; memória proporcional aos nós criados.', when:'Domínio muito grande ou implícito, por exemplo coordenadas até 10⁹.', notes:['add(raiz,LO,HI,pos,delta) faz atualização pontual.','query(raiz,LO,HI,l,r) consulta [l,r] inclusivo.','Ajuste LO e HI ao domínio do problema.','Use índices de nós, não referências persistentes, para evitar invalidação por realocação do vector.'], code:dynamic }
   ]
 };
