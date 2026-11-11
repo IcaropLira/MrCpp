@@ -1,75 +1,84 @@
 ---
 title: Sucessores (binary lifting)
-summary: Em breve.
+summary: K-th successor, ciclos funcionais e saltos em O(log n).
 status: done
-complexity: tags:
-tags: ---
+complexity: O(n log K) de pré-processamento; O(log K) por consulta
+tags: grafos dirigidos, binary lifting, sucessores, ciclos funcionais
 ---
 
-## Ideia e quando usar
+## A ideia
 
-Sucessores (binary lifting) é uma técnica/estrutura que aparece quando o problema tem a seguinte necessidade: reconhecer o padrão pedido no enunciado, representar os estados relevantes e escolher uma operação que possa ser executada dentro do limite de tempo. Não decore só o código: identifique **o que cada variável significa**, qual é a condição de validade e qual é o custo de cada operação.
+Quando cada vértice tem exatamente um próximo estado, podemos pré-calcular para cada vértice onde chegamos após (2^j) passos.
 
-## Como pensar na solução
+- `up[j][v]`: vértice alcançado partindo de `v` e seguindo a função exatamente (2^j) vezes.
+- `up[0][v] = prox[v]`.
+- `up[j][v] = up[j-1][up[j-1][v]]`.
 
-1. **Defina a entrada e a resposta.** Escreva em uma frase o que precisa ser calculado e quais restrições importam (`n`, número de arestas, tamanho das strings, valores máximos).
-2. **Escolha a representação.** Vetor, lista de adjacência, estado de DP, estrutura de dados ou ordenação devem refletir diretamente as operações necessárias.
-3. **Mantenha um invariante.** Antes de cada iteração/consulta, diga o que a estrutura representa. Depois da operação, prove que continua representando isso.
-4. **Analise a complexidade.** Conte quantas vezes cada elemento/aresta/estado é processado. Uma solução correta que faz `O(n²)` pode falhar para `n=2e5`.
-5. **Trate os casos-limite.** Entrada vazia ou mínima, duplicatas, valores negativos, grafo desconexo, ciclos, limites de índice e overflow.
+A consulta de (k)-ésimo sucessor vira a decomposição binária de (k). Não é necessário simular os (k) passos.
 
-## Modelo de implementação
+## Código — k-ésimo sucessor
 
-O esqueleto depende do problema concreto; não existe um único código que resolva todas as variantes. Em C++ competitivo, mantenha a implementação enxuta e explícita, no estilo deste material:
+Use `LOG = 60` quando (k) pode chegar a (10^{18}). Se o limite for menor, ajuste o número de níveis.
 
 ```cpp
-#include <bits/stdc++.h>
-using namespace std;
-using ll = long long;
+const int LOG = 60;
+vector<vector<int>> up;
 
-int main() {
-    ios::sync_with_stdio(false);
-    cin.tie(nullptr);
+void build(const vector<int>& prox) {
+    int n = prox.size();
+    up.assign(LOG, vector<int>(n));
+    for (int v = 0; v < n; v++) up[0][v] = prox[v];
+    for (int j = 1; j < LOG; j++)
+        for (int v = 0; v < n; v++)
+            up[j][v] = up[j-1][up[j-1][v]];
+}
 
-    int n;
-    cin >> n;
-    vector<int> a(n);
-    for (int i = 0; i < n; i++) cin >> a[i];
-
-    // 1. Inicialize a estrutura/estado.
-    // 2. Processe os dados mantendo o invariante.
-    // 3. Extraia e imprima a resposta.
-    return 0;
+int kth(int v, long long k) {
+    for (int j = 0; j < LOG; j++)
+        if (k & (1LL << j)) v = up[j][v];
+    return v;
 }
 ```
 
-Não copie o esqueleto literalmente quando a técnica exigir DFS, recursão, uma estrutura persistente ou várias consultas. Use o código específico da seção como base e adapte os tipos aos limites do enunciado.
+## Em árvores: LCA e distância
 
-## Complexidade: como conferir
+A mesma tabela guarda ancestrais em vez de sucessores arbitrários. Com profundidades, igualamos os níveis, subimos os dois vértices e encontramos o menor ancestral comum. A distância em arestas é:
 
-- Um laço sobre `n` elementos é `O(n)`.
-- Dois laços aninhados sobre `n` normalmente são `O(n²)`.
-- Ordenar costuma custar `O(n log n)`.
-- Uma busca binária custa `O(log n)`; fazer isso para cada elemento dá `O(n log n)`.
-- Em grafos, a DFS/BFS com lista de adjacência custa `O(n+m)`.
-- Uma estrutura de consultas pode ter custo de construção diferente do custo de cada consulta; informe os dois.
+`dist(u,v) = depth[u] + depth[v] - 2 * depth[lca(u,v)]`.
 
-A complexidade indicada no cabeçalho é uma referência para a implementação padrão. Variantes do mesmo algoritmo podem ter custos diferentes conforme a estrutura auxiliar, o domínio dos valores e as operações exigidas.
+Para encontrar o k-ésimo vértice no caminho de `u` até `v` (k começa em zero), seja `w = lca(u,v)`, `a = depth[u]-depth[w]` e `b = depth[v]-depth[w]`. Se `k <= a`, suba `k` passos a partir de `u`; caso contrário, suba `a+b-k` passos a partir de `v`.
 
-## Erros comuns
+```cpp
+int kth_ancestor(int v, int k) {
+    for (int j = 0; j < LOG; j++)
+        if (k & (1LL << j)) v = up[j][v];
+    return v;
+}
 
-- Usar a técnica só porque o nome aparece no enunciado, sem verificar suas pré-condições.
-- Não decidir se os intervalos são inclusivos `[l,r]` ou semiabertos `[l,r)`.
-- Misturar índices `0..n-1` com índices `1..n`.
-- Usar `int` para somas, distâncias ou produtos que podem ultrapassar `2^31-1`; use `long long` quando necessário.
-- Esquecer de limpar vetores globais entre casos de teste.
-- Não testar duplicatas, casos mínimos e o maior caso permitido.
+int kth_on_path(int u, int v, int k) {
+    int w = lca(u, v);
+    int a = depth[u] - depth[w];
+    int b = depth[v] - depth[w];
+    if (k <= a) return kth_ancestor(u, k);
+    return kth_ancestor(v, a + b - k);
+}
 
-## Checklist de prova/contest
+int distance(int u, int v) {
+    int w = lca(u, v);
+    return depth[u] + depth[v] - 2 * depth[w];
+}
+```
 
-- [ ] Sei explicar o que representa cada estado/estrutura?
-- [ ] Sei por que a transição/operação é correta?
-- [ ] Sei justificar a complexidade total, não apenas de uma operação?
-- [ ] Os limites e sentinelas estão corretos?
-- [ ] A solução trata o caso mínimo e os empates?
-- [ ] O tipo numérico comporta a resposta máxima?
+## Quando usar
+
+- Consultas de k-ésimo sucessor em grafo funcional.
+- Encontrar o vértice após (k) movimentos em uma simulação determinística.
+- K-ésimo ancestral, LCA, distância e k-ésimo vértice de um caminho em árvore.
+- Encontrar ciclos em grafos funcionais combinando binary lifting com decomposição dos ciclos.
+
+## Cuidados
+
+- O grafo funcional precisa ter um sucessor definido para todo vértice; trate estados sem saída com um vértice sentinela.
+- `LOG` precisa cobrir o maior bit de (k). Para (10^{18}), 60 níveis bastam.
+- DFS recursiva pode estourar a pilha em uma árvore com (2\cdot10^5) vértices; considere DFS iterativa.
+- Não confunda k-ésimo sucessor com LCA: a tabela é a mesma ideia, mas a interpretação e as pré-condições são diferentes.

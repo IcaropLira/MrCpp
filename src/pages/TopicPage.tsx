@@ -28,7 +28,7 @@ export default function TopicPage() {
           {topic.complexity && <code>{topic.complexity}</code>}
           {topic.tags.map((t) => <span key={t}>{t}</span>)}
         </div>
-        {topic.status === 'todo' && <div className="notice">Este tópico ainda não tem código. Edite <code>content/{`${String(section.order).padStart(2, '0')}-${section.slug}`}/</code> para adicioná-lo.</div>}
+        {topic.status === 'todo' && <div className="notice">Este tópico ainda está em desenvolvimento. Edite <code>content/{`${String(section.order).padStart(2, '0')}-${section.slug}`}/</code> para adicioná-lo.</div>}
         <Markdown>{topic.body}</Markdown>
         <nav className="pn">
           {prev ? <Link to={`/${section.slug}/${prev.slug}`}>← {prev.title}</Link> : <span />}

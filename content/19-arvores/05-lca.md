@@ -34,3 +34,37 @@ struct LCA {
     }
 };
 ```
+
+## Outras consultas que saem da mesma tabela
+
+Não pare no LCA. Com `depth` e `up`, você ganha de graça:
+
+- **K-ésimo ancestral:** subir `k` níveis usando os bits de `k`.
+- **Distância entre dois vértices:** `depth[u] + depth[v] - 2*depth[w]`, onde `w = LCA(u,v)`.
+- **K-ésimo vértice no caminho:** encontre `w = LCA(u,v)`. Seja `a = depth[u]-depth[w]` e `b = depth[v]-depth[w]`. Se `k <= a`, suba `k` a partir de `u`; caso contrário, suba `a+b-k` a partir de `v`. Aqui `k=0` representa o próprio `u`.
+- **Ancestralidade:** com tempos de entrada/saída da DFS, confira se `tin[u] <= tin[v] && tout[v] <= tout[u]`.
+
+Adicione estes métodos ao struct, mantendo `up[j][v]` como o ancestral a (2^j) passos:
+
+```cpp
+int kth_ancestor(int v, int k) {
+    for (int j = 0; j < LOG; j++)
+        if (k & (1 << j)) v = up[j][v];
+    return v;
+}
+
+int distance(int u, int v) {
+    int w = query(u, v);
+    return depth[u] + depth[v] - 2 * depth[w];
+}
+
+int kth_on_path(int u, int v, int k) {
+    int w = query(u, v);
+    int a = depth[u] - depth[w];
+    int b = depth[v] - depth[w];
+    if (k <= a) return kth_ancestor(u, k);
+    return kth_ancestor(v, a + b - k);
+}
+```
+
+Para `n` grande, considere DFS iterativa para evitar estouro de pilha. Se `k` ou a profundidade puderem alcançar valores que não cabem em `int`, ajuste o tipo e o número de níveis.

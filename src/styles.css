@@ -51,3 +51,18 @@ footer{border-top:1px solid var(--line);padding:30px 0;color:var(--mut);font-siz
 @keyframes up{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}@keyframes bob{50%{transform:translateY(-8px)}}
 @media(max-width:820px){.topic{grid-template-columns:1fr}aside{position:static;max-height:none;flex-direction:row;flex-wrap:wrap}nav a:not(:first-child){display:none}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.reveal,.st,.up{opacity:1!important;transform:none!important}}
+
+/* Exportação da biblioteca */
+.nav-export{border:1px solid var(--line);background:#ee0f7f14;color:var(--pk2);border-radius:999px;padding:7px 13px;font:12px 'Fira Code',monospace;cursor:pointer}.nav-export:hover{border-color:var(--pk);background:#ee0f7f25}
+.export-overlay{position:fixed;inset:0;z-index:20;background:#05030bd9;backdrop-filter:blur(8px);display:grid;place-items:center;padding:18px}
+.export-dialog{position:relative;width:min(720px,100%);max-height:min(92vh,900px);overflow:auto;background:#160f26;border:1px solid var(--line);border-radius:22px;padding:28px;box-shadow:0 30px 100px #000b}
+.export-dialog h2{font-size:30px;margin:4px 0 8px}.export-intro{color:var(--mut);font-size:13px;max-width:600px;margin-bottom:20px}
+.export-close{position:absolute;right:18px;top:14px;background:none;border:0;color:var(--mut);font-size:27px;cursor:pointer}
+.export-field{display:grid;gap:5px;color:var(--mut);font:12px 'Fira Code',monospace;margin:12px 0}.export-field input,.export-options select{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:9px;background:#0d0817;color:var(--tx);font:14px Inter,system-ui,sans-serif}
+.export-options{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:16px 0}.export-options label{display:grid;gap:6px;color:var(--mut);font:11px 'Fira Code',monospace}
+.export-check{display:flex;align-items:center;gap:9px;color:var(--mut);font-size:13px;margin:12px 0 18px}.export-check input,.export-sections input{accent-color:var(--pk)}
+.export-select-head{display:flex;align-items:center;gap:10px;border-top:1px solid var(--line);padding-top:16px;font-size:13px}.export-select-head span{color:var(--mut);margin-left:auto;font-size:11px}.export-select-head button{border:0;background:none;color:var(--pk2);font:11px 'Fira Code',monospace;cursor:pointer}
+.export-sections{display:grid;grid-template-columns:1fr 1fr;gap:3px 12px;max-height:210px;overflow:auto;padding:10px 4px;margin:5px 0 18px}.export-sections label{display:flex;align-items:center;gap:8px;padding:6px 4px;color:var(--tx);font-size:12px;cursor:pointer}.export-sections label span{flex:1}.export-sections small{color:var(--mut);font:10px 'Fira Code',monospace}
+.export-actions{display:flex;justify-content:flex-end;gap:10px;border-top:1px solid var(--line);padding-top:18px}.export-actions button{border-radius:999px;padding:10px 16px;font:12px 'Fira Code',monospace;cursor:pointer}.export-actions button:disabled{opacity:.4;cursor:not-allowed}.export-actions .secondary{background:transparent;border:1px solid var(--line);color:var(--mut)}.export-actions .primary{background:var(--grad);border:0;color:white}
+@media(max-width:620px){.nav-export{padding:6px 9px;font-size:10px}.export-dialog{padding:22px 16px}.export-options{grid-template-columns:1fr}.export-sections{grid-template-columns:1fr}.export-actions{flex-direction:column}.export-actions button{width:100%}}
+@media print{.nav-export,.export-overlay{display:none!important}}
