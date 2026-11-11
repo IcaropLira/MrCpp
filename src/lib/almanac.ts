@@ -15,7 +15,7 @@ export type AlmanacSheet = {
   entries: AlmanacEntry[];
 };
 
-const soma = String.raw\`struct SegTree {
+const soma = String.raw`struct SegTree {
     int n;
     vector<long long> t;
 
@@ -39,7 +39,7 @@ const soma = String.raw\`struct SegTree {
         }
         return ans;
     }
-};\`;
+};`;
 
 const extremos = String.raw\`struct Node {
     long long mn, mx;
@@ -55,10 +55,48 @@ Node merge(Node a, Node b) {
     return c;
 }
 
-// Na consulta, use {INF, -INF, -1, -1} como identidade.
-// Combine os nós com merge(a, b);\`;
+struct SegTreeExtremos {
+    int n;
+    vector<Node> t;
+    const long long INF = (1LL << 60);
 
-const xor = String.raw\`struct SegTreeXor {
+    Node neutro() { return {INF, -INF, -1, -1}; }
+
+    SegTreeExtremos(const vector<long long>& a) {
+        n = a.size();
+        t.assign(4*n, neutro());
+        build(a,1,0,n-1);
+    }
+
+    void build(const vector<long long>& a,int x,int l,int r) {
+        if (l == r) { t[x] = {a[l],a[l],l,l}; return; }
+        int m = (l+r)/2;
+        build(a,2*x,l,m);
+        build(a,2*x+1,m+1,r);
+        t[x] = merge(t[2*x],t[2*x+1]);
+    }
+
+    void set(int p,long long v,int x,int l,int r) {
+        if (l == r) { t[x] = {v,v,l,l}; return; }
+        int m = (l+r)/2;
+        if (p <= m) set(p,v,2*x,l,m);
+        else set(p,v,2*x+1,m+1,r);
+        t[x] = merge(t[2*x],t[2*x+1]);
+    }
+
+    Node query(int a,int b,int x,int l,int r) {
+        if (b < l || r < a) return neutro();
+        if (a <= l && r <= b) return t[x];
+        int m = (l+r)/2;
+        return merge(query(a,b,2*x,l,m),
+                     query(a,b,2*x+1,m+1,r));
+    }
+
+    void set(int p,long long v) { set(p,v,1,0,n-1); }
+    Node query(int l,int r) { return query(l,r,1,0,n-1); }
+};\`;
+
+const xor = String.raw`struct SegTreeXor {
     int n;
     vector<int> t;
 
@@ -82,9 +120,9 @@ const xor = String.raw\`struct SegTreeXor {
         }
         return ans;
     }
-};\`;
+};`;
 
-const lazySoma = String.raw\`struct LazySum {
+const lazySoma = String.raw`struct LazySum {
     int n;
     vector<long long> seg, lazy;
 
@@ -131,9 +169,9 @@ const lazySoma = String.raw\`struct LazySum {
 
     void add(int l, int r, long long v) { add(l,r,v,1,0,n-1); }
     long long query(int l, int r) { return query(l,r,1,0,n-1); }
-};\`;
+};`;
 
-const lazyXor = String.raw\`struct LazyXor {
+const lazyXor = String.raw`struct LazyXor {
     int n;
     vector<int> seg, lazy;
 
@@ -180,9 +218,9 @@ const lazyXor = String.raw\`struct LazyXor {
 
     void update(int l,int r,int v) { update(l,r,v,1,0,n-1); }
     int query(int l,int r) { return query(l,r,1,0,n-1); }
-};\`;
+};`;
 
-const persistente = String.raw\`struct PersistentSegTree {
+const persistente = String.raw`struct PersistentSegTree {
     struct Node { long long sum; int l, r; };
     vector<Node> t{{0,0,0}};
     int n;
@@ -207,9 +245,9 @@ const persistente = String.raw\`struct PersistentSegTree {
         return query(t[x].l,l,m,a,b) + query(t[x].r,m+1,r,a,b);
     }
 };
-// raiz[0] = 0; raiz[i+1] = update(raiz[i], 0, n-1, pos, delta);\`;
+// raiz[0] = 0; raiz[i+1] = update(raiz[i], 0, n-1, pos, delta);`;
 
-const mergeSort = String.raw\`struct MergeSortTree {
+const mergeSort = String.raw`struct MergeSortTree {
     int n;
     vector<vector<int>> t;
 
@@ -237,20 +275,26 @@ const mergeSort = String.raw\`struct MergeSortTree {
         return count_le(a,b,k,2*x,l,m)
              + count_le(a,b,k,2*x+1,m+1,r);
     }
-};\`;
+};`;
 
 const dynamic = String.raw\`struct DynamicSegTree {
     struct Node { long long sum = 0; int l = 0, r = 0; };
     vector<Node> t = {Node()};
     static const int LO = 0, HI = 1000000000;
 
-    void add(int &x,int l,int r,int p,long long v) {
+    int add(int x,int l,int r,int p,long long v) {
         if (!x) { x = t.size(); t.push_back(Node()); }
         t[x].sum += v;
-        if (l == r) return;
+        if (l == r) return x;
         int m = l + (r-l)/2;
-        if (p <= m) add(t[x].l,l,m,p,v);
-        else add(t[x].r,m+1,r,p,v);
+        if (p <= m) {
+            int child = add(t[x].l,l,m,p,v);
+            t[x].l = child;
+        } else {
+            int child = add(t[x].r,m+1,r,p,v);
+            t[x].r = child;
+        }
+        return x;
     }
 
     long long query(int x,int l,int r,int a,int b) {
@@ -261,7 +305,7 @@ const dynamic = String.raw\`struct DynamicSegTree {
              + query(t[x].r,m+1,r,a,b);
     }
 };
-// raiz começa em 0; add(raiz, LO, HI, pos, delta);\`;
+// raiz começa em 0; raiz = add(raiz, LO, HI, pos, delta);\`;
 
 export const segmentTreeSheet: AlmanacSheet = {
   title: 'Segment Tree',
