@@ -8,7 +8,7 @@ import type { Section, Topic } from '../types';
 type Props = { sections: Section[]; onClose: () => void };
 
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-const tex = (s: string) => s.replace(/\\/g, '\\textbackslash{}').replace(/([{}#$%&_])/g, '\\$1').replace(/\^/g, '\\textasciicircum{}').replace(/~/g, '\\textasciitilde{}');
+const tex = (s: string) => s.replace(/[\\{}#$%&_~^]/g, (c) => ({ '\\': '\\textbackslash{}', '{': '\\{', '}': '\\}', '#': '\\#', '$': '\\$', '%': '\\%', '&': '\\&', '_': '\\_', '~': '\\textasciitilde{}', '^': '\\textasciicircum{}' }[c] ?? c));
 
 function toLatex(topic: Topic) {
   const chunks = topic.body.split(/```cpp\n([\s\S]*?)```/g);
