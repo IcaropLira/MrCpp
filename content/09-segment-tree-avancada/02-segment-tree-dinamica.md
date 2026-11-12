@@ -14,7 +14,7 @@ Use quando o domínio é enorme (por exemplo, coordenadas até 10^9 ou 10^18) e 
 
 ## Soma com atualização pontual
 
-Convenção: domínio inclusivo [0, 10^9]; atualização soma v em uma posição; consulta soma em [a,b].
+Convenção: domínio inclusivo [0, 10^18]; limites e posições usam long long; atualização soma v em uma posição; consulta soma em [a,b].
 
 ```cpp
 struct DynamicSegTree {
@@ -23,7 +23,7 @@ struct DynamicSegTree {
 
     vector<Node> t = {Node()}; // índice 0 = filho inexistente
 
-    int add(int x, int l, int r, int p, ll v) {
+    int add(int x, ll l, ll r, ll p, ll v) {
         if (!x) {
             x = (int)t.size();
             t.push_back(Node());
@@ -42,7 +42,7 @@ struct DynamicSegTree {
         return x;
     }
 
-    ll query(int x, int l, int r, int a, int b) const {
+    ll query(int x, ll l, ll r, ll a, ll b) const {
         if (!x || b < l || r < a) return 0;
         if (a <= l && r <= b) return t[x].sum;
         int m = l + (r - l) / 2;
@@ -52,8 +52,8 @@ struct DynamicSegTree {
 };
 
 // int root = 0;
-// root = st.add(root, 0, 1000000000, pos, delta);
-// ll ans = st.query(root, 0, 1000000000, l, r);
+// root = st.add(root, 0LL, 1000000000000000000LL, pos, delta);
+// ll ans = st.query(root, 0LL, 1000000000000000000LL, l, r);
 ```
 
 ## Complexidade
