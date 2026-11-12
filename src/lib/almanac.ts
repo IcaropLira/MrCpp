@@ -238,7 +238,7 @@ const persistente = String.raw`struct PersistentSegTree {
         return cur;
     }
 
-    long long query(int x,int l,int r,int a,int b) {
+    long long query(int x,long long l,long long r,long long a,long long b) {
         if (!x || b < l || r < a) return 0;
         if (a <= l && r <= b) return t[x].sum;
         int m = (l+r)/2;
@@ -300,13 +300,13 @@ const mergeSort = String.raw`struct MergeSortTree {
 const dynamic = String.raw`struct DynamicSegTree {
     struct Node { long long sum = 0; int l = 0, r = 0; };
     vector<Node> t = {Node()};
-    static const int LO = 0, HI = 1000000000;
+    static const long long LO = 0, HI = 1000000000000000000LL;
 
-    int add(int x,int l,int r,int p,long long v) {
+    int add(int x,long long l,long long r,long long p,long long v) {
         if (!x) { x = t.size(); t.push_back(Node()); }
         t[x].sum += v;
         if (l == r) return x;
-        int m = l + (r-l)/2;
+        long long m = l + (r-l)/2;
         if (p <= m) {
             int child = add(t[x].l,l,m,p,v);
             t[x].l = child;
