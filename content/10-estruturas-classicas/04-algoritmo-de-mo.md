@@ -1,75 +1,84 @@
 ---
 title: Algoritmo de Mo
-summary: Em breve.
+summary: Reordena consultas offline para mover uma janela e manter uma resposta incremental.
 status: done
-complexity: tags:
-tags: ---
+complexity: O((n + q)√n) movimentos na ordenação em blocos; O(1) por movimento
+tags: consultas offline, sqrt decomposition, frequência
 ---
 
-## Ideia e quando usar
+## Ideia
 
-Algoritmo de Mo é uma técnica/estrutura que aparece quando o problema tem a seguinte necessidade: reconhecer o padrão pedido no enunciado, representar os estados relevantes e escolher uma operação que possa ser executada dentro do limite de tempo. Não decore só o código: identifique **o que cada variável significa**, qual é a condição de validade e qual é o custo de cada operação.
+Mo resolve consultas de intervalo offline quando todas as consultas são conhecidas antes de respondê-las e conseguimos adicionar/remover um elemento das extremidades da janela em O(1) (ou custo pequeno).
 
-## Como pensar na solução
+Ordene consultas pelo bloco de l; dentro do bloco, ordene r alternando a direção para reduzir o movimento do ponteiro direito. Mantenha a janela atual [L,R] e mova as pontas até coincidir com a consulta.
 
-1. **Defina a entrada e a resposta.** Escreva em uma frase o que precisa ser calculado e quais restrições importam (`n`, número de arestas, tamanho das strings, valores máximos).
-2. **Escolha a representação.** Vetor, lista de adjacência, estado de DP, estrutura de dados ou ordenação devem refletir diretamente as operações necessárias.
-3. **Mantenha um invariante.** Antes de cada iteração/consulta, diga o que a estrutura representa. Depois da operação, prove que continua representando isso.
-4. **Analise a complexidade.** Conte quantas vezes cada elemento/aresta/estado é processado. Uma solução correta que faz `O(n²)` pode falhar para `n=2e5`.
-5. **Trate os casos-limite.** Entrada vazia ou mínima, duplicatas, valores negativos, grafo desconexo, ciclos, limites de índice e overflow.
+## Exemplo: quantidade de valores distintos
 
-## Modelo de implementação
+O exemplo comprime os valores para indexar frequências e mantém distintos ao inserir/remover ocorrências. Consultas são inclusivas.
 
-O esqueleto depende do problema concreto; não existe um único código que resolva todas as variantes. Em C++ competitivo, mantenha a implementação enxuta e explícita, no estilo deste material:
+\`\`\`cpp
+struct Query { int l, r, id; };
 
-```cpp
-#include <bits/stdc++.h>
-using namespace std;
-using ll = long long;
+vector<int> mo_distinct(vector<int> a, vector<Query> qs) {
+    int n = a.size(), q = qs.size();
+    vector<int> vals = a;
+    sort(vals.begin(), vals.end());
+    vals.erase(unique(vals.begin(), vals.end()), vals.end());
+    for (int &x : a)
+        x = lower_bound(vals.begin(), vals.end(), x) - vals.begin();
 
-int main() {
-    ios::sync_with_stdio(false);
-    cin.tie(nullptr);
+    int B = max(1, (int)sqrt(n));
+    sort(qs.begin(), qs.end(), [&](const Query& x, const Query& y) {
+        int bx = x.l / B, by = y.l / B;
+        if (bx != by) return bx < by;
+        return (bx & 1) ? x.r > y.r : x.r < y.r;
+    });
 
-    int n;
-    cin >> n;
-    vector<int> a(n);
-    for (int i = 0; i < n; i++) cin >> a[i];
+    vector<int> freq(vals.size()), ans(q);
+    int L = 0, R = -1, distinct = 0;
 
-    // 1. Inicialize a estrutura/estado.
-    // 2. Processe os dados mantendo o invariante.
-    // 3. Extraia e imprima a resposta.
-    return 0;
+    auto add = [&](int p) {
+        if (freq[a[p]]++ == 0) distinct++;
+    };
+    auto remove = [&](int p) {
+        if (--freq[a[p]] == 0) distinct--;
+    };
+
+    for (auto qu : qs) {
+        while (L > qu.l) add(--L);
+        while (R < qu.r) add(++R);
+        while (L < qu.l) remove(L++);
+        while (R > qu.r) remove(R--);
+        ans[qu.id] = distinct;
+    }
+    return ans;
 }
-```
+\`\`\`
 
-Não copie o esqueleto literalmente quando a técnica exigir DFS, recursão, uma estrutura persistente ou várias consultas. Use o código específico da seção como base e adapte os tipos aos limites do enunciado.
+Antes de chamar, atribua id = índice original a cada consulta e garanta 0 <= l <= r < n.
 
-## Complexidade: como conferir
+## Complexidade
 
-- Um laço sobre `n` elementos é `O(n)`.
-- Dois laços aninhados sobre `n` normalmente são `O(n²)`.
-- Ordenar costuma custar `O(n log n)`.
-- Uma busca binária custa `O(log n)`; fazer isso para cada elemento dá `O(n log n)`.
-- Em grafos, a DFS/BFS com lista de adjacência custa `O(n+m)`.
-- Uma estrutura de consultas pode ter custo de construção diferente do custo de cada consulta; informe os dois.
+- Ordenação: O(q log q).
+- Movimento total usual: O((n+q)√n) com bloco B ≈ √n; a constante depende da distribuição das consultas.
+- Memória: O(n+q).
+- O custo real é número de chamadas a add/remove multiplicado pelo custo de cada chamada.
 
-A complexidade indicada no cabeçalho é uma referência para a implementação padrão. Variantes do mesmo algoritmo podem ter custos diferentes conforme a estrutura auxiliar, o domínio dos valores e as operações exigidas.
+## Variações
+
+- **Mo com atualização:** inclui tempo t na consulta e aplica/desfaz atualizações; a ordenação usa blocos em l, r e t.
+- **Mo em árvores:** Euler Tour transforma subárvore em intervalo; caminhos exigem uma técnica de Euler/LCA própria.
+- **Resposta por frequência:** soma de frequências, pares iguais, modo com estruturas adicionais etc. O estado e as funções add/remove mudam.
+
+## Quando não usar
+
+- Se uma Fenwick/Segment Tree responde online em O(log n), normalmente prefira a estrutura.
+- Se não há como atualizar a resposta ao adicionar/remover uma extremidade com custo pequeno, Mo pode não ajudar.
+- Consultas online não podem ser reordenadas livremente.
 
 ## Erros comuns
 
-- Usar a técnica só porque o nome aparece no enunciado, sem verificar suas pré-condições.
-- Não decidir se os intervalos são inclusivos `[l,r]` ou semiabertos `[l,r)`.
-- Misturar índices `0..n-1` com índices `1..n`.
-- Usar `int` para somas, distâncias ou produtos que podem ultrapassar `2^31-1`; use `long long` quando necessário.
-- Esquecer de limpar vetores globais entre casos de teste.
-- Não testar duplicatas, casos mínimos e o maior caso permitido.
-
-## Checklist de prova/contest
-
-- [ ] Sei explicar o que representa cada estado/estrutura?
-- [ ] Sei por que a transição/operação é correta?
-- [ ] Sei justificar a complexidade total, não apenas de uma operação?
-- [ ] Os limites e sentinelas estão corretos?
-- [ ] A solução trata o caso mínimo e os empates?
-- [ ] O tipo numérico comporta a resposta máxima?
+1. Esquecer de devolver as respostas na ordem original usando id.
+2. Usar bloco zero; o código protege com max(1, sqrt(n)).
+3. Fazer remove antes de garantir que a posição pertence à janela.
+4. Esquecer que add/remove devem manter o invariante da janela atual.
