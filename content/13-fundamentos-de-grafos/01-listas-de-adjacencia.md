@@ -8,7 +8,7 @@ tags: grafos, representação, listas de adjacência
 
 ## Ideia
 
-\`g[u]\` guarda todos os vértices alcançados por uma aresta que sai de \`u\`. É a representação padrão para grafos esparsos: percorremos somente arestas existentes, sem varrer uma matriz de \`n × n\`.
+`g[u]` guarda todos os vértices alcançados por uma aresta que sai de `u`. É a representação padrão para grafos esparsos: percorremos somente arestas existentes, sem varrer uma matriz de `n × n`.
 
 ## Não ponderado e não direcionado
 
@@ -26,7 +26,7 @@ for (int i = 0; i < m; i++) {
 }
 ```
 
-Percorrer todos os vizinhos de \`u\`:
+Percorrer todos os vizinhos de `u`:
 
 ```cpp
 for (int v : g[u]) {
@@ -36,7 +36,7 @@ for (int v : g[u]) {
 
 ## Grafo ponderado
 
-Guarde \`(vizinho, peso)\` em cada lista. Use \`long long\` para pesos/acumulados quando os limites exigirem.
+Guarde `(vizinho, peso)` em cada lista. Use `long long` para pesos/acumulados quando os limites exigirem.
 
 ```cpp
 using ll = long long;
@@ -54,26 +54,26 @@ for (int i = 0; i < m; i++) {
 
 ## Variações
 
-- **Direcionado:** insira somente \`g[u].push_back(v)\`.
+- **Direcionado:** insira somente `g[u].push_back(v)`.
 - **Não direcionado:** insira nos dois sentidos; cada aresta aparece duas vezes.
-- **Ponderado:** use \`vector<vector<pair<int,ll>>>\`.
-- **Arestas identificadas:** guarde \`{vizinho, id}\` quando precisar distinguir arestas paralelas, por exemplo em pontes.
-- **Lista de arestas:** mantenha também \`vector<tuple<int,int,ll>> edges\` para Kruskal ou processamento global.
+- **Ponderado:** use `vector<vector<pair<int,ll>>>`.
+- **Arestas identificadas:** guarde `{vizinho, id}` quando precisar distinguir arestas paralelas, por exemplo em pontes.
+- **Lista de arestas:** mantenha também `vector<tuple<int,int,ll>> edges` para Kruskal ou processamento global.
 
 ## Comparação rápida
 
 | Representação | Espaço | Testar se existe u-v | Percorrer vizinhos de u |
 |---|---:|---:|---:|
-| Lista de adjacência | \`O(n+m)\` | \`O(grau(u))\` | \`O(grau(u))\` |
-| Matriz | \`O(n²)\` | \`O(1)\` | \`O(n)\` |
-| Lista de arestas | \`O(m)\` | \`O(m)\` | \`O(m)\` |
+| Lista de adjacência | `O(n+m)` | `O(grau(u))` | `O(grau(u))` |
+| Matriz | `O(n²)` | `O(1)` | `O(n)` |
+| Lista de arestas | `O(m)` | `O(m)` | `O(m)` |
 
-Para grafos esparsos (\`m\` próximo de \`n\`), prefira lista. Para grafos densos ou consultas constantes de existência de aresta, matriz pode ser adequada.
+Para grafos esparsos (`m` próximo de `n`), prefira lista. Para grafos densos ou consultas constantes de existência de aresta, matriz pode ser adequada.
 
 ## Cuidados
 
 - Em grafo não direcionado, cada aresta é armazenada duas vezes.
-- Laços (\`u = v\`) e arestas paralelas podem existir; não os remova sem autorização do enunciado.
+- Laços (`u = v`) e arestas paralelas podem existir; não os remova sem autorização do enunciado.
 - Para detectar pontes em multigrafo, ignore a aresta pelo **id**, não apenas o vértice pai.
-- Limpe as listas entre casos de teste ou recrie \`g\`.
-- A DFS/BFS com lista de adjacência custa \`O(n+m)\` quando todos os vértices e arestas são percorridos.
+- Limpe as listas entre casos de teste ou recrie `g`.
+- A DFS/BFS com lista de adjacência custa `O(n+m)` quando todos os vértices e arestas são percorridos.
