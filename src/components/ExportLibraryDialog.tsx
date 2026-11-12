@@ -37,7 +37,7 @@ export default function ExportLibraryDialog({ sections, onClose }: Props) {
   const [fontSize, setFontSize] = useState('9');
   const [title, setTitle] = useState('Mr. C++ — Minha biblioteca');
   const [author, setAuthor] = useState('Ícaro Pinto Lira');
-  const [includeTodo, setIncludeTodo] = useState(true);
+  const [includeTodo, setIncludeTodo] = useState(false);
   const [format, setFormat] = useState<'library' | 'almanac'>('almanac');
   const chosen = useMemo(() => sections.filter((s) => selected.includes(s.slug)).map((s) => ({ ...s, topics: s.topics.filter((t) => includeTodo || t.status === 'done') })).filter((s) => s.topics.length), [sections, selected, includeTodo]);
 
