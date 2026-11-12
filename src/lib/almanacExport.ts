@@ -64,7 +64,7 @@ function texText(s: string): string {
     '⁹': slash + 'ensuremath{^9}'
   };
   const escaped = s.replace(/[\\{}#$%&_~^∞−·≤≥≈×√αβπθε⊕→←↔²³≠∑∏∈∉∪∩∝±–—⁹]/g, (ch) => replacements[ch] ?? ch);
-  return escaped.replace(/ROOTPH(\\d+)END/g, (_, index: string) =>
+  return escaped.replace(/ROOTPH(\d+)END/g, (_, index: string) =>
     slash + 'ensuremath{\\sqrt{' + roots[Number(index)] + '}}');
 }
 
