@@ -275,7 +275,7 @@ function referenceSheetsLatex(): string {
     const facts = sheet.facts.map((x) => '\\item ' + texText(x)).join('\n');
     const formulas = sheet.formula.map((x) => '\\item \\texttt{' + texText(x) + '}').join('\n');
     const entries = sheet.entries.map((entry) =>
-      '\\begin{tcolorbox}[breakable,colback=white,colframe=paleblueborder,boxrule=0.35pt,left=4pt,right=4pt,top=3pt,bottom=3pt,before skip=4pt,after skip=4pt]' +
+      '\\Needspace{0.35\\textheight}\\begin{tcolorbox}[breakable,colback=white,colframe=paleblueborder,boxrule=0.35pt,left=4pt,right=4pt,top=3pt,bottom=3pt,before skip=4pt,after skip=4pt]' +
       '\\noindent\\textbf{\\color{navy}' + texText(entry.title) + '}\\hfill{\\scriptsize\\color{gold}' + texText(entry.complexity) + '}\\\\[-2pt]\n' +
       '{\\footnotesize ' + texText(entry.purpose) + '}\\par{\\scriptsize\\textbf{QUANDO:} ' + texText(entry.when) + '}\\par' +
       entry.notes.map((x) => '{\\scriptsize\\textbullet\\ ' + texText(x) + '}\\par').join('') +
