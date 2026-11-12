@@ -295,7 +295,13 @@ const mergeSort = String.raw`struct MergeSortTree {
         }
         return valores[lo];
     }
-};`;
+};
+
+// vector<int> valores = a;
+// sort(valores.begin(), valores.end());
+// valores.erase(unique(valores.begin(), valores.end()), valores.end());
+// MergeSortTree st(a);
+// int resposta = st.kth(l, r, k, valores);`;
 
 const dynamic = String.raw`struct DynamicSegTree {
     struct Node { long long sum = 0; int l = 0, r = 0; };
@@ -335,6 +341,7 @@ export const segmentTreeSheet: AlmanacSheet = {
     'Snippets C++ pressupõem #include <bits/stdc++.h> e using namespace std;',
     'Árvore recursiva: normalmente 4n posições; iterativa: 2n posições',
     'A operação de combinação deve ser associativa e possuir identidade para consultas iterativas',
+    'Lazy Propagation: apply transforma o agregado; push distribui a tag; tags precisam compor corretamente',
     'Convenção desta ficha: índices zero-based e intervalos semiabertos [l,r), salvo indicação'
   ],
   formula: [
