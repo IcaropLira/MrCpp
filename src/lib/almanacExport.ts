@@ -51,9 +51,12 @@ function texText(s: string): string {
     '∪': slash + 'ensuremath{\\cup}',
     '∩': slash + 'ensuremath{\\cap}',
     '∝': slash + 'ensuremath{\\propto}',
-    '±': slash + 'ensuremath{\\pm}'
+    '±': slash + 'ensuremath{\\pm}',
+    '–': '--',
+    '—': '---',
+    '⁹': slash + 'ensuremath{^9}'
   };
-  return s.replace(/[\\{}#$%&_~^∞−·≤≥≈×√αβπθε⊕→←↔²³≠∑∏∈∉∪∩∝±]/g, (ch) => replacements[ch] ?? ch);
+  return s.replace(/[\\{}#$%&_~^∞−·≤≥≈×√αβπθε⊕→←↔²³≠∑∏∈∉∪∩∝±–—⁹]/g, (ch) => replacements[ch] ?? ch);
 }
 
 function texMath(s: string): string {
@@ -86,7 +89,9 @@ function texMath(s: string): string {
     .replace(/∈/g, '\\in')
     .replace(/∉/g, '\\notin')
     .replace(/∪/g, '\\cup')
-    .replace(/∩/g, '\\cap');
+    .replace(/∩/g, '\\cap')
+    .replace(/⁹/g, '^9')
+    .replace(/[–—]/g, '-');
 }
 
 function texInline(s: string): string {
@@ -295,7 +300,7 @@ export function buildAlmanacLatex(sections: Section[], title: string, author: st
     '\\definecolor{navy}{HTML}{16264A}\\definecolor{navylight}{HTML}{2E4C7A}\\definecolor{gold}{HTML}{9C6B12}\\definecolor{paleblue}{HTML}{EEF2F9}\\definecolor{paleblueborder}{HTML}{C7D3E8}\\definecolor{cream}{HTML}{FBF3D9}\\definecolor{optimbg}{HTML}{EFF6F1}\\definecolor{codebg}{HTML}{F8F9FB}\\definecolor{codefg}{HTML}{1B2540}\\definecolor{codekeyword}{HTML}{1857B8}\\definecolor{codestring}{HTML}{8A5A00}\\definecolor{codecomment}{HTML}{6B7280}\n' +
     '\\pagestyle{fancy}\\fancyhf{}\\fancyhead[L]{\\small\\color{navy}Mr. C++ · Almanaque}\\fancyhead[R]{\\small\\color{gold}\\leftmark}\\fancyfoot[R]{\\small Página \\thepage}\\renewcommand{\\headrulewidth}{0.3pt}\n' +
     '\\setlength{\\parindent}{0pt}\\setlength{\\parskip}{2pt}\\setlength{\\columnsep}{7mm}\n' +
-    '\\lstset{language=C++,basicstyle=\\ttfamily\\scriptsize\\color{codefg},keywordstyle=\\color{codekeyword}\\bfseries,stringstyle=\\color{codestring},commentstyle=\\color{codecomment}\\itshape,breaklines=true,showstringspaces=false,tabsize=2,columns=fullflexible,keepspaces=true,frame=single,rulecolor=\\color{paleblueborder},backgroundcolor=\\color{codebg},aboveskip=3pt,belowskip=3pt,extendedchars=true,literate={á}{{\\\'a}}1 {ã}{{\\~a}}1 {é}{{\\\'e}}1 {í}{{\\\'i}}1 {ó}{{\\\'o}}1 {õ}{{\\~o}}1 {ú}{{\\\'u}}1 {ç}{{\\c c}}1 {Á}{{\\\'A}}1 {É}{{\\\'E}}1 {Í}{{\\\'I}}1 {Ó}{{\\\'O}}1 {Ú}{{\\\'U}}1 {≈}{{\\ensuremath{\\approx}}}1 {≤}{{\\ensuremath{\\le}}}1 {≥}{{\\ensuremath{\\ge}}}1 {×}{{\\ensuremath{\\times}}}1 {·}{{\\ensuremath{\\cdot}}}1 {→}{{\\ensuremath{\\to}}}1 {∞}{{\\ensuremath{\\infty}}}1 {√}{{\\ensuremath{\\surd}}}1}\n' +
+    '\\lstset{language=C++,basicstyle=\\ttfamily\\scriptsize\\color{codefg},keywordstyle=\\color{codekeyword}\\bfseries,stringstyle=\\color{codestring},commentstyle=\\color{codecomment}\\itshape,breaklines=true,showstringspaces=false,tabsize=2,columns=fullflexible,keepspaces=true,frame=single,rulecolor=\\color{paleblueborder},backgroundcolor=\\color{codebg},aboveskip=3pt,belowskip=3pt,extendedchars=true,literate={á}{{\\\'a}}1 {ã}{{\\~a}}1 {é}{{\\\'e}}1 {í}{{\\\'i}}1 {ó}{{\\\'o}}1 {õ}{{\\~o}}1 {ú}{{\\\'u}}1 {ç}{{\\c c}}1 {Á}{{\\\'A}}1 {É}{{\\\'E}}1 {Í}{{\\\'I}}1 {Ó}{{\\\'O}}1 {Ú}{{\\\'U}}1 {à}{{\`a}}1 {â}{{\^a}}1 {ê}{{\^e}}1 {ô}{{\^o}}1 {À}{{\`A}}1 {Â}{{\^A}}1 {Ã}{{\~A}}1 {Ç}{{\c C}}1 {Ê}{{\^E}}1 {Ô}{{\^O}}1 {Õ}{{\~O}}1 {⁹}{{\ensuremath{^9}}}1 {–}{{--}}1 {—}{{---}}1 {≈}{{\\ensuremath{\\approx}}}1 {≤}{{\\ensuremath{\\le}}}1 {≥}{{\\ensuremath{\\ge}}}1 {×}{{\\ensuremath{\\times}}}1 {·}{{\\ensuremath{\\cdot}}}1 {→}{{\\ensuremath{\\to}}}1 {∞}{{\\ensuremath{\\infty}}}1 {√}{{\\ensuremath{\\surd}}}1}\n' +
     '\\titleformat{\\section}{\\Large\\bfseries\\color{navy}}{}{0pt}{}\\titlespacing*{\\section}{0pt}{8pt}{5pt}\n' +
     '\\begin{document}\n';
   return preamble + '\\begin{center}{\\Huge\\bfseries\\color{navy}' + texText(title) +
