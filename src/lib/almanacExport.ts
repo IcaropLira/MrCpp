@@ -69,7 +69,24 @@ function texMath(s: string): string {
     .replace(/∞/g, '\\infty')
     .replace(/→/g, '\\to')
     .replace(/←/g, '\\leftarrow')
-    .replace(/⊕/g, '\\oplus');
+    .replace(/↔/g, '\\leftrightarrow')
+    .replace(/⊕/g, '\\oplus')
+    .replace(/α/g, '\\alpha')
+    .replace(/β/g, '\\beta')
+    .replace(/π/g, '\\pi')
+    .replace(/θ/g, '\\theta')
+    .replace(/ε/g, '\\varepsilon')
+    .replace(/²/g, '^2')
+    .replace(/³/g, '^3')
+    .replace(/−/g, '-')
+    .replace(/±/g, '\\pm')
+    .replace(/∝/g, '\\propto')
+    .replace(/∑/g, '\\sum')
+    .replace(/∏/g, '\\prod')
+    .replace(/∈/g, '\\in')
+    .replace(/∉/g, '\\notin')
+    .replace(/∪/g, '\\cup')
+    .replace(/∩/g, '\\cap');
 }
 
 function texInline(s: string): string {
