@@ -18,7 +18,7 @@ Uma raiz identifica uma versão imutável da árvore. Ao atualizar uma posição
 
 O exemplo começa com uma árvore zerada. \`add(raiz, pos, delta)\` cria uma nova versão somando \`delta\` na posição. \`query(raiz, l, r)\` consulta intervalo inclusivo.
 
-\`\`\`cpp
+```cpp
 struct PersistentSegTree {
     using ll = long long;
     struct Node { ll sum = 0; int l = 0, r = 0; };
@@ -57,7 +57,7 @@ struct PersistentSegTree {
 // vector<int> raiz(q + 1, 0);
 // raiz[i + 1] = st.add(raiz[i], 0, n - 1, pos, delta);
 // st.query(raiz[k], 0, n - 1, l, r);
-\`\`\`
+```
 
 Para um vetor inicial não nulo, construa a primeira raiz em \`O(n)\` ou insira os \`n\` valores; não confunda a versão zerada acima com uma construção a partir de \`a\`.
 
