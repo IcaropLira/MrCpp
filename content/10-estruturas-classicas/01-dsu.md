@@ -2,7 +2,7 @@
 title: Union-Find (DSU)
 summary: Union-Find e árvore geradora mínima (Kruskal).
 status: done
-complexity: O(α(n))
+complexity: O(α(n)) amortizado por operação; O(E log E) no Kruskal
 tags: dsu, kruskal, mst
 ---
 
@@ -13,6 +13,8 @@ Cada conjunto é uma árvore com um representante. A compressão de caminho e a 
 ## Código
 
 ```cpp
+using ll = long long;
+
 struct DSU {
     vector<int> p, sz;
     DSU(int n) : p(n), sz(n, 1) { iota(p.begin(), p.end(), 0); }
@@ -33,6 +35,13 @@ ll kruskal(int n, vector<array<ll, 3>> e) { // {w, u, v}
     return total;
 }
 ```
+
+## Complexidade e cuidados
+
+- `find` e `unite`: `O(α(n))` amortizado por operação com compressão de caminho e união por tamanho.
+- Kruskal: ordenar as `E` arestas custa `O(E log E)`; as `E` uniões custam `O(E α(V))`. Total `O(E log E)`.
+- Se o grafo for desconexo, o código retorna o peso da floresta geradora mínima; para exigir uma árvore geradora, conte as uniões aceitas e verifique se foram `n-1`.
+- Pesos negativos são permitidos. O peso total usa `long long`.
 
 ## Uso
 
