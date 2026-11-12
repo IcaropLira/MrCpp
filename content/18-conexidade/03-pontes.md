@@ -19,7 +19,7 @@ Para uma aresta de árvore v-u, com u filho de v:
 
 Em multigrafos, ignorar apenas o vértice pai é incorreto: uma segunda aresta paralela até o pai é uma aresta de retorno válida. Guarde o id de cada aresta e ignore somente a aresta exata usada para chegar ao vértice.
 
-\`\`\`cpp
+```cpp
 vector<vector<pair<int,int>>> g; // {vizinho, id da aresta}
 vector<int> tin, low;
 vector<pair<int,int>> bridges;
@@ -58,7 +58,7 @@ void find_bridges(int n, const vector<pair<int,int>>& edges) {
     for (int v = 0; v < n; v++)
         if (tin[v] == -1) dfs(v, -1);
 }
-\`\`\`
+```
 
 A entrada de arestas deve estar 0-based. O laço externo também cobre grafos desconexos. Cada aresta recebe um id único, inclusive arestas paralelas.
 
