@@ -16,7 +16,7 @@ A árvore divide as linhas; em cada nó da dimensão x existe uma Segment Tree q
 
 A implementação abaixo é recursiva, 0-based e usa intervalos inclusivos. a é a matriz inicial.
 
-\`\`\`cpp
+```cpp
 struct SegTree2D {
     using ll = long long;
     int n, m;
@@ -100,7 +100,7 @@ struct SegTree2D {
         return query_x(1,0,n-1,x1,x2,y1,y2);
     }
 };
-\`\`\`
+```
 
 ## Complexidade e quando usar
 
