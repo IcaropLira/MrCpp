@@ -60,7 +60,7 @@ Guarde a soma dos valores-base de cada bloco e uma tag lazy aplicada a todos os 
 - Consulta de intervalo: O(√n).
 - Atualização/consulta de bloco inteiro: O(1).
 
-\`\`\`cpp
+```cpp
 struct SqrtRange {
     using ll = long long;
     int n, B;
@@ -110,7 +110,7 @@ struct SqrtRange {
         return ans;
     }
 };
-\`\`\`
+```
 
 ## Escolha do tamanho do bloco
 
