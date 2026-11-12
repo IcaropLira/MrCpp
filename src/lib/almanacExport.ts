@@ -294,7 +294,7 @@ export function buildAlmanacLatex(sections: Section[], title: string, author: st
         n.lines.map(texInline).join(' · ') + '\\par\n').join('');
       const diagrams = diagramFor(topic).map((d) => '\\begin{center}\n' + d.tikz + '\n\\end{center}\n').join('');
       const codes = codeOf(topic).map((c) => { const lang = c.language === 'python' ? '[language=Python]' : c.language === 'text' ? '' : '[language=C++]'; return '\\textbf{IMPLEMENTAÇÃO}\\par\\begin{lstlisting}' + lang + '\n' + c.code + '\n\\end{lstlisting}\n'; }).join('');
-      return '\\begin{tcolorbox}[breakable,colback=white,colframe=paleblueborder,boxrule=0.35pt,left=4pt,right=4pt,top=3pt,bottom=3pt,before skip=4pt,after skip=4pt]\n' +
+      return '\\Needspace{0.35\\textheight}\n\\begin{tcolorbox}[breakable,colback=white,colframe=paleblueborder,boxrule=0.35pt,left=4pt,right=4pt,top=3pt,bottom=3pt,before skip=4pt,after skip=4pt]\n' +
         '\\noindent\\textbf{\\color{navy}' + texText(topic.title) + '}\\hfill{\\scriptsize\\color{gold}' + texText(topic.complexity || '—') + '}\\\\[-2pt]\n' +
         '{\\footnotesize ' + texInline(topic.summary) + '}\\par\n' + notes + diagrams + codes + '\\end{tcolorbox}\n';
     }).join('\n');
@@ -305,7 +305,7 @@ export function buildAlmanacLatex(sections: Section[], title: string, author: st
     '\\usepackage[margin=12mm,top=14mm,bottom=15mm]{geometry}\n' +
     '\\usepackage{amsmath,amssymb,xcolor,tikz}\n' +
     '\\usetikzlibrary{shapes.geometric,arrows.meta,positioning}\n' +
-    '\\usepackage[most,breakable,skins,listings]{tcolorbox}\n\\usepackage{listings,multicol,fancyhdr,titlesec}\n' +
+    '\\usepackage[most,breakable,skins,listings]{tcolorbox}\n\\usepackage{listings,multicol,fancyhdr,titlesec,needspace}\n' +
     '\\definecolor{navy}{HTML}{16264A}\\definecolor{navylight}{HTML}{2E4C7A}\\definecolor{gold}{HTML}{9C6B12}\\definecolor{paleblue}{HTML}{EEF2F9}\\definecolor{paleblueborder}{HTML}{C7D3E8}\\definecolor{cream}{HTML}{FBF3D9}\\definecolor{optimbg}{HTML}{EFF6F1}\\definecolor{codebg}{HTML}{F8F9FB}\\definecolor{codefg}{HTML}{1B2540}\\definecolor{codekeyword}{HTML}{1857B8}\\definecolor{codestring}{HTML}{8A5A00}\\definecolor{codecomment}{HTML}{6B7280}\n' +
     '\\pagestyle{fancy}\\fancyhf{}\\fancyhead[L]{\\small\\color{navy}Mr. C++ · Almanaque}\\fancyhead[R]{\\small\\color{gold}\\leftmark}\\fancyfoot[R]{\\small Página \\thepage}\\renewcommand{\\headrulewidth}{0.3pt}\n' +
     '\\setlength{\\parindent}{0pt}\\setlength{\\parskip}{2pt}\\setlength{\\columnsep}{7mm}\n' +
