@@ -1,75 +1,170 @@
 ---
 title: Treap
-summary: Em breve.
+summary: Árvore de busca binária aleatorizada que combina chave ou posição com prioridade aleatória.
 status: done
-complexity: tags:
-tags: ---
+complexity: O(log n) esperado por operação; O(n) no pior caso
+tags: treap, árvore balanceada, ordem estatística, sequência
 ---
 
-## Ideia e quando usar
+## Ideia
 
-Treap é uma técnica/estrutura que aparece quando o problema tem a seguinte necessidade: reconhecer o padrão pedido no enunciado, representar os estados relevantes e escolher uma operação que possa ser executada dentro do limite de tempo. Não decore só o código: identifique **o que cada variável significa**, qual é a condição de validade e qual é o custo de cada operação.
+Cada nó respeita duas propriedades:
 
-## Como pensar na solução
+- **BST:** as chaves (ou posições implícitas) respeitam a ordem.
+- **Heap:** a prioridade aleatória respeita a ordem de prioridade.
 
-1. **Defina a entrada e a resposta.** Escreva em uma frase o que precisa ser calculado e quais restrições importam (`n`, número de arestas, tamanho das strings, valores máximos).
-2. **Escolha a representação.** Vetor, lista de adjacência, estado de DP, estrutura de dados ou ordenação devem refletir diretamente as operações necessárias.
-3. **Mantenha um invariante.** Antes de cada iteração/consulta, diga o que a estrutura representa. Depois da operação, prove que continua representando isso.
-4. **Analise a complexidade.** Conte quantas vezes cada elemento/aresta/estado é processado. Uma solução correta que faz `O(n²)` pode falhar para `n=2e5`.
-5. **Trate os casos-limite.** Entrada vazia ou mínima, duplicatas, valores negativos, grafo desconexo, ciclos, limites de índice e overflow.
+Prioridades independentes tornam a altura esperada O(log n). Não é garantia determinística: no pior caso a árvore pode degenerar para O(n).
 
-## Modelo de implementação
+## Treap implícita: sequência dinâmica
 
-O esqueleto depende do problema concreto; não existe um único código que resolva todas as variantes. Em C++ competitivo, mantenha a implementação enxuta e explícita, no estilo deste material:
+Na treap implícita, a chave de um nó é sua posição atual, calculada pelo tamanho da subárvore esquerda. Isso permite inserir, apagar, consultar o k-ésimo elemento e inverter um intervalo sem deslocar um vetor inteiro.
+
+O código abaixo usa índices 0-based e split(t,k) separa os k primeiros elementos.
 
 ```cpp
-#include <bits/stdc++.h>
-using namespace std;
-using ll = long long;
+mt19937 rng(chrono::steady_clock::now().time_since_epoch().count());
 
-int main() {
-    ios::sync_with_stdio(false);
-    cin.tie(nullptr);
+struct Node {
+    int val, pr, sz = 1;
+    bool rev = false;
+    Node *l = nullptr, *r = nullptr;
+    Node(int v) : val(v), pr((int)rng()) {}
+};
 
-    int n;
-    cin >> n;
-    vector<int> a(n);
-    for (int i = 0; i < n; i++) cin >> a[i];
+int size(Node* t) { return t ? t->sz : 0; }
 
-    // 1. Inicialize a estrutura/estado.
-    // 2. Processe os dados mantendo o invariante.
-    // 3. Extraia e imprima a resposta.
-    return 0;
+void pull(Node* t) {
+    if (t) t->sz = 1 + size(t->l) + size(t->r);
+}
+
+void push(Node* t) {
+    if (!t || !t->rev) return;
+    swap(t->l, t->r);
+    if (t->l) t->l->rev ^= 1;
+    if (t->r) t->r->rev ^= 1;
+    t->rev = false;
+}
+
+// a recebe os k primeiros; b recebe o restante.
+void split(Node* t, int k, Node*& a, Node*& b) {
+    if (!t) { a = b = nullptr; return; }
+    push(t);
+    if (size(t->l) >= k) {
+        split(t->l, k, a, t->l);
+        b = t;
+    } else {
+        split(t->r, k-size(t->l)-1, t->r, b);
+        a = t;
+    }
+    pull(t);
+}
+
+Node* merge(Node* a, Node* b) {
+    if (!a) return b;
+    if (!b) return a;
+    if (a->pr > b->pr) {
+        push(a);
+        a->r = merge(a->r, b);
+        pull(a);
+        return a;
+    }
+    push(b);
+    b->l = merge(a, b->l);
+    pull(b);
+    return b;
+}
+
+void insert(Node*& root, int pos, int value) {
+    Node *a, *b;
+    split(root, pos, a, b);
+    root = merge(merge(a, new Node(value)), b);
+}
+
+void erase(Node*& root, int pos) {
+    Node *a, *b, *mid, *c;
+    split(root, pos, a, b);
+    split(b, 1, mid, c);
+    delete mid;
+    root = merge(a, c);
+}
+
+int kth(Node* root, int k) {
+    if (!root || k < 0 || k >= size(root)) return -1;
+    push(root);
+    int left = size(root->l);
+    if (k < left) return kth(root->l, k);
+    if (k == left) return root->val;
+    return kth(root->r, k-left-1);
+}
+
+void reverse_range(Node*& root, int l, int r) {
+    Node *a, *b, *mid, *c;
+    split(root, l, a, b);
+    split(b, r-l+1, mid, c);
+    if (mid) mid->rev ^= 1;
+    root = merge(a, merge(mid, c));
 }
 ```
 
-Não copie o esqueleto literalmente quando a técnica exigir DFS, recursão, uma estrutura persistente ou várias consultas. Use o código específico da seção como base e adapte os tipos aos limites do enunciado.
+Operações: inserir na posição pos, apagar a posição pos, consultar kth(pos) e inverter [l,r]. Antes de consultar/apagar, garanta índices válidos. A rotina delete mid libera apenas o nó isolado; a subárvore mid é unitária após o segundo split.
 
-## Complexidade: como conferir
+## Treap por chave
 
-- Um laço sobre `n` elementos é `O(n)`.
-- Dois laços aninhados sobre `n` normalmente são `O(n²)`.
-- Ordenar costuma custar `O(n log n)`.
-- Uma busca binária custa `O(log n)`; fazer isso para cada elemento dá `O(n log n)`.
-- Em grafos, a DFS/BFS com lista de adjacência custa `O(n+m)`.
-- Uma estrutura de consultas pode ter custo de construção diferente do custo de cada consulta; informe os dois.
+Para um conjunto ordenado, use a chave explícita em vez da posição implícita. split por chave separa valores menores/maiores; size permite rank e k-ésimo. Para chaves repetidas, guarde multiplicidade no nó ou use um desempate único.
 
-A complexidade indicada no cabeçalho é uma referência para a implementação padrão. Variantes do mesmo algoritmo podem ter custos diferentes conforme a estrutura auxiliar, o domínio dos valores e as operações exigidas.
+Com a mesma struct Node e merge já definidos, a versão por chave única usa:
 
-## Erros comuns
+```cpp
+void split_key(Node* t, int key, Node*& a, Node*& b) {
+    if (!t) { a = b = nullptr; return; }
+    push(t);
+    if (t->val < key) {
+        split_key(t->r, key, t->r, b);
+        a = t;
+    } else {
+        split_key(t->l, key, a, t->l);
+        b = t;
+    }
+    pull(t);
+}
 
-- Usar a técnica só porque o nome aparece no enunciado, sem verificar suas pré-condições.
-- Não decidir se os intervalos são inclusivos `[l,r]` ou semiabertos `[l,r)`.
-- Misturar índices `0..n-1` com índices `1..n`.
-- Usar `int` para somas, distâncias ou produtos que podem ultrapassar `2^31-1`; use `long long` quando necessário.
-- Esquecer de limpar vetores globais entre casos de teste.
-- Não testar duplicatas, casos mínimos e o maior caso permitido.
+bool contains(Node* t, int key) {
+    while (t) {
+        push(t);
+        if (t->val == key) return true;
+        t = (key < t->val ? t->l : t->r);
+    }
+    return false;
+}
 
-## Checklist de prova/contest
+void insert_key(Node*& root, int key) {
+    if (contains(root, key)) return; // conjunto: sem duplicatas
+    Node *a, *b;
+    split_key(root, key, a, b);
+    root = merge(merge(a, new Node(key)), b);
+}
 
-- [ ] Sei explicar o que representa cada estado/estrutura?
-- [ ] Sei por que a transição/operação é correta?
-- [ ] Sei justificar a complexidade total, não apenas de uma operação?
-- [ ] Os limites e sentinelas estão corretos?
-- [ ] A solução trata o caso mínimo e os empates?
-- [ ] O tipo numérico comporta a resposta máxima?
+Node* erase_key(Node* t, int key) {
+    if (!t) return nullptr;
+    push(t);
+    if (t->val == key) {
+        Node* res = merge(t->l, t->r);
+        delete t;
+        return res;
+    }
+    if (key < t->val) t->l = erase_key(t->l, key);
+    else t->r = erase_key(t->r, key);
+    pull(t);
+    return t;
+}
+```
+
+Use uma raiz separada para a treap por chave; não misture operações de reversão de sequência com a ordenação por chave. Para multiset, adicione um contador de ocorrências no nó.
+
+## Complexidade e cuidados
+
+- Altura e operações: O(log n) esperado; O(n) no pior caso.
+- Construção por inserções: O(n log n) esperado; com prioridades pré-geradas e construção linear por pilha, O(n).
+- A prioridade deve ser aleatória e independente das chaves.
+- Não altere val/chave sem remover e reinserir, pois a propriedade BST pode quebrar.
+- Em problemas com limite de pilha ou memória, considere uma estrutura determinística ou iterativa.

@@ -238,11 +238,21 @@ const persistente = String.raw`struct PersistentSegTree {
         return cur;
     }
 
-    long long query(int x,int l,int r,int a,int b) {
+    long long query(int x,long long l,long long r,long long a,long long b) {
         if (!x || b < l || r < a) return 0;
         if (a <= l && r <= b) return t[x].sum;
         int m = (l+r)/2;
         return query(t[x].l,l,m,a,b) + query(t[x].r,m+1,r,a,b);
+    }
+
+    // Versões de prefixo: retorna a posição do k-ésimo elemento em [l,r).
+    int kth(int leftRoot,int rightRoot,int l,int r,long long k) const {
+        if (l == r) return l;
+        int m = (l+r)/2;
+        long long left = t[t[rightRoot].l].sum - t[t[leftRoot].l].sum;
+        if (k <= left)
+            return kth(t[leftRoot].l,t[rightRoot].l,l,m,k);
+        return kth(t[leftRoot].r,t[rightRoot].r,m+1,r,k-left);
     }
 };
 // raiz[0] = 0; raiz[i+1] = update(raiz[i], 0, n-1, pos, delta);`;
@@ -285,18 +295,24 @@ const mergeSort = String.raw`struct MergeSortTree {
         }
         return valores[lo];
     }
-};`;
+};
+
+// vector<int> valores = a;
+// sort(valores.begin(), valores.end());
+// valores.erase(unique(valores.begin(), valores.end()), valores.end());
+// MergeSortTree st(a);
+// int resposta = st.kth(l, r, k, valores);`;
 
 const dynamic = String.raw`struct DynamicSegTree {
     struct Node { long long sum = 0; int l = 0, r = 0; };
     vector<Node> t = {Node()};
-    static const int LO = 0, HI = 1000000000;
+    static const long long LO = 0, HI = 1000000000000000000LL;
 
-    int add(int x,int l,int r,int p,long long v) {
+    int add(int x,long long l,long long r,long long p,long long v) {
         if (!x) { x = t.size(); t.push_back(Node()); }
         t[x].sum += v;
         if (l == r) return x;
-        int m = l + (r-l)/2;
+        long long m = l + (r-l)/2;
         if (p <= m) {
             int child = add(t[x].l,l,m,p,v);
             t[x].l = child;
@@ -307,10 +323,10 @@ const dynamic = String.raw`struct DynamicSegTree {
         return x;
     }
 
-    long long query(int x,int l,int r,int a,int b) {
+    long long query(int x,long long l,long long r,long long a,long long b) {
         if (!x || b < l || r < a) return 0;
         if (a <= l && r <= b) return t[x].sum;
-        int m = l + (r-l)/2;
+        long long m = l + (r-l)/2;
         return query(t[x].l,l,m,a,b)
              + query(t[x].r,m+1,r,a,b);
     }
@@ -325,6 +341,7 @@ export const segmentTreeSheet: AlmanacSheet = {
     'Snippets C++ pressupõem #include <bits/stdc++.h> e using namespace std;',
     'Árvore recursiva: normalmente 4n posições; iterativa: 2n posições',
     'A operação de combinação deve ser associativa e possuir identidade para consultas iterativas',
+    'Lazy Propagation: apply transforma o agregado; push distribui a tag; tags precisam compor corretamente',
     'Convenção desta ficha: índices zero-based e intervalos semiabertos [l,r), salvo indicação'
   ],
   formula: [
@@ -338,14 +355,9 @@ export const segmentTreeSheet: AlmanacSheet = {
     'Lazy + XOR: XOR do nó muda somente quando o comprimento é ímpar'
   ],
   entries: [
-    { title:'Soma', purpose:'Guardar a soma de cada segmento e responder consultas de soma.', complexity:'O(n) construção; O(log n) consulta e atualização pontual.', when:'Somas de intervalos com alterações pontuais.', notes:['Use 0 como identidade.','Para vetor estático, prefix sums respondem em O(1).'], code:soma },
-    { title:'Soma em intervalo', purpose:'Consultar a soma em [l,r) combinando os nós que cobrem o intervalo.', complexity:'O(log n) por consulta.', when:'Muitas consultas de soma com atualizações pontuais.', notes:['O método query retorna a soma em [l,r), com r exclusivo.','set(p,v) faz atualização pontual.','Se não houver atualizações, prefira prefix sums.'], code:soma },
-    { title:'Mínimo/máximo', purpose:'Substituir a soma por min ou max; o nó guarda o extremo do segmento.', complexity:'O(log n) consulta e atualização pontual.', when:'RMQ dinâmica ou consultas de máximo/mínimo.', notes:['Identidade do mínimo: +∞.','Identidade do máximo: −∞.','A consulta e a atualização pontual usam intervalo inclusivo [l,r].'], code:extremos },
-    { title:'Extremos de intervalo', purpose:'Retornar também a posição do mínimo e do máximo, não apenas seus valores.', complexity:'O(log n) por consulta.', when:'Encontrar índice do menor/maior elemento em um trecho.', notes:['Consulta e atualização usam intervalo inclusivo [l,r].','O merge preserva o primeiro índice em caso de empate.','query(l,r) retorna mínimo, máximo e as duas posições.'], code:extremos },
-    { title:'XOR', purpose:'Combinar os segmentos com XOR e atualizar um único elemento.', complexity:'O(log n) consulta e atualização pontual.', when:'XOR de intervalos com alterações pontuais.', notes:['Identidade: 0.','XOR de prefixos resolve consultas estáticas em O(1).'], code:xor },
-    { title:'XOR em intervalo', purpose:'Calcular XOR de todos os elementos de [l,r).', complexity:'O(log n) por consulta.', when:'Consultas XOR com atualizações pontuais.', notes:['O código usa intervalo semiaberto.','Não confunda com maximizar XOR entre dois valores; para isso, use Trie binária.'], code:xor },
-    { title:'Lazy Propagation', purpose:'Adiar atualizações completas de segmentos até que seja necessário visitar seus filhos.', complexity:'O(log n) por atualização/consulta em operações compatíveis.', when:'Uma atualização afeta muitos elementos e consultas continuam sendo feitas.', notes:['O exemplo concreto é Lazy + Soma, com intervalo inclusivo [l,r].','Defina como a tag se compõe com outra tag.','Defina como a tag transforma o agregado do nó.'], code:lazySoma },
-    { title:'Atualização em intervalo', purpose:'Aplicar uma alteração em todos os elementos de [l,r] sem visitar cada posição.', complexity:'O(log n) por operação com lazy propagation.', when:'Range add, range assign ou outras atualizações que admitem composição.', notes:['O exemplo implementa adição em intervalo inclusivo [l,r].','A função apply atualiza o agregado e a tag pendente.','A tag deve representar uma transformação que possa ser composta.'], code:lazySoma },
+    { title:'Soma e consulta em intervalo', purpose:'Guardar a soma de cada segmento e responder consultas de soma.', complexity:'O(n) construção; O(log n) consulta e atualização pontual.', when:'Somas de intervalos com alterações pontuais.', notes:['Use 0 como identidade.','Para vetor estático, prefix sums respondem em O(1).'], code:soma },
+    { title:'Mínimo/máximo com índice', purpose:'Retornar também a posição do mínimo e do máximo, não apenas seus valores.', complexity:'O(log n) por consulta.', when:'Encontrar índice do menor/maior elemento em um trecho.', notes:['Consulta e atualização usam intervalo inclusivo [l,r].','O merge preserva o primeiro índice em caso de empate.','query(l,r) retorna mínimo, máximo e as duas posições.'], code:extremos },
+    { title:'XOR de intervalo', purpose:'Combinar os segmentos com XOR e atualizar um único elemento.', complexity:'O(log n) consulta e atualização pontual.', when:'XOR de intervalos com alterações pontuais.', notes:['Identidade: 0.','XOR de prefixos resolve consultas estáticas em O(1).'], code:xor },
     { title:'Lazy + Soma', purpose:'Adicionar v a todos os elementos de [l,r] e consultar a soma de qualquer intervalo.', complexity:'O(log n) por atualização e consulta.', when:'Range add + range sum.', notes:['Construa com st.build(a,1,0,n-1).','add(l,r,v) e query(l,r) usam [l,r] inclusivo.','Ao adicionar v em um nó de comprimento len, soma += v*len.','Tags de adição se compõem por soma.'], code:lazySoma },
     { title:'Lazy + XOR', purpose:'Aplicar XOR com uma máscara em todo o intervalo e consultar o XOR resultante.', complexity:'O(log n) por atualização e consulta.', when:'Inverter um ou vários bits em intervalo e consultar XOR.', notes:['Construa com st.build(a,1,0,n-1).','update(l,r,mask) e query(l,r) usam [l,r] inclusivo.','Se o tamanho do segmento é ímpar, seg ^= máscara.','Se é par, o XOR agregado não muda.','A tag se compõe por XOR.'], code:lazyXor },
     { title:'Persistente', purpose:'Criar uma nova raiz após cada atualização, preservando as versões anteriores por cópia dos nós alterados.', complexity:'O(log n) nós novos por atualização; O(log n) consulta.', when:'Consultas em versões anteriores, prefixos de versões ou comparar estados históricos.', notes:['Cada raiz identifica uma versão imutável.','update(raiz_antiga,0,n-1,pos,delta) devolve a nova raiz.','query(raiz,0,n-1,l,r) usa [l,r] inclusivo.','O exemplo soma deltas em uma posição; adapte a folha para atribuição quando necessário.'], code:persistente },

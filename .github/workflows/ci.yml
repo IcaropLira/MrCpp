@@ -1,5 +1,9 @@
 name: CI
 
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 on:
   pull_request:
   push:
@@ -17,3 +21,21 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm run build
+      - name: Generate complete almanac exports
+        run: npm run export:almanac
+      - name: Install LaTeX toolchain
+        run: sudo apt-get install -y --no-install-recommends texlive-latex-base texlive-latex-recommended texlive-latex-extra texlive-fonts-recommended poppler-utils
+      - name: Compile complete A4 reference PDF
+        run: |
+          pdflatex -interaction=nonstopmode -halt-on-error -output-directory=artifacts artifacts/mrcpp-almanac.tex
+          pdflatex -interaction=nonstopmode -halt-on-error -output-directory=artifacts artifacts/mrcpp-almanac.tex
+          pdfinfo artifacts/mrcpp-almanac.pdf
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mrcpp-almanac-validation
+          path: |
+            artifacts/mrcpp-almanac.pdf
+            artifacts/mrcpp-almanac.tex
+            artifacts/mrcpp-almanac.html
+            artifacts/content-audit.md

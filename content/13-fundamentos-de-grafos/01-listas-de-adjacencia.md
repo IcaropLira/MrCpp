@@ -1,75 +1,79 @@
 ---
 title: Listas de adjacência
-summary: Em breve.
+summary: Representação esparsa de grafos; armazena apenas os vizinhos de cada vértice.
 status: done
-complexity: tags:
-tags: ---
+complexity: O(n + m) espaço e leitura; O(grau(v)) para percorrer vizinhos
+tags: grafos, representação, listas de adjacência
 ---
 
-## Ideia e quando usar
+## Ideia
 
-Listas de adjacência é uma técnica/estrutura que aparece quando o problema tem a seguinte necessidade: reconhecer o padrão pedido no enunciado, representar os estados relevantes e escolher uma operação que possa ser executada dentro do limite de tempo. Não decore só o código: identifique **o que cada variável significa**, qual é a condição de validade e qual é o custo de cada operação.
+`g[u]` guarda todos os vértices alcançados por uma aresta que sai de `u`. É a representação padrão para grafos esparsos: percorremos somente arestas existentes, sem varrer uma matriz de `n × n`.
 
-## Como pensar na solução
-
-1. **Defina a entrada e a resposta.** Escreva em uma frase o que precisa ser calculado e quais restrições importam (`n`, número de arestas, tamanho das strings, valores máximos).
-2. **Escolha a representação.** Vetor, lista de adjacência, estado de DP, estrutura de dados ou ordenação devem refletir diretamente as operações necessárias.
-3. **Mantenha um invariante.** Antes de cada iteração/consulta, diga o que a estrutura representa. Depois da operação, prove que continua representando isso.
-4. **Analise a complexidade.** Conte quantas vezes cada elemento/aresta/estado é processado. Uma solução correta que faz `O(n²)` pode falhar para `n=2e5`.
-5. **Trate os casos-limite.** Entrada vazia ou mínima, duplicatas, valores negativos, grafo desconexo, ciclos, limites de índice e overflow.
-
-## Modelo de implementação
-
-O esqueleto depende do problema concreto; não existe um único código que resolva todas as variantes. Em C++ competitivo, mantenha a implementação enxuta e explícita, no estilo deste material:
+## Não ponderado e não direcionado
 
 ```cpp
-#include <bits/stdc++.h>
-using namespace std;
-using ll = long long;
+int n, m;
+cin >> n >> m;
+vector<vector<int>> g(n);
 
-int main() {
-    ios::sync_with_stdio(false);
-    cin.tie(nullptr);
-
-    int n;
-    cin >> n;
-    vector<int> a(n);
-    for (int i = 0; i < n; i++) cin >> a[i];
-
-    // 1. Inicialize a estrutura/estado.
-    // 2. Processe os dados mantendo o invariante.
-    // 3. Extraia e imprima a resposta.
-    return 0;
+for (int i = 0; i < m; i++) {
+    int u, v;
+    cin >> u >> v;
+    --u; --v;                 // entrada 1-based -> vetor 0-based
+    g[u].push_back(v);
+    g[v].push_back(u);        // remova esta linha se for direcionado
 }
 ```
 
-Não copie o esqueleto literalmente quando a técnica exigir DFS, recursão, uma estrutura persistente ou várias consultas. Use o código específico da seção como base e adapte os tipos aos limites do enunciado.
+Percorrer todos os vizinhos de `u`:
 
-## Complexidade: como conferir
+```cpp
+for (int v : g[u]) {
+    // processa a aresta u -> v
+}
+```
 
-- Um laço sobre `n` elementos é `O(n)`.
-- Dois laços aninhados sobre `n` normalmente são `O(n²)`.
-- Ordenar costuma custar `O(n log n)`.
-- Uma busca binária custa `O(log n)`; fazer isso para cada elemento dá `O(n log n)`.
-- Em grafos, a DFS/BFS com lista de adjacência custa `O(n+m)`.
-- Uma estrutura de consultas pode ter custo de construção diferente do custo de cada consulta; informe os dois.
+## Grafo ponderado
 
-A complexidade indicada no cabeçalho é uma referência para a implementação padrão. Variantes do mesmo algoritmo podem ter custos diferentes conforme a estrutura auxiliar, o domínio dos valores e as operações exigidas.
+Guarde `(vizinho, peso)` em cada lista. Use `long long` para pesos/acumulados quando os limites exigirem.
 
-## Erros comuns
+```cpp
+using ll = long long;
+vector<vector<pair<int, ll>>> g(n);
 
-- Usar a técnica só porque o nome aparece no enunciado, sem verificar suas pré-condições.
-- Não decidir se os intervalos são inclusivos `[l,r]` ou semiabertos `[l,r)`.
-- Misturar índices `0..n-1` com índices `1..n`.
-- Usar `int` para somas, distâncias ou produtos que podem ultrapassar `2^31-1`; use `long long` quando necessário.
-- Esquecer de limpar vetores globais entre casos de teste.
-- Não testar duplicatas, casos mínimos e o maior caso permitido.
+for (int i = 0; i < m; i++) {
+    int u, v;
+    ll w;
+    cin >> u >> v >> w;
+    --u; --v;
+    g[u].push_back({v, w});
+    g[v].push_back({u, w});   // grafo não direcionado
+}
+```
 
-## Checklist de prova/contest
+## Variações
 
-- [ ] Sei explicar o que representa cada estado/estrutura?
-- [ ] Sei por que a transição/operação é correta?
-- [ ] Sei justificar a complexidade total, não apenas de uma operação?
-- [ ] Os limites e sentinelas estão corretos?
-- [ ] A solução trata o caso mínimo e os empates?
-- [ ] O tipo numérico comporta a resposta máxima?
+- **Direcionado:** insira somente `g[u].push_back(v)`.
+- **Não direcionado:** insira nos dois sentidos; cada aresta aparece duas vezes.
+- **Ponderado:** use `vector<vector<pair<int,ll>>>`.
+- **Arestas identificadas:** guarde `{vizinho, id}` quando precisar distinguir arestas paralelas, por exemplo em pontes.
+- **Lista de arestas:** mantenha também `vector<tuple<int,int,ll>> edges` para Kruskal ou processamento global.
+
+## Comparação rápida
+
+| Representação | Espaço | Testar se existe u-v | Percorrer vizinhos de u |
+|---|---:|---:|---:|
+| Lista de adjacência | `O(n+m)` | `O(grau(u))` | `O(grau(u))` |
+| Matriz | `O(n²)` | `O(1)` | `O(n)` |
+| Lista de arestas | `O(m)` | `O(m)` | `O(m)` |
+
+Para grafos esparsos (`m` próximo de `n`), prefira lista. Para grafos densos ou consultas constantes de existência de aresta, matriz pode ser adequada.
+
+## Cuidados
+
+- Em grafo não direcionado, cada aresta é armazenada duas vezes.
+- Laços (`u = v`) e arestas paralelas podem existir; não os remova sem autorização do enunciado.
+- Para detectar pontes em multigrafo, ignore a aresta pelo **id**, não apenas o vértice pai.
+- Limpe as listas entre casos de teste ou recrie `g`.
+- A DFS/BFS com lista de adjacência custa `O(n+m)` quando todos os vértices e arestas são percorridos.

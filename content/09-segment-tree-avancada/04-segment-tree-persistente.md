@@ -1,75 +1,109 @@
 ---
 title: Segment Tree persistente
-summary: Em breve.
+summary: Versionamento de consultas por path copying; cada atualização cria uma nova raiz sem alterar versões antigas.
 status: done
-complexity: tags:
-tags: ---
+complexity: O(log n) por atualização e consulta; O(log n) nós novos por versão
+tags: segtree, persistência, consultas, k-ésimo
 ---
 
-## Ideia e quando usar
+## Ideia
 
-Segment Tree persistente é uma técnica/estrutura que aparece quando o problema tem a seguinte necessidade: reconhecer o padrão pedido no enunciado, representar os estados relevantes e escolher uma operação que possa ser executada dentro do limite de tempo. Não decore só o código: identifique **o que cada variável significa**, qual é a condição de validade e qual é o custo de cada operação.
+Uma raiz identifica uma versão imutável da árvore. Ao atualizar uma posição, copiamos somente os nós do caminho entre a raiz e a folha; os demais nós são compartilhados com a versão anterior (*path copying*).
 
-## Como pensar na solução
+- **Versão 0:** vetor inicial ou árvore vazia.
+- **Versão i:** resultado após as primeiras i atualizações.
+- Nunca modifique um nó antigo: crie uma cópia antes de alterar seus filhos ou agregado.
 
-1. **Defina a entrada e a resposta.** Escreva em uma frase o que precisa ser calculado e quais restrições importam (`n`, número de arestas, tamanho das strings, valores máximos).
-2. **Escolha a representação.** Vetor, lista de adjacência, estado de DP, estrutura de dados ou ordenação devem refletir diretamente as operações necessárias.
-3. **Mantenha um invariante.** Antes de cada iteração/consulta, diga o que a estrutura representa. Depois da operação, prove que continua representando isso.
-4. **Analise a complexidade.** Conte quantas vezes cada elemento/aresta/estado é processado. Uma solução correta que faz `O(n²)` pode falhar para `n=2e5`.
-5. **Trate os casos-limite.** Entrada vazia ou mínima, duplicatas, valores negativos, grafo desconexo, ciclos, limites de índice e overflow.
+## Soma em intervalo entre versões
 
-## Modelo de implementação
-
-O esqueleto depende do problema concreto; não existe um único código que resolva todas as variantes. Em C++ competitivo, mantenha a implementação enxuta e explícita, no estilo deste material:
+O exemplo começa com uma árvore zerada. `add(raiz, pos, delta)` cria uma nova versão somando `delta` na posição. `query(raiz, l, r)` consulta intervalo inclusivo.
 
 ```cpp
-#include <bits/stdc++.h>
-using namespace std;
-using ll = long long;
-
-int main() {
-    ios::sync_with_stdio(false);
-    cin.tie(nullptr);
+struct PersistentSegTree {
+    using ll = long long;
+    struct Node { ll sum = 0; int l = 0, r = 0; };
 
     int n;
-    cin >> n;
-    vector<int> a(n);
-    for (int i = 0; i < n; i++) cin >> a[i];
+    vector<Node> t = {Node()}; // nó 0 representa uma árvore nula
 
-    // 1. Inicialize a estrutura/estado.
-    // 2. Processe os dados mantendo o invariante.
-    // 3. Extraia e imprima a resposta.
-    return 0;
+    PersistentSegTree(int n) : n(n) {}
+
+    int add(int old, int l, int r, int p, ll v) {
+        int cur = (int)t.size();
+        t.push_back(t[old]); // copia o nó antigo
+        t[cur].sum += v;
+
+        if (l == r) return cur;
+        int m = (l + r) / 2;
+        if (p <= m) {
+            int child = add(t[old].l, l, m, p, v);
+            t[cur].l = child;
+        } else {
+            int child = add(t[old].r, m + 1, r, p, v);
+            t[cur].r = child;
+        }
+        return cur;
+    }
+
+    ll query(int x, int l, int r, int a, int b) const {
+        if (!x || b < l || r < a) return 0;
+        if (a <= l && r <= b) return t[x].sum;
+        int m = (l + r) / 2;
+        return query(t[x].l, l, m, a, b)
+             + query(t[x].r, m + 1, r, a, b);
+    }
+};
+
+// vector<int> raiz(q + 1, 0);
+// raiz[i + 1] = st.add(raiz[i], 0, n - 1, pos, delta);
+// st.query(raiz[k], 0, n - 1, l, r);
+```
+
+Para um vetor inicial não nulo, construa a primeira raiz em `O(n)` ou insira os `n` valores; não confunda a versão zerada acima com uma construção a partir de `a`.
+
+## K-ésimo menor em um intervalo
+
+Com compressão de coordenadas, crie `raiz[i]` contendo as frequências dos valores em `a[0..i)`. A diferença entre `raiz[r]` e `raiz[l]` representa exatamente as frequências do intervalo semiaberto `[l,r)`.
+
+Na descida simultânea pelas duas raízes, a quantidade à esquerda é `leftCount = t[t[raiz[r]].l].sum - t[t[raiz[l]].l].sum`. Se `k <= leftCount`, desça à esquerda; caso contrário, subtraia `leftCount` de `k` e desça à direita.
+
+Dentro da mesma struct, implemente a descida pelas duas versões assim:
+
+```cpp
+int kth(int leftRoot, int rightRoot, int l, int r, long long k) const {
+    if (l == r) return l;
+    int m = (l + r) / 2;
+    long long left = t[t[rightRoot].l].sum - t[t[leftRoot].l].sum;
+    if (k <= left)
+        return kth(t[leftRoot].l, t[rightRoot].l, l, m, k);
+    return kth(t[leftRoot].r, t[rightRoot].r, m + 1, r, k - left);
 }
 ```
 
-Não copie o esqueleto literalmente quando a técnica exigir DFS, recursão, uma estrutura persistente ou várias consultas. Use o código específico da seção como base e adapte os tipos aos limites do enunciado.
+Chame `kth(raiz[l], raiz[r], 0, m-1, k)` no domínio comprimido de tamanho `m`. A função pressupõe frequências não negativas e `1 <= k <= r-l`; ela retorna a posição comprimida, que deve ser convertida para o valor original.
 
-## Complexidade: como conferir
+- Construção das versões de frequência: `O(n log n)`.
+- Consulta do k-ésimo menor: `O(log n)`.
+- Memória: `O(n log n)` nós.
+- `k` é 1-based e deve satisfazer `1 <= k <= r-l`.
 
-- Um laço sobre `n` elementos é `O(n)`.
-- Dois laços aninhados sobre `n` normalmente são `O(n²)`.
-- Ordenar costuma custar `O(n log n)`.
-- Uma busca binária custa `O(log n)`; fazer isso para cada elemento dá `O(n log n)`.
-- Em grafos, a DFS/BFS com lista de adjacência custa `O(n+m)`.
-- Uma estrutura de consultas pode ter custo de construção diferente do custo de cada consulta; informe os dois.
+## Quando usar
 
-A complexidade indicada no cabeçalho é uma referência para a implementação padrão. Variantes do mesmo algoritmo podem ter custos diferentes conforme a estrutura auxiliar, o domínio dos valores e as operações exigidas.
+- Consultar somas/contagens em versões históricas.
+- Comparar prefixos de frequências para estatísticas de ordem.
+- Responder consultas offline de k-ésimo menor em subarray.
+
+## Complexidade e invariantes
+
+- Cada atualização cria no máximo `ceil(log2(n)) + 1` nós: `O(log n)`.
+- Uma consulta de intervalo visita `O(log n)` nós.
+- A memória total é `O(n + q log n)` para `q` atualizações, além dos vetores de raízes.
+- Nós compartilhados são imutáveis. Alterar um nó compartilhado corrompe todas as versões que o utilizam.
 
 ## Erros comuns
 
-- Usar a técnica só porque o nome aparece no enunciado, sem verificar suas pré-condições.
-- Não decidir se os intervalos são inclusivos `[l,r]` ou semiabertos `[l,r)`.
-- Misturar índices `0..n-1` com índices `1..n`.
-- Usar `int` para somas, distâncias ou produtos que podem ultrapassar `2^31-1`; use `long long` quando necessário.
-- Esquecer de limpar vetores globais entre casos de teste.
-- Não testar duplicatas, casos mínimos e o maior caso permitido.
-
-## Checklist de prova/contest
-
-- [ ] Sei explicar o que representa cada estado/estrutura?
-- [ ] Sei por que a transição/operação é correta?
-- [ ] Sei justificar a complexidade total, não apenas de uma operação?
-- [ ] Os limites e sentinelas estão corretos?
-- [ ] A solução trata o caso mínimo e os empates?
-- [ ] O tipo numérico comporta a resposta máxima?
+1. Guardar referências ou ponteiros para elementos de `vector<Node>` durante `push_back`: a realocação pode invalidá-los. O código usa índices.
+2. Modificar o filho da versão antiga em vez de gravar o índice do novo filho no nó copiado.
+3. Subtrair versões em ordem errada: `raiz[r] - raiz[l]` representa `[l,r)`.
+4. Usar k fora de `1..r-l` na consulta de ordem estatística.
+5. Esquecer que a coordenada comprimida precisa ser mapeada de volta para o valor original.
