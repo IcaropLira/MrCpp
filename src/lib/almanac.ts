@@ -244,6 +244,16 @@ const persistente = String.raw`struct PersistentSegTree {
         int m = (l+r)/2;
         return query(t[x].l,l,m,a,b) + query(t[x].r,m+1,r,a,b);
     }
+
+    // Versões de prefixo: retorna a posição do k-ésimo elemento em [l,r).
+    int kth(int leftRoot,int rightRoot,int l,int r,long long k) const {
+        if (l == r) return l;
+        int m = (l+r)/2;
+        long long left = t[t[rightRoot].l].sum - t[t[leftRoot].l].sum;
+        if (k <= left)
+            return kth(t[leftRoot].l,t[rightRoot].l,l,m,k);
+        return kth(t[leftRoot].r,t[rightRoot].r,m+1,r,k-left);
+    }
 };
 // raiz[0] = 0; raiz[i+1] = update(raiz[i], 0, n-1, pos, delta);`;
 
