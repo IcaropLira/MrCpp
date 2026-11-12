@@ -317,10 +317,10 @@ const dynamic = String.raw`struct DynamicSegTree {
         return x;
     }
 
-    long long query(int x,int l,int r,int a,int b) {
+    long long query(int x,long long l,long long r,long long a,long long b) {
         if (!x || b < l || r < a) return 0;
         if (a <= l && r <= b) return t[x].sum;
-        int m = l + (r-l)/2;
+        long long m = l + (r-l)/2;
         return query(t[x].l,l,m,a,b)
              + query(t[x].r,m+1,r,a,b);
     }
