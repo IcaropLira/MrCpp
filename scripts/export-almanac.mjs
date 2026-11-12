@@ -78,7 +78,7 @@ try {
       body: parsed.body
     };
     section.topics.push(topic);
-    if (!topic.title || !topic.summary || !topic.complexity || topic.complexity === 'tags:' ||
+    if (!topic.title || !topic.summary || (!topic.complexity && topic.slug !== 'template') || topic.complexity === 'tags:' ||
         topic.summary === 'Em breve.' || /é uma técnica\/estrutura que aparece quando o problema tem a seguinte necessidade/i.test(topic.body)) {
       audit.push({ path: rel, summary: topic.summary, complexity: topic.complexity, status: topic.status });
     }
@@ -88,6 +88,8 @@ try {
     .map(s => ({ ...s, topics: s.topics.sort((a,b)=>a.order-b.order).filter(t=>t.status==='done') }))
     .filter(s=>s.topics.length);
   const count = selected.reduce((sum,s)=>sum+s.topics.length,0);
+  const allTopicCount = [...sections.values()].reduce((sum,s)=>sum+s.topics.length,0);
+  const developmentCount = allTopicCount - count;
   await mkdir(output, { recursive: true });
   await writeFile(resolve(output,'mrcpp-almanac.tex'),
     buildAlmanacLatex(selected, 'Mr. C++ — Almanaque de Referência', 'Ícaro Pinto Lira'), 'utf8');
@@ -99,6 +101,7 @@ try {
     '- Arquivos Markdown encontrados: ' + files.length,
     '- Seções exportadas: ' + selected.length,
     '- Tópicos concluídos incluídos: ' + count,
+    '- Tópicos em desenvolvimento/excluídos por padrão: ' + developmentCount,
     '- Fichas com metadados incompletos ou texto genérico detectado: ' + audit.length,
     '',
     ...audit.map(x => '- ' + x.path + ' — ' + (x.summary || 'sem resumo') + '; complexidade: ' + (x.complexity || 'ausente'))
