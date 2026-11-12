@@ -1,5 +1,6 @@
 import type { Section, Topic } from '../types';
 import { almanacDiagrams } from './almanacDiagrams';
+import { almanacSheets } from './almanac';
 
 type Note = { title: string; lines: string[] };
 type CodeSample = { language: string; code: string };
@@ -138,6 +139,22 @@ function compactTopicHtml(topic: Topic): string {
     '</p>' + notesHtml + diagramHtml + codeHtml + '</article>';
 }
 
+function referenceSheetsHtml(): string {
+  return almanacSheets.map((sheet) => {
+    const facts = sheet.facts.map((x) => '<li>' + esc(x) + '</li>').join('');
+    const formulas = sheet.formula.map((x) => '<li><code>' + esc(x) + '</code></li>').join('');
+    const entries = sheet.entries.map((entry) =>
+      '<article class="reference-entry"><header><h3>' + esc(entry.title) + '</h3><small>' + esc(entry.complexity) + '</small></header>' +
+      '<p class="summary">' + esc(entry.purpose) + '</p><p class="when"><b>QUANDO</b> ' + esc(entry.when) + '</p>' +
+      '<ul class="reference-notes">' + entry.notes.map((x) => '<li>' + esc(x) + '</li>').join('') + '</ul>' +
+      '<div class="implementation"><b>IMPLEMENTAÇÃO</b><pre><code>' + esc(entry.code) + '</code></pre></div></article>'
+    ).join('');
+    return '<section class="chapter reference-sheet"><h2>' + esc(sheet.title) + '</h2><p class="summary">' + esc(sheet.subtitle) +
+      '</p><div class="reference-facts"><b>LEMBRETES</b><ul>' + facts + '</ul></div><div class="reference-formulas"><b>FÓRMULAS</b><ul>' +
+      formulas + '</ul></div><div class="entries">' + entries + '</div></section>';
+  }).join('');
+}
+
 export function buildAlmanacHtml(sections: Section[], title: string, author: string): string {
   const topics = sections.reduce((n, s) => n + s.topics.length, 0);
   const toc = '<section class="contents"><h2>Índice</h2><ol>' + sections.map((s) => '<li>' + esc(s.title) + '</li>').join('') + '</ol></section>';
@@ -151,7 +168,24 @@ export function buildAlmanacHtml(sections: Section[], title: string, author: str
     '.note{display:flex;gap:5px;margin:2px 0;font-size:7pt}.note b{font:6.2pt monospace;color:#9c6b12;min-width:55px}.note span{color:#35445e}.implementation>b{font:6.2pt monospace;letter-spacing:.08em;color:#9c6b12}.diagram{margin:4px 0 5px;border:1px solid #e1e6ef;padding:3px 5px;break-inside:avoid}.diagram span{font:6pt monospace;color:#64748b}.diagram svg{display:block;width:100%;height:54px}.entry pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f8f9fb;border-left:2px solid #16264a;padding:5px;margin:4px 0;font:6.2pt/1.17 monospace;color:#1b2540;break-inside:avoid}.entry code{font-family:monospace}footer{position:fixed;bottom:-7mm;right:0;font-size:6pt;color:#888}' +
     '@media screen{body{max-width:850px;margin:20px auto;padding:20px}.cover{height:650px}.chapter{padding:16px 0}}</style></head><body><header class="cover"><small>MR. C++ · ALMANAQUE DE REFERÊNCIA</small><h1>' +
     esc(title) + '</h1><p>' + esc(author) + ' · ' + sections.length + ' seções · ' + topics + ' tópicos</p><p>Fórmulas, diagramas e implementações essenciais.</p></header>' +
-    toc + body + '<footer>Mr. C++ · ' + esc(author) + '</footer><script>window.addEventListener("load",()=>setTimeout(()=>window.print(),350));</script></body></html>';
+    toc + body + referenceSheetsHtml() + '<footer>Mr. C++ · ' + esc(author) + '</footer><script>window.addEventListener("load",()=>setTimeout(()=>window.print(),350));</script></body></html>';
+}
+
+function referenceSheetsLatex(): string {
+  return almanacSheets.map((sheet) => {
+    const facts = sheet.facts.map((x) => '\\item ' + texText(x)).join('\n');
+    const formulas = sheet.formula.map((x) => '\\item \\texttt{' + texText(x) + '}').join('\n');
+    const entries = sheet.entries.map((entry) =>
+      '\\begin{tcolorbox}[breakable,colback=white,colframe=paleblueborder,boxrule=0.35pt,left=4pt,right=4pt,top=3pt,bottom=3pt,before skip=4pt,after skip=4pt]' +
+      '\\noindent\\textbf{\\color{navy}' + texText(entry.title) + '}\\hfill{\\scriptsize\\color{gold}' + texText(entry.complexity) + '}\\\\[-2pt]\n' +
+      '{\\footnotesize ' + texText(entry.purpose) + '}\\par{\\scriptsize\\textbf{QUANDO:} ' + texText(entry.when) + '}\\par' +
+      entry.notes.map((x) => '{\\scriptsize\\textbullet\\ ' + texText(x) + '}\\par').join('') +
+      '\\textbf{IMPLEMENTAÇÃO}\\par\\begin{lstlisting}[basicstyle=\\ttfamily\\tiny]\\n' + entry.code + '\\n\\end{lstlisting}\\end{tcolorbox}'
+    ).join('\n');
+    return '\\section{' + texText(sheet.title) + '}\\textit{' + texText(sheet.subtitle) + '}\\par\\smallskip' +
+      '\\begin{minipage}[t]{0.49\\linewidth}\\textbf{LEMBRETES}\\begin{itemize}\\scriptsize' + facts + '\\end{itemize}\\end{minipage}' +
+      '\\begin{minipage}[t]{0.49\\linewidth}\\textbf{FÓRMULAS}\\begin{itemize}\\scriptsize' + formulas + '\\end{itemize}\\end{minipage}\\par\\medskip' + entries;
+  }).join('\\clearpage\n');
 }
 
 export function buildAlmanacLatex(sections: Section[], title: string, author: string): string {
