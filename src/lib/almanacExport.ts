@@ -115,7 +115,7 @@ function compactTopicHtml(topic: Topic): string {
     '<div class="note"><b>' + esc(n.title.toUpperCase()) + '</b><span>' +
     n.lines.map((x) => esc(x)).join(' · ') + '</span></div>'
   ).join('');
-  const codeHtml = codes.map((c) => '<pre><code>' + esc(c.code) + '</code></pre>').join('');
+  const codeHtml = codes.map((c) => '<div class="implementation"><b>IMPLEMENTAÇÃO</b><pre><code>' + esc(c.code) + '</code></pre></div>').join('');
   const diagramHtml = diagrams.length ? '<div class="diagram"><span>' + esc(diagrams[0].caption) + '</span>' +
     svgFor(topic.section + '/' + topic.slug) + '</div>' : '';
   return '<article class="entry"><header><h3>' + esc(topic.title) + '</h3><small>' +
@@ -133,7 +133,7 @@ export function buildAlmanacHtml(sections: Section[], title: string, author: str
     '.cover{height:274mm;display:flex;flex-direction:column;justify-content:center;padding:15mm;border-left:5px solid #9c6b12;page-break-after:always}.contents{page-break-after:always;columns:2}.contents h2{column-span:all;color:#16264a}.contents li{margin:3px 0;color:#35445e}.cover small{font:8pt monospace;letter-spacing:.15em;color:#9c6b12}.cover h1{font-size:30pt;line-height:1.04;margin:10px 0}.cover p{color:#536078}' +
     '.chapter{page-break-before:always}.chapter h2{font-size:17pt;color:#16264a;border-bottom:1.5px solid #9c6b12;padding-bottom:4px;margin:0 0 8px}.entries{columns:2;column-gap:7mm}' +
     '.entry{break-inside:avoid;border-bottom:1px solid #d7dce6;padding:0 0 6px;margin:0 0 7px}.entry header{display:flex;align-items:baseline;gap:8px}.entry h3{font-size:10pt;margin:0;color:#16264a}.entry header small{font:7pt monospace;color:#9c6b12;white-space:nowrap}.summary{font-size:7.5pt;color:#536078;margin:2px 0 4px}' +
-    '.note{display:flex;gap:5px;margin:2px 0;font-size:7pt}.note b{font:6.2pt monospace;color:#9c6b12;min-width:55px}.note span{color:#35445e}.diagram{margin:4px 0 5px;border:1px solid #e1e6ef;padding:3px 5px;break-inside:avoid}.diagram span{font:6pt monospace;color:#64748b}.diagram svg{display:block;width:100%;height:54px}.entry pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f8f9fb;border-left:2px solid #16264a;padding:5px;margin:4px 0;font:6.2pt/1.17 monospace;color:#1b2540;break-inside:avoid}.entry code{font-family:monospace}footer{position:fixed;bottom:-7mm;right:0;font-size:6pt;color:#888}' +
+    '.note{display:flex;gap:5px;margin:2px 0;font-size:7pt}.note b{font:6.2pt monospace;color:#9c6b12;min-width:55px}.note span{color:#35445e}.implementation>b{font:6.2pt monospace;letter-spacing:.08em;color:#9c6b12}.diagram{margin:4px 0 5px;border:1px solid #e1e6ef;padding:3px 5px;break-inside:avoid}.diagram span{font:6pt monospace;color:#64748b}.diagram svg{display:block;width:100%;height:54px}.entry pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f8f9fb;border-left:2px solid #16264a;padding:5px;margin:4px 0;font:6.2pt/1.17 monospace;color:#1b2540;break-inside:avoid}.entry code{font-family:monospace}footer{position:fixed;bottom:-7mm;right:0;font-size:6pt;color:#888}' +
     '@media screen{body{max-width:850px;margin:20px auto;padding:20px}.cover{height:650px}.chapter{padding:16px 0}}</style></head><body><header class="cover"><small>MR. C++ · ALMANAQUE DE REFERÊNCIA</small><h1>' +
     esc(title) + '</h1><p>' + esc(author) + ' · ' + sections.length + ' seções · ' + topics + ' tópicos</p><p>Fórmulas, diagramas e implementações essenciais.</p></header>' +
     toc + body + '<footer>Mr. C++ · ' + esc(author) + '</footer><script>window.addEventListener("load",()=>setTimeout(()=>window.print(),350));</script></body></html>';
@@ -145,7 +145,7 @@ export function buildAlmanacLatex(sections: Section[], title: string, author: st
       const notes = notesOf(topic).map((n) => '\\textbf{' + texText(n.title) + ':} ' +
         n.lines.map(texInline).join(' · ') + '\\par\n').join('');
       const diagrams = diagramFor(topic).map((d) => '\\begin{center}\n' + d.tikz + '\n\\end{center}\n').join('');
-      const codes = codeOf(topic).map((c) => { const lang = c.language === 'python' ? '[language=Python]' : c.language === 'text' ? '' : '[language=C++]'; return '\\begin{lstlisting}' + lang + '\n' + c.code + '\n\\end{lstlisting}\n'; }).join('');
+      const codes = codeOf(topic).map((c) => { const lang = c.language === 'python' ? '[language=Python]' : c.language === 'text' ? '' : '[language=C++]'; return '\\textbf{IMPLEMENTAÇÃO}\\par\\begin{lstlisting}' + lang + '\n' + c.code + '\n\\end{lstlisting}\n'; }).join('');
       return '\\begin{tcolorbox}[colback=white,colframe=paleblueborder,boxrule=0.35pt,left=4pt,right=4pt,top=3pt,bottom=3pt,before skip=4pt,after skip=4pt]\n' +
         '\\noindent\\textbf{\\color{navy}' + texText(topic.title) + '}\\hfill{\\scriptsize\\color{gold}' + texText(topic.complexity || '—') + '}\\\\[-2pt]\n' +
         '{\\footnotesize ' + texInline(topic.summary) + '}\\par\n' + notes + diagrams + codes + '\\end{tcolorbox}\n';
