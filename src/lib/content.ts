@@ -37,12 +37,16 @@ function build(): Section[] {
       continue;
     }
     const { order, slug } = splitName(name);
+    const summary = data.summary ?? '';
+    const complexity = data.complexity ?? '';
+    const placeholder = summary === 'Em breve.' || complexity === 'tags:' ||
+      /é uma técnica\/estrutura que aparece quando o problema tem a seguinte necessidade/i.test(body);
     section.topics.push({
       section: section.slug, slug, order, body,
       title: data.title ?? slug,
-      summary: data.summary ?? '',
-      status: (data.status === 'done' ? 'done' : 'todo') as Status,
-      complexity: data.complexity ?? '',
+      summary,
+      status: (data.status === 'done' && !placeholder ? 'done' : 'todo') as Status,
+      complexity,
       tags: (data.tags ?? '').split(',').map((t) => t.trim()).filter(Boolean),
     });
   }
