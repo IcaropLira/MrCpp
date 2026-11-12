@@ -112,6 +112,55 @@ Operações: inserir na posição pos, apagar a posição pos, consultar kth(pos
 
 Para um conjunto ordenado, use a chave explícita em vez da posição implícita. split por chave separa valores menores/maiores; size permite rank e k-ésimo. Para chaves repetidas, guarde multiplicidade no nó ou use um desempate único.
 
+Com a mesma struct Node e merge já definidos, a versão por chave única usa:
+
+```cpp
+void split_key(Node* t, int key, Node*& a, Node*& b) {
+    if (!t) { a = b = nullptr; return; }
+    push(t);
+    if (t->val < key) {
+        split_key(t->r, key, t->r, b);
+        a = t;
+    } else {
+        split_key(t->l, key, a, t->l);
+        b = t;
+    }
+    pull(t);
+}
+
+bool contains(Node* t, int key) {
+    while (t) {
+        push(t);
+        if (t->val == key) return true;
+        t = (key < t->val ? t->l : t->r);
+    }
+    return false;
+}
+
+void insert_key(Node*& root, int key) {
+    if (contains(root, key)) return; // conjunto: sem duplicatas
+    Node *a, *b;
+    split_key(root, key, a, b);
+    root = merge(merge(a, new Node(key)), b);
+}
+
+Node* erase_key(Node* t, int key) {
+    if (!t) return nullptr;
+    push(t);
+    if (t->val == key) {
+        Node* res = merge(t->l, t->r);
+        delete t;
+        return res;
+    }
+    if (key < t->val) t->l = erase_key(t->l, key);
+    else t->r = erase_key(t->r, key);
+    pull(t);
+    return t;
+}
+```
+
+Use uma raiz separada para a treap por chave; não misture operações de reversão de sequência com a ordenação por chave. Para multiset, adicione um contador de ocorrências no nó.
+
 ## Complexidade e cuidados
 
 - Altura e operações: O(log n) esperado; O(n) no pior caso.
