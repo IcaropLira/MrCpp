@@ -291,7 +291,7 @@ export function buildAlmanacLatex(sections: Section[], title: string, author: st
     }).join('\n');
     return '\\section{' + texText(s.title) + '}\n' + entries;
   }).join('\n\\medskip\n');
-  const preamble = '\\documentclass[9pt,a4paper]{article}\n' +
+  const preamble = '\\documentclass[9pt,a4paper]{extarticle}\n' +
     '\\usepackage[utf8]{inputenc}\n\\usepackage[T1]{fontenc}\n' +
     '\\usepackage[margin=12mm,top=14mm,bottom=15mm]{geometry}\n' +
     '\\usepackage{amsmath,amssymb,xcolor,tikz}\n' +
