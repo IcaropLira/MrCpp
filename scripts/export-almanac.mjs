@@ -64,12 +64,16 @@ try {
       continue;
     }
     const topicName = splitName(file.replace(/\.md$/, ''));
+    const summary = parsed.data.summary ?? '';
+    const complexity = parsed.data.complexity ?? '';
+    const placeholder = summary === 'Em breve.' || complexity === 'tags:' ||
+      /é uma técnica\/estrutura que aparece quando o problema tem a seguinte necessidade/i.test(parsed.body);
     const topic = {
       section: section.slug, slug: topicName.slug, order: topicName.order,
       title: parsed.data.title ?? topicName.slug,
-      summary: parsed.data.summary ?? '',
-      status: parsed.data.status === 'done' ? 'done' : 'todo',
-      complexity: parsed.data.complexity ?? '',
+      summary,
+      status: parsed.data.status === 'done' && !placeholder ? 'done' : 'todo',
+      complexity,
       tags: (parsed.data.tags ?? '').split(',').map(x => x.trim()).filter(Boolean),
       body: parsed.body
     };
