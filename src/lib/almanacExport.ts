@@ -11,8 +11,15 @@ function esc(s: string): string {
 
 function texText(s: string): string {
   const slash = String.fromCharCode(92);
-  s = s.replace(/√\(([^)]+)\)/g, (_, value: string) => slash + 'ensuremath{\\sqrt{' + value + '}}');
-  s = s.replace(/√([A-Za-z0-9]+)/g, (_, value: string) => slash + 'ensuremath{\\sqrt{' + value + '}}');
+  const roots: string[] = [];
+  s = s.replace(/√\(([^)]+)\)/g, (_, value: string) => {
+    roots.push(value);
+    return 'ROOTPH' + (roots.length - 1) + 'END';
+  });
+  s = s.replace(/√([A-Za-z0-9]+)/g, (_, value: string) => {
+    roots.push(value);
+    return 'ROOTPH' + (roots.length - 1) + 'END';
+  });
   const replacements: Record<string, string> = {
     [slash]: slash + 'textbackslash{}',
     '{': slash + '{',
@@ -56,7 +63,9 @@ function texText(s: string): string {
     '—': '---',
     '⁹': slash + 'ensuremath{^9}'
   };
-  return s.replace(/[\\{}#$%&_~^∞−·≤≥≈×√αβπθε⊕→←↔²³≠∑∏∈∉∪∩∝±–—⁹]/g, (ch) => replacements[ch] ?? ch);
+  const escaped = s.replace(/[\\{}#$%&_~^∞−·≤≥≈×√αβπθε⊕→←↔²³≠∑∏∈∉∪∩∝±–—⁹]/g, (ch) => replacements[ch] ?? ch);
+  return escaped.replace(/ROOTPH(\\d+)END/g, (_, index: string) =>
+    slash + 'ensuremath{\\sqrt{' + roots[Number(index)] + '}}');
 }
 
 function texMath(s: string): string {
