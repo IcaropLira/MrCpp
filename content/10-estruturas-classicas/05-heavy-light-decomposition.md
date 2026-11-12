@@ -16,7 +16,7 @@ Cada cadeia é linearizada em posições contíguas pos[v]. Uma consulta de cami
 
 Árvore não ponderada, índices 0-based, raiz 0, caminho inclusivo. O exemplo usa soma; troque a operação e a identidade para outros agregados associativos.
 
-\`\`\`cpp
+```cpp
 struct HLD {
     using ll = long long;
     int n, timer = 0;
@@ -90,7 +90,7 @@ struct HLD {
         return ans;
     }
 };
-\`\`\`
+```
 
 ## Complexidade
 
