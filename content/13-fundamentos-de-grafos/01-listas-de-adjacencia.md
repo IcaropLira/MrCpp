@@ -12,7 +12,7 @@ tags: grafos, representação, listas de adjacência
 
 ## Não ponderado e não direcionado
 
-\`\`\`cpp
+```cpp
 int n, m;
 cin >> n >> m;
 vector<vector<int>> g(n);
@@ -24,21 +24,21 @@ for (int i = 0; i < m; i++) {
     g[u].push_back(v);
     g[v].push_back(u);        // remova esta linha se for direcionado
 }
-\`\`\`
+```
 
 Percorrer todos os vizinhos de \`u\`:
 
-\`\`\`cpp
+```cpp
 for (int v : g[u]) {
     // processa a aresta u -> v
 }
-\`\`\`
+```
 
 ## Grafo ponderado
 
 Guarde \`(vizinho, peso)\` em cada lista. Use \`long long\` para pesos/acumulados quando os limites exigirem.
 
-\`\`\`cpp
+```cpp
 using ll = long long;
 vector<vector<pair<int, ll>>> g(n);
 
@@ -50,7 +50,7 @@ for (int i = 0; i < m; i++) {
     g[u].push_back({v, w});
     g[v].push_back({u, w});   // grafo não direcionado
 }
-\`\`\`
+```
 
 ## Variações
 
