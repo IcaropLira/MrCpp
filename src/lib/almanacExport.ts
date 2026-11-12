@@ -279,7 +279,7 @@ function referenceSheetsLatex(): string {
       '\\noindent\\textbf{\\color{navy}' + texText(entry.title) + '}\\hfill{\\scriptsize\\color{gold}' + texText(entry.complexity) + '}\\\\[-2pt]\n' +
       '{\\footnotesize ' + texText(entry.purpose) + '}\\par{\\scriptsize\\textbf{QUANDO:} ' + texText(entry.when) + '}\\par' +
       entry.notes.map((x) => '{\\scriptsize\\textbullet\\ ' + texText(x) + '}\\par').join('') +
-      '\\textbf{IMPLEMENTAÇÃO}\\par\\begin{lstlisting}[basicstyle=\\ttfamily\\tiny]\n' + entry.code + '\n\\end{lstlisting}\\end{tcolorbox}'
+      '\\textbf{IMPLEMENTAÇÃO}\\par\\begin{lstlisting}[basicstyle=\\ttfamily\\scriptsize]\n' + entry.code + '\n\\end{lstlisting}\\end{tcolorbox}'
     ).join('\n');
     return '\\section{' + texText(sheet.title) + '}\\textit{' + texText(sheet.subtitle) + '}\\par\\smallskip' +
       '\\begin{minipage}[t]{0.49\\linewidth}\\textbf{LEMBRETES}\\begin{itemize}\\scriptsize' + facts + '\\end{itemize}\\end{minipage}' +
@@ -309,12 +309,12 @@ export function buildAlmanacLatex(sections: Section[], title: string, author: st
     '\\definecolor{navy}{HTML}{16264A}\\definecolor{navylight}{HTML}{2E4C7A}\\definecolor{gold}{HTML}{9C6B12}\\definecolor{paleblue}{HTML}{EEF2F9}\\definecolor{paleblueborder}{HTML}{C7D3E8}\\definecolor{cream}{HTML}{FBF3D9}\\definecolor{optimbg}{HTML}{EFF6F1}\\definecolor{codebg}{HTML}{F8F9FB}\\definecolor{codefg}{HTML}{1B2540}\\definecolor{codekeyword}{HTML}{1857B8}\\definecolor{codestring}{HTML}{8A5A00}\\definecolor{codecomment}{HTML}{6B7280}\n' +
     '\\pagestyle{fancy}\\fancyhf{}\\fancyhead[L]{\\small\\color{navy}Mr. C++ · Almanaque}\\fancyhead[R]{\\small\\color{gold}\\leftmark}\\fancyfoot[R]{\\small Página \\thepage}\\renewcommand{\\headrulewidth}{0.3pt}\n' +
     '\\setlength{\\parindent}{0pt}\\setlength{\\parskip}{2pt}\\setlength{\\columnsep}{7mm}\n' +
-    '\\lstset{language=C++,basicstyle=\\ttfamily\\scriptsize\\color{codefg},keywordstyle=\\color{codekeyword}\\bfseries,stringstyle=\\color{codestring},commentstyle=\\color{codecomment}\\itshape,breaklines=true,showstringspaces=false,tabsize=2,columns=fullflexible,keepspaces=true,frame=single,rulecolor=\\color{paleblueborder},backgroundcolor=\\color{codebg},aboveskip=3pt,belowskip=3pt,extendedchars=true,literate={á}{{\\\'a}}1 {ã}{{\\~a}}1 {é}{{\\\'e}}1 {í}{{\\\'i}}1 {ó}{{\\\'o}}1 {õ}{{\\~o}}1 {ú}{{\\\'u}}1 {ç}{{\\c c}}1 {Á}{{\\\'A}}1 {É}{{\\\'E}}1 {Í}{{\\\'I}}1 {Ó}{{\\\'O}}1 {Ú}{{\\\'U}}1 {à}{{\\`a}}1 {â}{{\\^a}}1 {ê}{{\\^e}}1 {ô}{{\\^o}}1 {À}{{\\`A}}1 {Â}{{\\^A}}1 {Ã}{{\\~A}}1 {Ç}{{\\c C}}1 {Ê}{{\\^E}}1 {Ô}{{\\^O}}1 {Õ}{{\\~O}}1 {⁹}{{\\ensuremath{^9}}}1 {–}{{--}}1 {—}{{---}}1 {≈}{{\\ensuremath{\\approx}}}1 {≤}{{\\ensuremath{\\le}}}1 {≥}{{\\ensuremath{\\ge}}}1 {×}{{\\ensuremath{\\times}}}1 {·}{{\\ensuremath{\\cdot}}}1 {→}{{\\ensuremath{\\to}}}1 {∞}{{\\ensuremath{\\infty}}}1 {√}{{\\ensuremath{\\surd}}}1}\n' +
+    '\\lstset{language=C++,basicstyle=\\ttfamily\\footnotesize\\color{codefg},keywordstyle=\\color{codekeyword}\\bfseries,stringstyle=\\color{codestring},commentstyle=\\color{codecomment}\\itshape,breaklines=true,showstringspaces=false,tabsize=2,columns=fullflexible,keepspaces=true,frame=single,rulecolor=\\color{paleblueborder},backgroundcolor=\\color{codebg},aboveskip=3pt,belowskip=3pt,extendedchars=true,literate={á}{{\\\'a}}1 {ã}{{\\~a}}1 {é}{{\\\'e}}1 {í}{{\\\'i}}1 {ó}{{\\\'o}}1 {õ}{{\\~o}}1 {ú}{{\\\'u}}1 {ç}{{\\c c}}1 {Á}{{\\\'A}}1 {É}{{\\\'E}}1 {Í}{{\\\'I}}1 {Ó}{{\\\'O}}1 {Ú}{{\\\'U}}1 {à}{{\\`a}}1 {â}{{\\^a}}1 {ê}{{\\^e}}1 {ô}{{\\^o}}1 {À}{{\\`A}}1 {Â}{{\\^A}}1 {Ã}{{\\~A}}1 {Ç}{{\\c C}}1 {Ê}{{\\^E}}1 {Ô}{{\\^O}}1 {Õ}{{\\~O}}1 {⁹}{{\\ensuremath{^9}}}1 {–}{{--}}1 {—}{{---}}1 {≈}{{\\ensuremath{\\approx}}}1 {≤}{{\\ensuremath{\\le}}}1 {≥}{{\\ensuremath{\\ge}}}1 {×}{{\\ensuremath{\\times}}}1 {·}{{\\ensuremath{\\cdot}}}1 {→}{{\\ensuremath{\\to}}}1 {∞}{{\\ensuremath{\\infty}}}1 {√}{{\\ensuremath{\\surd}}}1}\n' +
     '\\titleformat{\\section}{\\Large\\bfseries\\color{navy}}{}{0pt}{}\\titlespacing*{\\section}{0pt}{8pt}{5pt}\n' +
     '\\begin{document}\n';
   return preamble + '\\begin{center}{\\Huge\\bfseries\\color{navy}' + texText(title) +
     '}\\\\[3pt]{\\small\\color{gold}' + texText(author) + '}\\\\[5pt]{\\footnotesize ' +
     sections.length + ' seções · ' + sections.reduce((n, s) => n + s.topics.length, 0) +
     ' tópicos · fórmulas · diagramas vetoriais · códigos essenciais}\\end{center}\\hrule\\vspace{6pt}\n' +
-    '\\tableofcontents\\clearpage\n\\begin{multicols}{2}\\raggedcolumns\n' + body + '\n\\end{multicols}\n\\clearpage\n' + referenceSheetsLatex() + '\n\\end{document}\n';
+    '\\tableofcontents\\clearpage\n' + body + '\n\\clearpage\n' + referenceSheetsLatex() + '\n\\end{document}\n';
 }
