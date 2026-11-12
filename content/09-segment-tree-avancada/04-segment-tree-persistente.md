@@ -67,6 +67,21 @@ Com compressão de coordenadas, crie `raiz[i]` contendo as frequências dos valo
 
 Na descida simultânea pelas duas raízes, a quantidade à esquerda é `leftCount = t[t[raiz[r]].l].sum - t[t[raiz[l]].l].sum`. Se `k <= leftCount`, desça à esquerda; caso contrário, subtraia `leftCount` de `k` e desça à direita.
 
+Dentro da mesma struct, implemente a descida pelas duas versões assim:
+
+```cpp
+int kth(int leftRoot, int rightRoot, int l, int r, long long k) const {
+    if (l == r) return l;
+    int m = (l + r) / 2;
+    long long left = t[t[rightRoot].l].sum - t[t[leftRoot].l].sum;
+    if (k <= left)
+        return kth(t[leftRoot].l, t[rightRoot].l, l, m, k);
+    return kth(t[leftRoot].r, t[rightRoot].r, m + 1, r, k - left);
+}
+```
+
+Chame `kth(raiz[l], raiz[r], 0, m-1, k)` no domínio comprimido de tamanho `m`. A função pressupõe frequências não negativas e `1 <= k <= r-l`; ela retorna a posição comprimida, que deve ser convertida para o valor original.
+
 - Construção das versões de frequência: `O(n log n)`.
 - Consulta do k-ésimo menor: `O(log n)`.
 - Memória: `O(n log n)` nós.
