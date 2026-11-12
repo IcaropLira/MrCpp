@@ -89,6 +89,7 @@ void erase(Node*& root, int pos) {
 }
 
 int kth(Node* root, int k) {
+    if (!root || k < 0 || k >= size(root)) return -1;
     push(root);
     int left = size(root->l);
     if (k < left) return kth(root->l, k);
