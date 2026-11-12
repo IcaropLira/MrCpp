@@ -9,10 +9,20 @@ function esc(s: string): string {
 }
 
 function texText(s: string): string {
-  return s.replace(/[\\{}#$%&_~^]/g, (c) => ({
-    '\\\': '\\textbackslash{}', '{': '\\{', '}': '\\}', '#': '\\#', '$': '\\$', '%': '\\%',
-    '&': '\\&', '_': '\\_', '~': '\\textasciitilde{}', '^': '\\textasciicircum{}'
-  }[c] || c));
+  const slash = String.fromCharCode(92);
+  const replacements: Record<string, string> = {
+    [slash]: slash + 'textbackslash{}',
+    '{': slash + '{',
+    '}': slash + '}',
+    '#': slash + '#',
+    '$': slash + '$',
+    '%': slash + '%',
+    '&': slash + '&',
+    '_': slash + '_',
+    '~': slash + 'textasciitilde{}',
+    '^': slash + 'textasciicircum{}'
+  };
+  return s.replace(/[\\{}#$%&_~^]/g, (ch) => replacements[ch] ?? ch);
 }
 
 function texInline(s: string): string {
