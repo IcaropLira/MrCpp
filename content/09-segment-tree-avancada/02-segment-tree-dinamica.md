@@ -31,7 +31,7 @@ struct DynamicSegTree {
         t[x].sum += v;
         if (l == r) return x;
 
-        int m = l + (r - l) / 2;
+        ll m = l + (r - l) / 2;
         if (p <= m) {
             int child = add(t[x].l, l, m, p, v);
             t[x].l = child;
