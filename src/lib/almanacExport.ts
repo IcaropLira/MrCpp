@@ -285,7 +285,7 @@ export function buildAlmanacLatex(sections: Section[], title: string, author: st
         n.lines.map(texInline).join(' · ') + '\\par\n').join('');
       const diagrams = diagramFor(topic).map((d) => '\\begin{center}\n' + d.tikz + '\n\\end{center}\n').join('');
       const codes = codeOf(topic).map((c) => { const lang = c.language === 'python' ? '[language=Python]' : c.language === 'text' ? '' : '[language=C++]'; return '\\textbf{IMPLEMENTAÇÃO}\\par\\begin{lstlisting}' + lang + '\n' + c.code + '\n\\end{lstlisting}\n'; }).join('');
-      return '\\begin{tcolorbox}[colback=white,colframe=paleblueborder,boxrule=0.35pt,left=4pt,right=4pt,top=3pt,bottom=3pt,before skip=4pt,after skip=4pt]\n' +
+      return '\\begin{tcolorbox}[breakable,colback=white,colframe=paleblueborder,boxrule=0.35pt,left=4pt,right=4pt,top=3pt,bottom=3pt,before skip=4pt,after skip=4pt]\n' +
         '\\noindent\\textbf{\\color{navy}' + texText(topic.title) + '}\\hfill{\\scriptsize\\color{gold}' + texText(topic.complexity || '—') + '}\\\\[-2pt]\n' +
         '{\\footnotesize ' + texInline(topic.summary) + '}\\par\n' + notes + diagrams + codes + '\\end{tcolorbox}\n';
     }).join('\n');
