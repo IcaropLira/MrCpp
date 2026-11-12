@@ -1,75 +1,79 @@
 ---
 title: Decomposição em raiz quadrada
-summary: Em breve.
+summary: Divide o vetor em blocos de tamanho aproximado √n para equilibrar trabalho local e agregado por bloco.
 status: done
-complexity: tags:
-tags: ---
+complexity: O(n) construção; O(√n) por consulta/atualização de intervalo
+tags: sqrt decomposition, blocos, consultas, Mo
 ---
 
-## Ideia e quando usar
+## Ideia
 
-Decomposição em raiz quadrada é uma técnica/estrutura que aparece quando o problema tem a seguinte necessidade: reconhecer o padrão pedido no enunciado, representar os estados relevantes e escolher uma operação que possa ser executada dentro do limite de tempo. Não decore só o código: identifique **o que cada variável significa**, qual é a condição de validade e qual é o custo de cada operação.
+Divida o vetor em blocos de tamanho B ≈ √n. Em uma consulta [l,r], processe diretamente as pontas parciais e use o agregado pré-calculado para cada bloco inteiro.
 
-## Como pensar na solução
+A técnica é útil quando uma Segment Tree é excessiva, quando o agregado é simples ou quando o problema pede uma solução offline/por blocos.
 
-1. **Defina a entrada e a resposta.** Escreva em uma frase o que precisa ser calculado e quais restrições importam (`n`, número de arestas, tamanho das strings, valores máximos).
-2. **Escolha a representação.** Vetor, lista de adjacência, estado de DP, estrutura de dados ou ordenação devem refletir diretamente as operações necessárias.
-3. **Mantenha um invariante.** Antes de cada iteração/consulta, diga o que a estrutura representa. Depois da operação, prove que continua representando isso.
-4. **Analise a complexidade.** Conte quantas vezes cada elemento/aresta/estado é processado. Uma solução correta que faz `O(n²)` pode falhar para `n=2e5`.
-5. **Trate os casos-limite.** Entrada vazia ou mínima, duplicatas, valores negativos, grafo desconexo, ciclos, limites de índice e overflow.
+## Soma: atualização pontual e consulta de intervalo
 
-## Modelo de implementação
-
-O esqueleto depende do problema concreto; não existe um único código que resolva todas as variantes. Em C++ competitivo, mantenha a implementação enxuta e explícita, no estilo deste material:
+Intervalos inclusivos e índices 0-based.
 
 ```cpp
-#include <bits/stdc++.h>
-using namespace std;
-using ll = long long;
+struct SqrtSum {
+    int n, B;
+    vector<long long> a, sum;
 
-int main() {
-    ios::sync_with_stdio(false);
-    cin.tie(nullptr);
+    SqrtSum(const vector<long long>& v) {
+        a = v;
+        n = a.size();
+        B = max(1, (int)sqrt(n));
+        sum.assign((n+B-1)/B, 0);
+        for (int i = 0; i < n; i++) sum[i/B] += a[i];
+    }
 
-    int n;
-    cin >> n;
-    vector<int> a(n);
-    for (int i = 0; i < n; i++) cin >> a[i];
+    void setval(int p, long long v) {
+        sum[p/B] += v - a[p];
+        a[p] = v;
+    }
 
-    // 1. Inicialize a estrutura/estado.
-    // 2. Processe os dados mantendo o invariante.
-    // 3. Extraia e imprima a resposta.
-    return 0;
-}
+    long long query(int l, int r) const {
+        long long ans = 0;
+        while (l <= r && l % B) ans += a[l++];
+        while (l + B - 1 <= r) {
+            ans += sum[l/B];
+            l += B;
+        }
+        while (l <= r) ans += a[l++];
+        return ans;
+    }
+};
 ```
 
-Não copie o esqueleto literalmente quando a técnica exigir DFS, recursão, uma estrutura persistente ou várias consultas. Use o código específico da seção como base e adapte os tipos aos limites do enunciado.
+- Construção: O(n).
+- Atualização pontual: O(1).
+- Consulta de intervalo: O(√n).
+- Memória: O(n).
 
-## Complexidade: como conferir
+## Range add + range sum com lazy por bloco
 
-- Um laço sobre `n` elementos é `O(n)`.
-- Dois laços aninhados sobre `n` normalmente são `O(n²)`.
-- Ordenar costuma custar `O(n log n)`.
-- Uma busca binária custa `O(log n)`; fazer isso para cada elemento dá `O(n log n)`.
-- Em grafos, a DFS/BFS com lista de adjacência custa `O(n+m)`.
-- Uma estrutura de consultas pode ter custo de construção diferente do custo de cada consulta; informe os dois.
+Guarde a soma dos valores-base de cada bloco e uma tag lazy aplicada a todos os elementos do bloco. Em uma consulta parcial, some os valores-base mais a tag; em um bloco inteiro, use somaBase + lazy × comprimento.
 
-A complexidade indicada no cabeçalho é uma referência para a implementação padrão. Variantes do mesmo algoritmo podem ter custos diferentes conforme a estrutura auxiliar, o domínio dos valores e as operações exigidas.
+- Atualização de intervalo: O(√n).
+- Consulta de intervalo: O(√n).
+- Atualização/consulta de bloco inteiro: O(1).
 
-## Erros comuns
+## Escolha do tamanho do bloco
 
-- Usar a técnica só porque o nome aparece no enunciado, sem verificar suas pré-condições.
-- Não decidir se os intervalos são inclusivos `[l,r]` ou semiabertos `[l,r)`.
-- Misturar índices `0..n-1` com índices `1..n`.
-- Usar `int` para somas, distâncias ou produtos que podem ultrapassar `2^31-1`; use `long long` quando necessário.
-- Esquecer de limpar vetores globais entre casos de teste.
-- Não testar duplicatas, casos mínimos e o maior caso permitido.
+B = √n é uma escolha padrão quando o custo de percorrer pontas e blocos é simétrico. Em problemas com q consultas, pode ser melhor ajustar B em função de n e q. A complexidade deve contar separadamente o trabalho nas pontas e nos blocos inteiros.
 
-## Checklist de prova/contest
+## Variações
 
-- [ ] Sei explicar o que representa cada estado/estrutura?
-- [ ] Sei por que a transição/operação é correta?
-- [ ] Sei justificar a complexidade total, não apenas de uma operação?
-- [ ] Os limites e sentinelas estão corretos?
-- [ ] A solução trata o caso mínimo e os empates?
-- [ ] O tipo numérico comporta a resposta máxima?
+- **Mo:** ordena consultas em blocos para reduzir o movimento das extremidades; exige todas as consultas offline.
+- **Blocos com lazy:** aplica atualizações uniformes a blocos inteiros e processa pontas individualmente.
+- **Agregados:** soma, mínimo, máximo, frequência ou outra informação que possa ser mantida por bloco.
+- **Ordenação por blocos:** mantém cada bloco ordenado para responder contagens por valor; atualização pode exigir reordenar um bloco.
+
+## Cuidados
+
+1. O código pressupõe 0 <= l <= r < n e n > 0.
+2. O tamanho B afeta constantes e memória; não assuma que √n é sempre ótimo.
+3. Para operações associativas e atualizações online, Fenwick/Segment Tree pode ser mais simples e rápida.
+4. Não confunda decomposição em blocos com o algoritmo de Mo: Mo é uma ordenação específica das consultas.
