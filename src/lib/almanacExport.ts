@@ -25,10 +25,14 @@ function texInline(s: string): string {
 
 function sectionsOf(body: string): Array<{ title: string; body: string }> {
   const matches = [...body.matchAll(/^##\s+(.+)$/gm)];
-  return matches.map((m, i) => ({
-    title: (m[1] || '').trim(),
-    body: body.slice((m.index || 0) + m[0].length, i + 1 < matches.length ? (matches[i + 1].index || body.length) : body.length).trim()
-  }));
+  return matches.map((m, i) => {
+    const next = matches[i + 1];
+    const end = next?.index ?? body.length;
+    return {
+      title: (m[1] || '').trim(),
+      body: body.slice((m.index ?? 0) + m[0].length, end).trim()
+    };
+  });
 }
 
 function notesOf(topic: Topic): Note[] {
@@ -116,7 +120,8 @@ function compactTopicHtml(topic: Topic): string {
     n.lines.map((x) => esc(x)).join(' · ') + '</span></div>'
   ).join('');
   const codeHtml = codes.map((c) => '<div class="implementation"><b>IMPLEMENTAÇÃO</b><pre><code>' + esc(c.code) + '</code></pre></div>').join('');
-  const diagramHtml = diagrams.length ? '<div class="diagram"><span>' + esc(diagrams[0].caption) + '</span>' +
+  const firstDiagram = diagrams[0];
+  const diagramHtml = firstDiagram ? '<div class="diagram"><span>' + esc(firstDiagram.caption) + '</span>' +
     svgFor(topic.section + '/' + topic.slug) + '</div>' : '';
   return '<article class="entry"><header><h3>' + esc(topic.title) + '</h3><small>' +
     esc(topic.complexity || '—') + '</small></header><p class="summary">' + esc(topic.summary) +
