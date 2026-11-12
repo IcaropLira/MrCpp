@@ -307,5 +307,5 @@ export function buildAlmanacLatex(sections: Section[], title: string, author: st
     '}\\\\[3pt]{\\small\\color{gold}' + texText(author) + '}\\\\[5pt]{\\footnotesize ' +
     sections.length + ' seções · ' + sections.reduce((n, s) => n + s.topics.length, 0) +
     ' tópicos · fórmulas · diagramas vetoriais · códigos essenciais}\\end{center}\\hrule\\vspace{6pt}\n' +
-    '\\tableofcontents\\clearpage\n\\begin{multicols}{2}\n' + body + '\n\\end{multicols}\n\\clearpage\n' + referenceSheetsLatex() + '\n\\end{document}\n';
+    '\\tableofcontents\\clearpage\n\\begin{multicols}{2}\\raggedcolumns\n' + body + '\n\\end{multicols}\n\\clearpage\n' + referenceSheetsLatex() + '\n\\end{document}\n';
 }
