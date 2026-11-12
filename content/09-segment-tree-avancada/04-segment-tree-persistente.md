@@ -16,7 +16,7 @@ Uma raiz identifica uma versão imutável da árvore. Ao atualizar uma posição
 
 ## Soma em intervalo entre versões
 
-O exemplo começa com uma árvore zerada. \`add(raiz, pos, delta)\` cria uma nova versão somando \`delta\` na posição. \`query(raiz, l, r)\` consulta intervalo inclusivo.
+O exemplo começa com uma árvore zerada. `add(raiz, pos, delta)` cria uma nova versão somando `delta` na posição. `query(raiz, l, r)` consulta intervalo inclusivo.
 
 ```cpp
 struct PersistentSegTree {
@@ -59,18 +59,18 @@ struct PersistentSegTree {
 // st.query(raiz[k], 0, n - 1, l, r);
 ```
 
-Para um vetor inicial não nulo, construa a primeira raiz em \`O(n)\` ou insira os \`n\` valores; não confunda a versão zerada acima com uma construção a partir de \`a\`.
+Para um vetor inicial não nulo, construa a primeira raiz em `O(n)` ou insira os `n` valores; não confunda a versão zerada acima com uma construção a partir de `a`.
 
 ## K-ésimo menor em um intervalo
 
-Com compressão de coordenadas, crie \`raiz[i]\` contendo as frequências dos valores em \`a[0..i)\`. A diferença entre \`raiz[r]\` e \`raiz[l]\` representa exatamente as frequências do intervalo semiaberto \`[l,r)\`.
+Com compressão de coordenadas, crie `raiz[i]` contendo as frequências dos valores em `a[0..i)`. A diferença entre `raiz[r]` e `raiz[l]` representa exatamente as frequências do intervalo semiaberto `[l,r)`.
 
-Na descida simultânea pelas duas raízes, a quantidade à esquerda é \`leftCount = t[t[raiz[r]].l].sum - t[t[raiz[l]].l].sum\`. Se \`k <= leftCount\`, desça à esquerda; caso contrário, subtraia \`leftCount\` de \`k\` e desça à direita.
+Na descida simultânea pelas duas raízes, a quantidade à esquerda é `leftCount = t[t[raiz[r]].l].sum - t[t[raiz[l]].l].sum`. Se `k <= leftCount`, desça à esquerda; caso contrário, subtraia `leftCount` de `k` e desça à direita.
 
-- Construção das versões de frequência: \`O(n log n)\`.
-- Consulta do k-ésimo menor: \`O(log n)\`.
-- Memória: \`O(n log n)\` nós.
-- \`k\` é 1-based e deve satisfazer \`1 <= k <= r-l\`.
+- Construção das versões de frequência: `O(n log n)`.
+- Consulta do k-ésimo menor: `O(log n)`.
+- Memória: `O(n log n)` nós.
+- `k` é 1-based e deve satisfazer `1 <= k <= r-l`.
 
 ## Quando usar
 
@@ -80,15 +80,15 @@ Na descida simultânea pelas duas raízes, a quantidade à esquerda é \`leftCou
 
 ## Complexidade e invariantes
 
-- Cada atualização cria no máximo \`ceil(log2(n)) + 1\` nós: \`O(log n)\`.
-- Uma consulta de intervalo visita \`O(log n)\` nós.
-- A memória total é \`O(n + q log n)\` para \`q\` atualizações, além dos vetores de raízes.
+- Cada atualização cria no máximo `ceil(log2(n)) + 1` nós: `O(log n)`.
+- Uma consulta de intervalo visita `O(log n)` nós.
+- A memória total é `O(n + q log n)` para `q` atualizações, além dos vetores de raízes.
 - Nós compartilhados são imutáveis. Alterar um nó compartilhado corrompe todas as versões que o utilizam.
 
 ## Erros comuns
 
-1. Guardar referências ou ponteiros para elementos de \`vector<Node>\` durante \`push_back\`: a realocação pode invalidá-los. O código usa índices.
+1. Guardar referências ou ponteiros para elementos de `vector<Node>` durante `push_back`: a realocação pode invalidá-los. O código usa índices.
 2. Modificar o filho da versão antiga em vez de gravar o índice do novo filho no nó copiado.
-3. Subtrair versões em ordem errada: \`raiz[r] - raiz[l]\` representa \`[l,r)\`.
-4. Usar k fora de \`1..r-l\` na consulta de ordem estatística.
+3. Subtrair versões em ordem errada: `raiz[r] - raiz[l]` representa `[l,r)`.
+4. Usar k fora de `1..r-l` na consulta de ordem estatística.
 5. Esquecer que a coordenada comprimida precisa ser mapeada de volta para o valor original.
