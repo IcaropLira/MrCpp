@@ -97,6 +97,18 @@ function texInline(s: string): string {
   }).join('');
 }
 
+function sectionsOf(body: string): Array<{ title: string; body: string }> {
+  const matches = [...body.matchAll(/^##\s+(.+)$/gm)];
+  return matches.map((m, i) => {
+    const next = matches[i + 1];
+    const end = next?.index ?? body.length;
+    return {
+      title: (m[1] || '').trim(),
+      body: body.slice((m.index ?? 0) + m[0].length, end).trim()
+    };
+  });
+}
+
 function notesOf(topic: Topic): Note[] {
   const wanted = /f[oó]rmula|propriedade|uso|aplica|observa|complexidade|limite|cuidado/i;
   const notes = sectionsOf(topic.body).filter((s) => wanted.test(s.title) && !/^c[oó]digo$/i.test(s.title))
