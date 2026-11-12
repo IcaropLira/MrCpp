@@ -60,6 +60,58 @@ Guarde a soma dos valores-base de cada bloco e uma tag lazy aplicada a todos os 
 - Consulta de intervalo: O(√n).
 - Atualização/consulta de bloco inteiro: O(1).
 
+\`\`\`cpp
+struct SqrtRange {
+    using ll = long long;
+    int n, B;
+    vector<ll> a, sum, lazy;
+
+    SqrtRange(const vector<ll>& v) {
+        a = v;
+        n = a.size();
+        B = max(1, (int)sqrt(n));
+        int blocks = (n+B-1)/B;
+        sum.assign(blocks,0);
+        lazy.assign(blocks,0);
+        for (int i = 0; i < n; i++) sum[i/B] += a[i];
+    }
+
+    int len(int b) const {
+        return min(B,n-b*B);
+    }
+
+    void add(int l, int r, ll v) {
+        int bl = l/B, br = r/B;
+        if (bl == br) {
+            for (int i = l; i <= r; i++) a[i] += v;
+            sum[bl] += v*(r-l+1);
+            return;
+        }
+        int rightL = (bl+1)*B;
+        for (int i = l; i < rightL; i++) a[i] += v;
+        sum[bl] += v*(rightL-l);
+
+        for (int b = bl+1; b < br; b++) lazy[b] += v;
+
+        int leftR = br*B;
+        for (int i = leftR; i <= r; i++) a[i] += v;
+        sum[br] += v*(r-leftR+1);
+    }
+
+    ll query(int l, int r) const {
+        ll ans = 0;
+        while (l <= r && l%B) ans += a[l] + lazy[l/B], l++;
+        while (l+B-1 <= r) {
+            int b = l/B;
+            ans += sum[b] + lazy[b]*len(b);
+            l += B;
+        }
+        while (l <= r) ans += a[l] + lazy[l/B], l++;
+        return ans;
+    }
+};
+\`\`\`
+
 ## Escolha do tamanho do bloco
 
 B = √n é uma escolha padrão quando o custo de percorrer pontas e blocos é simétrico. Em problemas com q consultas, pode ser melhor ajustar B em função de n e q. A complexidade deve contar separadamente o trabalho nas pontas e nos blocos inteiros.
