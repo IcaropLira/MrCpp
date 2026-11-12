@@ -16,7 +16,7 @@ A cada nível, o tamanho da componente cai pelo menos pela metade; portanto, a �
 
 Árvore não ponderada. anc[v] contém pares (centróide, distância).
 
-\`\`\`cpp
+```cpp
 const int INF = 1e9;
 vector<vector<int>> g;
 vector<int> sz;
@@ -63,7 +63,7 @@ int nearest(int v) {
         ans = min(ans,best[c]+d);
     return ans; // INF se nenhum vértice foi ativado
 }
-\`\`\`
+```
 
 Inicialize sz(n), removed(n,false), anc(n), best(n,INF) e chame decompose(0). Marque um vértice inicial com activate(v).
 
