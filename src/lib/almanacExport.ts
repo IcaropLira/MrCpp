@@ -270,7 +270,7 @@ function referenceSheetsLatex(): string {
       '\\noindent\\textbf{\\color{navy}' + texText(entry.title) + '}\\hfill{\\scriptsize\\color{gold}' + texText(entry.complexity) + '}\\\\[-2pt]\n' +
       '{\\footnotesize ' + texText(entry.purpose) + '}\\par{\\scriptsize\\textbf{QUANDO:} ' + texText(entry.when) + '}\\par' +
       entry.notes.map((x) => '{\\scriptsize\\textbullet\\ ' + texText(x) + '}\\par').join('') +
-      '\\textbf{IMPLEMENTAÇÃO}\\par\\begin{lstlisting}[basicstyle=\\ttfamily\\tiny]\\n' + entry.code + '\\n\\end{lstlisting}\\end{tcolorbox}'
+      '\\textbf{IMPLEMENTAÇÃO}\\par\\begin{lstlisting}[basicstyle=\\ttfamily\\tiny]\n' + entry.code + '\n\\end{lstlisting}\\end{tcolorbox}'
     ).join('\n');
     return '\\section{' + texText(sheet.title) + '}\\textit{' + texText(sheet.subtitle) + '}\\par\\smallskip' +
       '\\begin{minipage}[t]{0.49\\linewidth}\\textbf{LEMBRETES}\\begin{itemize}\\scriptsize' + facts + '\\end{itemize}\\end{minipage}' +
