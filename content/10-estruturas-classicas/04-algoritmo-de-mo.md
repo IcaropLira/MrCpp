@@ -16,7 +16,7 @@ Ordene consultas pelo bloco de l; dentro do bloco, ordene r alternando a direç�
 
 O exemplo comprime os valores para indexar frequências e mantém distintos ao inserir/remover ocorrências. Consultas são inclusivas.
 
-\`\`\`cpp
+```cpp
 struct Query { int l, r, id; };
 
 vector<int> mo_distinct(vector<int> a, vector<Query> qs) {
@@ -53,7 +53,7 @@ vector<int> mo_distinct(vector<int> a, vector<Query> qs) {
     }
     return ans;
 }
-\`\`\`
+```
 
 Antes de chamar, atribua id = índice original a cada consulta e garanta 0 <= l <= r < n.
 
