@@ -21,11 +21,33 @@ function texText(s: string): string {
     '&': slash + '&',
     '_': slash + '_',
     '~': slash + 'textasciitilde{}',
-    '^': slash + 'textasciicircum{}'
+    '^': slash + 'textasciicircum{}',
+    '∞': slash + 'ensuremath{\\infty}',
+    '−': slash + 'ensuremath{-}',
+    '·': slash + 'ensuremath{\\cdot}',
+    '≤': slash + 'ensuremath{\\le}',
+    '≥': slash + 'ensuremath{\\ge}',
+    '×': slash + 'ensuremath{\\times}',
+    '√': slash + 'ensuremath{\\sqrt{}}',
+    'α': slash + 'ensuremath{\\alpha}',
+    'β': slash + 'ensuremath{\\beta}',
+    'π': slash + 'ensuremath{\\pi}',
+    'θ': slash + 'ensuremath{\\theta}',
+    'ε': slash + 'ensuremath{\\varepsilon}',
+    '⊕': slash + 'ensuremath{\\oplus}',
+    '→': slash + 'ensuremath{\\to}',
+    '²': slash + 'ensuremath{^2}',
+    '³': slash + 'ensuremath{^3}',
+    '≠': slash + 'ensuremath{\\ne}',
+    '∑': slash + 'ensuremath{\\sum}',
+    '∏': slash + 'ensuremath{\\prod}',
+    '∈': slash + 'ensuremath{\\in}',
+    '∉': slash + 'ensuremath{\\notin}',
+    '∪': slash + 'ensuremath{\\cup}',
+    '∩': slash + 'ensuremath{\\cap}'
   };
-  return s.replace(/[\\{}#$%&_~^]/g, (ch) => replacements[ch] ?? ch);
+  return s.replace(/[\\{}#$%&_~^∞−·≤≥×√αβπθε⊕→²³≠∑∏∈∉∪∩]/g, (ch) => replacements[ch] ?? ch);
 }
-
 function texInline(s: string): string {
   return s.split(/(\$[^$]+\$)/g).map((part) => {
     if (part.startsWith('$') && part.endsWith('$')) return part;
@@ -179,7 +201,7 @@ function referenceSheetsHtml(): string {
 
 export function buildAlmanacHtml(sections: Section[], title: string, author: string): string {
   const topics = sections.reduce((n, s) => n + s.topics.length, 0);
-  const toc = '<section class="contents"><h2>Índice</h2><ol>' + sections.map((s) => '<li>' + esc(s.title) + '</li>').join('') + '</ol></section>';
+  const toc = '<section class="contents"><h2>Índice</h2><ol>' + sections.map((s) => '<li>' + esc(s.title) + '</li>').join('') + almanacSheets.map((s) => '<li>' + esc(s.title) + ' — fichas e variantes</li>').join('') + '</ol></section>';
   const body = sections.map((s) => '<section class="chapter"><h2>' + esc(s.title) + '</h2>' +
     '<div class="entries">' + s.topics.map(compactTopicHtml).join('') + '</div></section>').join('');
   return '<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>' + esc(title) +
