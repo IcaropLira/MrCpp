@@ -13,7 +13,7 @@ Quando precisamos resolver a^x = b (mod p), com p primo e a não nulo módulo p.
 ## Código
 
 ~~~cpp
-long long discrete_log(long long a, long long b, long long p) {
+long long modpow_bsgs(long long a, long long e, long long mod) {\n    long long r = 1;\n    for (; e; e >>= 1, a = a * a % mod)\n        if (e & 1) r = r * a % mod;\n    return r;\n}\n\nlong long discrete_log(long long a, long long b, long long p) {
     a %= p; b %= p;
     if (b == 1) return 0;
     if (a == 0) return b == 0 ? 1 : -1;
@@ -26,7 +26,7 @@ long long discrete_log(long long a, long long b, long long p) {
         cur = cur * a % p;
     }
 
-    long long factor = modpow(a, (p - 1 - m % (p - 1)) % (p - 1));
+    long long factor = modpow_bsgs(a, (p - 1 - m % (p - 1)) % (p - 1), p);
     cur = b;
     for (long long i = 0; i <= m; i++) {
         if (baby.count(cur)) return i * m + baby[cur];
