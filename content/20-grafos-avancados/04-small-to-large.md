@@ -18,7 +18,7 @@ Cada subárvore mantém um contêiner. Reaproveitamos o contêiner da maior sub�
 
 ~~~cpp
 vector<vector<int>> g;
-vector<int> a, ans, sz;
+vector<int> a, ans, sz, best;
 vector<map<int,int>> bag;
 
 void dfs(int u, int p) {
@@ -32,22 +32,24 @@ void dfs(int u, int p) {
     }
 
     // Reaproveita o contêiner da maior subárvore.
-    if (heavy != -1) bag[u].swap(bag[heavy]);
+    if (heavy != -1) {
+        bag[u].swap(bag[heavy]);
+        best[u] = best[heavy];
+    }
 
-    bag[u][a[u]]++;
+    best[u] = max(best[u], ++bag[u][a[u]]);
     for (int v : g[u]) if (v != p && v != heavy) {
-        for (auto [value, freq] : bag[v])
+        for (auto [value, freq] : bag[v]) {
             bag[u][value] += freq;
+            best[u] = max(best[u], bag[u][value]);
+        }
         bag[v].clear();
     }
 
-    int best = 0;
-    for (auto [value, freq] : bag[u])
-        best = max(best, freq);
-    ans[u] = best; // maior frequência na subárvore de u
+    ans[u] = best[u]; // maior frequência na subárvore de u
 }
 
-// Inicialize g, a, ans(n), sz(n) e bag(n);
+// Inicialize g, a, ans(n), sz(n), best(n) e bag(n);
 // chame dfs(raiz, -1).
 ~~~
 
