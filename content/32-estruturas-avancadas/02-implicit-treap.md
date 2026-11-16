@@ -91,7 +91,7 @@ struct ImplicitTreap {
         root = merge(a, merge(b, c));
     }
 
-    long long query_sum(P& root, int l, int r) { // [l,r)
+    void erase(P& root, int pos) {\n        P a, b, c;\n        split(root, pos, a, b);\n        split(b, 1, b, c);\n        delete b;\n        root = merge(a, c);\n    }\n\n    int kth(P t, int k) { // k-th elemento, 0-based\n        assert(t && 0 <= k && k < size(t));\n        push(t);\n        int leftSize = size(t->l);\n        if (k < leftSize) return kth(t->l, k);\n        if (k == leftSize) return t->val;\n        return kth(t->r, k - leftSize - 1);\n    }\n\n    long long query_sum(P& root, int l, int r) { // [l,r)
         P a, b, c;
         split(root, l, a, b);
         split(b, r - l, b, c);
