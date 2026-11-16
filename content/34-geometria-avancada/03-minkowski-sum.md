@@ -27,6 +27,7 @@ __int128 cross(Point a, Point b) {
 }
 
 vector<Point> minkowski(vector<Point> A, vector<Point> B) {
+    if (A.empty() || B.empty()) return {};
     auto normalize = [](vector<Point>& p) {
         if (p.size() > 1 && p.front().x == p.back().x &&
             p.front().y == p.back().y) p.pop_back();
