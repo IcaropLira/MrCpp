@@ -110,6 +110,47 @@ export async function downloadDirectPdf(sections: Section[], title: string, auth
     }
     y += size * .25;
   };
+  const code = (value: string, size: number) => {
+    const font = Math.max(5, size);
+    const lineHeight = font * 1.4;
+    const maxWidth = (cw - 8) * scale;
+    ctx.font = font * scale + 'px monospace';
+    ctx.fillStyle = '#263445';
+    for (const sourceLine of value.replace(/\\r\\n?/g, '\\n').split('\\n')) {
+      const line = sourceLine.replace(/\\t/g, '  ');
+      if (!line) {
+        if (y + lineHeight > h - margin) advance();
+        y += lineHeight;
+        continue;
+      }
+      let rest = line;
+      while (rest.length) {
+        let end = 1;
+        while (end <= rest.length && ctx.measureText(rest.slice(0, end)).width <= maxWidth) end++;
+        if (end <= rest.length) end = Math.max(1, end - 1);
+        const part = rest.slice(0, end);
+        if (y + lineHeight > h - margin) advance();
+        const x = (margin + col * (cw + gap)) * scale;
+        ctx.fillText(part, x, y * scale);
+        y += lineHeight;
+        rest = rest.slice(end);
+      }
+    }
+    y += font * 0.35;
+  };
+  const blocksOf = (body: string): Array<{ code: boolean; value: string }> => {
+    const blocks: Array<{ code: boolean; value: string }> = [];
+    const fence = /^(`{3,}|~{3,})[^\\r\\n]*\\r?\\n([\\s\\S]*?)^\\1[ \\t]*$/gm;
+    let last = 0;
+    for (const match of body.matchAll(fence)) {
+      const index = match.index ?? 0;
+      if (index > last) blocks.push({ code: false, value: body.slice(last, index) });
+      blocks.push({ code: true, value: (match[2] ?? '').replace(/^\\r?\\n|\\r?\\n$/g, '') });
+      last = index + match[0].length;
+    }
+    if (last < body.length) blocks.push({ code: false, value: body.slice(last) });
+    return blocks;
+  };
   begin();
   if (o.cover) {
     ctx.fillStyle = '#d41478'; ctx.fillRect(margin * scale, h * .25 * scale, 5 * scale, h * .35 * scale);
@@ -131,31 +172,12 @@ export async function downloadDirectPdf(sections: Section[], title: string, auth
       text(topic.title, o.fontSize + 1, '#252b36', true);
       text([topic.complexity, topic.tags.join(' / ')].filter(Boolean).join(' · '), Math.max(6, o.fontSize - 2), '#777f8b');
       if (topic.summary) text(topic.summary, o.fontSize, '#4b5563');
-      const blocks = topic.body.split(/(?:```|~~~)(?:cpp|c\+\+|c|python)?\s*\n/);
-      blocks.forEach((block, i) => {
-        const value = i % 2 ? (block.split(/(?:```|~~~)/)[0] ?? '').trim() : clean(block);
-        if (value) {
-          const mono = i % 2 === 1;
-          const size = mono ? Math.max(5, o.fontSize - 2) : o.fontSize;
-          if (mono) {
-            ctx.font = size * scale + 'px monospace';
-            const max = (cw - 8) * scale;
-            const estimatedLines = value.split('\n').reduce((total, line) => {
-              let current = '';
-              let count = 0;
-              for (const word of line.split(/\s+/)) {
-                const next = current ? current + ' ' + word : word;
-                if (current && ctx.measureText(next).width > max) { count++; current = word; }
-                else current = next;
-              }
-              return total + Math.max(1, count + (current ? 1 : 0));
-            }, 0);
-            const blockHeight = estimatedLines * size * 1.65;
-            if (blockHeight <= h - margin * 2 && y + blockHeight > h - margin) advance();
-          }
-          text(value, size, mono ? '#263445' : '#303642', false, mono);
-        }
-      });
+      for (const block of blocksOf(topic.body)) {
+        const value = block.code ? block.value : clean(block.value);
+        if (!value) continue;
+        if (block.code) code(value, Math.max(5, o.fontSize - 2));
+        else text(value, o.fontSize, '#303642');
+      }
       y += 4;
     }
   }
