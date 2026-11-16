@@ -37,9 +37,10 @@ struct VirtualTree {
         });
         marked.erase(unique(marked.begin(), marked.end()), marked.end());
 
-        int k = marked.size();
+        vector<int> base = marked;
+        int k = base.size();
         for (int i = 1; i < k; i++)
-            marked.push_back(lca(marked[i - 1], marked[i]));
+            marked.push_back(lca(base[i - 1], base[i]));
 
         sort(marked.begin(), marked.end(), [&](int a, int b) {
             return tin[a] < tin[b];
