@@ -20,10 +20,19 @@ Hierholzer constrói ciclos/trilhas e os incorpora usando uma pilha. Remova cada
 vector<int> euler_dirigido(int n, vector<vector<pair<int,int>>>& g,
                            vector<int> indeg, vector<int> outdeg,
                            int s, int m) {
-    // g[u] contém {v, id}; cada aresta deve ter ID único.
-    for (int u = 0; u < n; u++)
-        if (outdeg[u] - indeg[u] > 0 && u != s) return {};
-    if (outdeg[s] - indeg[s] != 1 && outdeg[s] != indeg[s]) return {};
+    // g[u] contém {v, id}; cada aresta tem ID único.
+    int ini = 0, fim = 0;
+    for (int u = 0; u < n; u++) {
+        int d = outdeg[u] - indeg[u];
+        if (d == 1) ini++;
+        else if (d == -1) fim++;
+        else if (d != 0) return {};
+    }
+
+    bool circuito = (ini == 0 && fim == 0);
+    if (!circuito && !(ini == 1 && fim == 1)) return {};
+    if (s < 0 || s >= n || outdeg[s] == 0 && m > 0) return {};
+    if (!circuito && outdeg[s] - indeg[s] != 1) return {};
 
     vector<int> ptr(n), st = {s}, path;
     vector<char> used(m, false);
@@ -49,7 +58,7 @@ vector<int> euler_dirigido(int n, vector<vector<pair<int,int>>>& g,
 
 ## Cuidados
 
-- O código acima verifica os graus para um caminho aberto com início s; para circuito, todos os graus devem ser iguais.
+- Para circuito, todos os graus de entrada e saída devem ser iguais; escolha s em qualquer vértice com aresta. Para caminho aberto, s deve ser o único vértice com saída excedente.
 - Também é necessário garantir que todas as arestas estejam na mesma componente alcançável relevante. A checagem final path.size() == E+1 detecta arestas não usadas.
 - Para grafo não dirigido, cada aresta aparece nas listas dos dois extremos com o mesmo ID e o controle used[id] evita usá-la duas vezes.
 - Para multigrafos, IDs únicos por aresta são obrigatórios.
