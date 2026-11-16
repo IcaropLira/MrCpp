@@ -11,6 +11,7 @@ Este documento registra o inventário inicial obtido do índice de código do re
 - [ ] Conferir individualmente todos os itens abaixo contra o conteúdo do MrCpp.
 - [ ] Portar o que estiver ausente, mantendo autoria/referências e adaptando para snippets autocontidos.
 - [ ] Compilar e testar cada implementação portada.
+- [x] Criar fichas de SCC, 2-SAT, caminho euleriano e Hopcroft-Karp (primeira revisão estática realizada).
 - [ ] Registrar cobertura final por algoritmo e variante.
 
 ## Grafos
@@ -34,8 +35,8 @@ Fonte — UFCG:
 
 MrCpp:
 - Já existentes antes desta etapa: DSU, LCA, HLD, Centroid Decomposition, DFS/BFS, componentes, bipartido, ciclos, ordenação topológica e MST.
-- Incluídos nesta etapa: pontes e pontos de articulação, Dinic, fluxo de custo mínimo e modelagem com vértices auxiliares.
-- Pendentes de conferência/possível inclusão: SCC, Block-Cut Tree, 2-SAT, caminhos eulerianos, matching bipartido, Link-Cut Tree e variantes específicas do código-fonte.
+- Incluídos nesta etapa: pontes e pontos de articulação, Dinic, fluxo de custo mínimo, SCC (Kosaraju), 2-SAT, caminho euleriano, matching bipartido (Hopcroft-Karp), Small to Large e modelagem com vértices auxiliares.
+- Pendentes de conferência/possível inclusão: Block-Cut Tree, Link-Cut Tree e variantes específicas do código-fonte.
 
 ## Estruturas de dados
 
