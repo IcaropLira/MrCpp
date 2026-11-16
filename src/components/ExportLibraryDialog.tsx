@@ -4,6 +4,7 @@ import ReactMarkdown from 'react-markdown';
 import rehypeHighlight from 'rehype-highlight';
 import remarkGfm from 'remark-gfm';
 import type { Section, Topic } from '../types';
+import { downloadDirectPdf } from '../lib/directPdf';
 import { buildAlmanacHtml, buildAlmanacLatex } from '../lib/almanacExport';
 
 type Props = { sections: Section[]; onClose: () => void };
@@ -35,6 +36,11 @@ export default function ExportLibraryDialog({ sections, onClose }: Props) {
   const [orientation, setOrientation] = useState<'landscape' | 'portrait'>('landscape');
   const [columns, setColumns] = useState<'1' | '2' | '3'>('2');
   const [fontSize, setFontSize] = useState('9');
+  const [page, setPage] = useState<'A4' | 'A5' | 'Letter'>('A4');
+  const [margin, setMargin] = useState('12');
+  const [cover, setCover] = useState(true);
+  const [index, setIndex] = useState(true);
+  const [pageNumbers, setPageNumbers] = useState(true);
   const [title, setTitle] = useState('Mr. C++ — Minha biblioteca');
   const [author, setAuthor] = useState('Ícaro Pinto Lira');
   const [includeTodo, setIncludeTodo] = useState(false);
@@ -59,11 +65,17 @@ export default function ExportLibraryDialog({ sections, onClose }: Props) {
     const url = URL.createObjectURL(new Blob([source], { type: 'application/x-tex;charset=utf-8' }));
     const a = document.createElement('a'); a.href = url; a.download = 'mr-cpp-biblioteca.tex'; a.click(); URL.revokeObjectURL(url);
   };
-  const exportPdf = () => {
-    const popup = window.open('', '_blank');
-    if (!popup) { alert('Permita pop-ups para gerar o PDF.'); return; }
-    popup.document.open(); popup.document.write(format === 'almanac' ? almanacHtml() : html()); popup.document.close();
+  const exportPdf = async () => {
+    try {
+      await downloadDirectPdf(chosen, title, author, {
+        page, orientation, columns: Number(columns) as 1 | 2 | 3,
+        margin: Number(margin), fontSize: Number(fontSize), cover, index, pageNumbers
+      });
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Não foi possível gerar o PDF.');
+    }
   };
+  void html;
 
   return <div className="export-overlay" role="presentation" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
     <section className="export-dialog" role="dialog" aria-modal="true" aria-labelledby="export-title">
@@ -71,18 +83,25 @@ export default function ExportLibraryDialog({ sections, onClose }: Props) {
       <div className="k">~/lib $ make pdf</div><h2 id="export-title">Montar minha biblioteca</h2>
       <p className="export-intro">O almanaque gera fichas compactas com fórmulas, diagramas e códigos. A biblioteca mantém o conteúdo explicativo completo.</p>
       <label className="export-field">Formato de exportação<select value={format} onChange={(e) => setFormat(e.target.value as "library"|"almanac")}><option value="almanac">Almanaque visual — compacto</option><option value="library">Biblioteca explicativa — conteúdo integral</option></select></label>
-      {format === "almanac" && <p className="export-intro">A prévia PDF usa diagramas vetoriais SVG; o arquivo LaTeX preserva os desenhos TikZ originais e pode ser compilado com pdfLaTeX.</p>}
+      {format === "almanac" && <p className="export-intro">O PDF é montado diretamente no app, sem abrir a impressão do navegador. Você pode ajustar papel, orientação, colunas, margens, fonte, capa e índice.</p>}
       <label className="export-field">Nome da biblioteca<input value={title} onChange={(e) => setTitle(e.target.value)} /></label>
       <label className="export-field">Autoria<input value={author} onChange={(e) => setAuthor(e.target.value)} /></label>
-      {format === "library" && <div className="export-options">
-        <label>Folha<select value={orientation} onChange={(e) => setOrientation(e.target.value as 'landscape'|'portrait')}><option value="landscape">A4 — paisagem</option><option value="portrait">A4 — retrato</option></select></label>
+      <div className="export-options">
+        <label>Papel<select value={page} onChange={(e) => setPage(e.target.value as 'A4'|'A5'|'Letter')}><option value="A4">A4</option><option value="A5">A5</option><option value="Letter">Carta (Letter)</option></select></label>
+        <label>Orientação<select value={orientation} onChange={(e) => setOrientation(e.target.value as 'landscape'|'portrait')}><option value="landscape">Paisagem</option><option value="portrait">Retrato</option></select></label>
         <label>Colunas<select value={columns} onChange={(e) => setColumns(e.target.value as '1'|'2'|'3')}><option value="1">1 coluna</option><option value="2">2 colunas</option><option value="3">3 colunas</option></select></label>
-        <label>Texto<select value={fontSize} onChange={(e) => setFontSize(e.target.value)}><option value="8">Compacto</option><option value="9">Padrão</option><option value="10">Confortável</option></select></label>
-      </div>}
+        <label>Fonte<select value={fontSize} onChange={(e) => setFontSize(e.target.value)}><option value="7">Muito compacta</option><option value="8">Compacta</option><option value="9">Padrão</option><option value="10">Confortável</option><option value="11">Grande</option></select></label>
+        <label>Margens (mm)<select value={margin} onChange={(e) => setMargin(e.target.value)}><option value="6">6 mm</option><option value="9">9 mm</option><option value="12">12 mm</option><option value="16">16 mm</option><option value="20">20 mm</option></select></label>
+      </div>
+      <div className="export-options">
+        <label><input type="checkbox" checked={cover} onChange={(e) => setCover(e.target.checked)} /> Capa</label>
+        <label><input type="checkbox" checked={index} onChange={(e) => setIndex(e.target.checked)} /> Índice</label>
+        <label><input type="checkbox" checked={pageNumbers} onChange={(e) => setPageNumbers(e.target.checked)} /> Número das páginas</label>
+      </div>
       <label className="export-check"><input type="checkbox" checked={includeTodo} onChange={(e) => setIncludeTodo(e.target.checked)} /> Incluir tópicos em desenvolvimento</label>
       <div className="export-select-head"><b>Conteúdo</b><span>{chosen.reduce((n,s)=>n+s.topics.length,0)} tópicos selecionados</span><button onClick={() => setSelected(selected.length === sections.length ? [] : sections.map((s)=>s.slug))}>{selected.length === sections.length ? 'Limpar' : 'Selecionar tudo'}</button></div>
       <div className="export-sections">{sections.map((s) => <label key={s.slug}><input type="checkbox" checked={selected.includes(s.slug)} onChange={() => toggle(s.slug)} /><span>{String(s.order).padStart(2,'0')} · {s.title}</span><small>{s.topics.length}</small></label>)}</div>
-      <div className="export-actions"><button className="secondary" onClick={downloadTex} disabled={!chosen.length}>Baixar LaTeX compilável (.tex)</button><button className="primary" onClick={exportPdf} disabled={!chosen.length}>Imprimir / salvar PDF ↗</button></div>
+      <div className="export-actions"><button className="secondary" onClick={downloadTex} disabled={!chosen.length}>Baixar LaTeX compilável (.tex)</button><button className="primary" onClick={exportPdf} disabled={!chosen.length}>Gerar e baixar PDF ↓</button></div>
     </section>
   </div>;
 }
