@@ -70,7 +70,7 @@ MrCpp já possui fichas para DSU, Treap, sqrt decomposition, Mo, HLD, Centroid D
 
 ## Strings
 
-MrCpp adicionou nesta frente: KMP/prefix function, Z-function, Manacher, Aho-Corasick, Suffix Array + LCP e Suffix Automaton. Ainda faltam hash/rolling hash e a comparação item a item com os fontes da UFCG.
+MrCpp adicionou nesta frente: KMP/prefix function, Z-function, Manacher, Aho-Corasick, Suffix Array + LCP, Suffix Automaton e Rolling Hash duplo. Ainda faltam hash/rolling hash e a comparação item a item com os fontes da UFCG.
 
 Fonte — UFCG:
 - string/kmp.cpp
