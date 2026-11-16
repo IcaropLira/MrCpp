@@ -113,7 +113,6 @@ export async function downloadDirectPdf(sections: Section[], title: string, auth
   const code = (value: string, size: number) => {
     const font = Math.max(5, size);
     const lineHeight = font * 1.4;
-    const x = (margin + col * (cw + gap)) * scale;
     const maxWidth = (cw - 8) * scale;
     ctx.font = font * scale + 'px monospace';
     ctx.fillStyle = '#263445';
@@ -125,17 +124,16 @@ export async function downloadDirectPdf(sections: Section[], title: string, auth
         continue;
       }
       let rest = line;
-      let first = true;
       while (rest.length) {
         let end = 1;
         while (end <= rest.length && ctx.measureText(rest.slice(0, end)).width <= maxWidth) end++;
         if (end <= rest.length) end = Math.max(1, end - 1);
         const part = rest.slice(0, end);
         if (y + lineHeight > h - margin) advance();
+        const x = (margin + col * (cw + gap)) * scale;
         ctx.fillText(part, x, y * scale);
         y += lineHeight;
         rest = rest.slice(end);
-        first = false;
       }
     }
     y += font * 0.35;
