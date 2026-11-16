@@ -140,10 +140,10 @@ export async function downloadDirectPdf(sections: Section[], title: string, auth
           if (mono) {
             ctx.font = size * scale + 'px monospace';
             const max = (cw - 8) * scale;
-            const estimatedLines = value.split('\\n').reduce((total, line) => {
+            const estimatedLines = value.split('\n').reduce((total, line) => {
               let current = '';
               let count = 0;
-              for (const word of line.split(/\\s+/)) {
+              for (const word of line.split(/\s+/)) {
                 const next = current ? current + ' ' + word : word;
                 if (current && ctx.measureText(next).width > max) { count++; current = word; }
                 else current = next;
