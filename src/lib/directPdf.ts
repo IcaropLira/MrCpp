@@ -133,7 +133,7 @@ export async function downloadDirectPdf(sections: Section[], title: string, auth
       if (topic.summary) text(topic.summary, o.fontSize, '#4b5563');
       const blocks = topic.body.split(/(?:```|~~~)(?:cpp|c\+\+|c|python)?\s*\n/);
       blocks.forEach((block, i) => {
-        const value = i % 2 ? block.split(/(?:```|~~~)/)[0].trim() : clean(block);
+        const value = i % 2 ? (block.split(/(?:```|~~~)/)[0] ?? '').trim() : clean(block);
         if (value) text(value, i % 2 ? Math.max(5, o.fontSize - 2) : o.fontSize, i % 2 ? '#263445' : '#303642', false, i % 2 === 1);
       });
       y += 4;
