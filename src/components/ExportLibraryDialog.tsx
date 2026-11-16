@@ -83,7 +83,7 @@ export default function ExportLibraryDialog({ sections, onClose }: Props) {
       <div className="k">~/lib $ make pdf</div><h2 id="export-title">Montar minha biblioteca</h2>
       <p className="export-intro">O almanaque gera fichas compactas com fórmulas, diagramas e códigos. A biblioteca mantém o conteúdo explicativo completo.</p>
       <label className="export-field">Formato de exportação<select value={format} onChange={(e) => setFormat(e.target.value as "library"|"almanac")}><option value="almanac">Almanaque visual — compacto</option><option value="library">Biblioteca explicativa — conteúdo integral</option></select></label>
-      {format === "almanac" && <p className="export-intro">A prévia PDF usa diagramas vetoriais SVG; o arquivo LaTeX preserva os desenhos TikZ originais e pode ser compilado com pdfLaTeX.</p>}
+      {format === "almanac" && <p className="export-intro">O PDF é montado diretamente no app, sem abrir a impressão do navegador. Você pode ajustar papel, orientação, colunas, margens, fonte, capa e índice.</p>}
       <label className="export-field">Nome da biblioteca<input value={title} onChange={(e) => setTitle(e.target.value)} /></label>
       <label className="export-field">Autoria<input value={author} onChange={(e) => setAuthor(e.target.value)} /></label>
       <div className="export-options">
