@@ -1,75 +1,104 @@
 ---
 title: Fluxo de custo mínimo
-summary: Em breve.
+summary: Envia fluxo máximo limitado minimizando o custo total com potenciais e Dijkstra.
 status: done
-complexity: tags:
-tags: ---
+complexity: O(F E log V) após inicialização dos potenciais
+tags: fluxo, custo minimo, potentials, dijkstra
 ---
 
-## Ideia e quando usar
+## Quando usar
 
-Fluxo de custo mínimo é uma técnica/estrutura que aparece quando o problema tem a seguinte necessidade: reconhecer o padrão pedido no enunciado, representar os estados relevantes e escolher uma operação que possa ser executada dentro do limite de tempo. Não decore só o código: identifique **o que cada variável significa**, qual é a condição de validade e qual é o custo de cada operação.
+Quando cada aresta tem capacidade e custo por unidade, e queremos enviar até F unidades de s para t com custo mínimo. Aparece em atribuição, emparelhamento ponderado e alocação.
 
-## Como pensar na solução
+## Ideia
 
-1. **Defina a entrada e a resposta.** Escreva em uma frase o que precisa ser calculado e quais restrições importam (`n`, número de arestas, tamanho das strings, valores máximos).
-2. **Escolha a representação.** Vetor, lista de adjacência, estado de DP, estrutura de dados ou ordenação devem refletir diretamente as operações necessárias.
-3. **Mantenha um invariante.** Antes de cada iteração/consulta, diga o que a estrutura representa. Depois da operação, prove que continua representando isso.
-4. **Analise a complexidade.** Conte quantas vezes cada elemento/aresta/estado é processado. Uma solução correta que faz `O(n²)` pode falhar para `n=2e5`.
-5. **Trate os casos-limite.** Entrada vazia ou mínima, duplicatas, valores negativos, grafo desconexo, ciclos, limites de índice e overflow.
+O custo residual pode ter arestas negativas. Inicialize potenciais com Bellman-Ford a partir de s; depois use Dijkstra com custos reduzidos c'(u,v)=c(u,v)+pot[u]-pot[v], que são não negativos quando não há ciclo negativo relevante. Após cada caminho mínimo, atualize os potenciais dos vértices alcançados e aumente o fluxo pelo gargalo.
 
-## Modelo de implementação
+## Código
 
-O esqueleto depende do problema concreto; não existe um único código que resolva todas as variantes. Em C++ competitivo, mantenha a implementação enxuta e explícita, no estilo deste material:
-
-```cpp
-#include <bits/stdc++.h>
-using namespace std;
-using ll = long long;
-
-int main() {
-    ios::sync_with_stdio(false);
-    cin.tie(nullptr);
-
+~~~cpp
+struct MinCostMaxFlow {
+    struct Edge { int to, rev; long long cap, cost; };
     int n;
-    cin >> n;
-    vector<int> a(n);
-    for (int i = 0; i < n; i++) cin >> a[i];
+    vector<vector<Edge>> g;
+    const long long INF = (1LL << 62);
 
-    // 1. Inicialize a estrutura/estado.
-    // 2. Processe os dados mantendo o invariante.
-    // 3. Extraia e imprima a resposta.
-    return 0;
-}
-```
+    MinCostMaxFlow(int n) : n(n), g(n) {}
 
-Não copie o esqueleto literalmente quando a técnica exigir DFS, recursão, uma estrutura persistente ou várias consultas. Use o código específico da seção como base e adapte os tipos aos limites do enunciado.
+    void add_edge(int u, int v, long long cap, long long cost) {
+        Edge a{v, (int)g[v].size(), cap, cost};
+        Edge b{u, (int)g[u].size(), 0, -cost};
+        g[u].push_back(a);
+        g[v].push_back(b);
+    }
 
-## Complexidade: como conferir
+    pair<long long,long long> flow(int s, int t, long long maxf) {
+        vector<long long> pot(n, INF);
+        pot[s] = 0;
 
-- Um laço sobre `n` elementos é `O(n)`.
-- Dois laços aninhados sobre `n` normalmente são `O(n²)`.
-- Ordenar costuma custar `O(n log n)`.
-- Uma busca binária custa `O(log n)`; fazer isso para cada elemento dá `O(n log n)`.
-- Em grafos, a DFS/BFS com lista de adjacência custa `O(n+m)`.
-- Uma estrutura de consultas pode ter custo de construção diferente do custo de cada consulta; informe os dois.
+        // Bellman-Ford inicial para permitir custos negativos.
+        for (int it = 0; it < n - 1; it++) {
+            bool change = false;
+            for (int u = 0; u < n; u++) if (pot[u] < INF)
+                for (const Edge& e : g[u])
+                    if (e.cap > 0 && pot[e.to] > pot[u] + e.cost) {
+                        pot[e.to] = pot[u] + e.cost;
+                        change = true;
+                    }
+            if (!change) break;
+        }
+        for (auto& x : pot) if (x == INF) x = 0;
 
-A complexidade indicada no cabeçalho é uma referência para a implementação padrão. Variantes do mesmo algoritmo podem ter custos diferentes conforme a estrutura auxiliar, o domínio dos valores e as operações exigidas.
+        long long sent = 0, cost = 0;
+        while (sent < maxf) {
+            vector<long long> dist(n, INF);
+            vector<int> pv(n, -1), pe(n, -1);
+            priority_queue<pair<long long,int>,
+                vector<pair<long long,int>>, greater<pair<long long,int>>> pq;
+            dist[s] = 0;
+            pq.push({0, s});
 
-## Erros comuns
+            while (!pq.empty()) {
+                auto [d, u] = pq.top(); pq.pop();
+                if (d != dist[u]) continue;
+                for (int i = 0; i < (int)g[u].size(); i++) {
+                    const Edge& e = g[u][i];
+                    if (!e.cap) continue;
+                    long long nd = d + e.cost + pot[u] - pot[e.to];
+                    if (nd < dist[e.to]) {
+                        dist[e.to] = nd;
+                        pv[e.to] = u;
+                        pe[e.to] = i;
+                        pq.push({nd, e.to});
+                    }
+                }
+            }
 
-- Usar a técnica só porque o nome aparece no enunciado, sem verificar suas pré-condições.
-- Não decidir se os intervalos são inclusivos `[l,r]` ou semiabertos `[l,r)`.
-- Misturar índices `0..n-1` com índices `1..n`.
-- Usar `int` para somas, distâncias ou produtos que podem ultrapassar `2^31-1`; use `long long` quando necessário.
-- Esquecer de limpar vetores globais entre casos de teste.
-- Não testar duplicatas, casos mínimos e o maior caso permitido.
+            if (dist[t] == INF) break;
+            for (int v = 0; v < n; v++)
+                if (dist[v] < INF) pot[v] += dist[v];
 
-## Checklist de prova/contest
+            long long add = maxf - sent;
+            for (int v = t; v != s; v = pv[v])
+                add = min(add, g[pv[v]][pe[v]].cap);
 
-- [ ] Sei explicar o que representa cada estado/estrutura?
-- [ ] Sei por que a transição/operação é correta?
-- [ ] Sei justificar a complexidade total, não apenas de uma operação?
-- [ ] Os limites e sentinelas estão corretos?
-- [ ] A solução trata o caso mínimo e os empates?
-- [ ] O tipo numérico comporta a resposta máxima?
+            for (int v = t; v != s; v = pv[v]) {
+                Edge& e = g[pv[v]][pe[v]];
+                cost += add * e.cost;
+                e.cap -= add;
+                g[v][e.rev].cap += add;
+            }
+            sent += add;
+        }
+        return {sent, cost};
+    }
+};
+~~~
+
+## Cuidados
+
+- Retorna {fluxo enviado, custo total}; pode enviar menos que maxf se não houver capacidade suficiente.
+- Bellman-Ford inicial pressupõe ausência de ciclos negativos alcançáveis com capacidade residual positiva. Ciclos negativos exigem cancelamento de ciclos ou outra formulação.
+- Depois da primeira fase, custos reduzidos permitem Dijkstra; não rode Dijkstra diretamente nos custos residuais negativos.
+- O custo total pode exceder int; use long long e verifique overflow no produto fluxo*custo.
+- Para atribuição bipartida, modele fonte -> agentes -> tarefas -> sorvedouro com capacidades 1.

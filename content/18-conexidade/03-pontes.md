@@ -84,3 +84,16 @@ A desigualdade é diferente da ponte: para ponte usamos >; para articulação n�
 3. Trate cada componente conexa.
 4. Em multigrafos, ignore a aresta pai pelo id, não todas as arestas para o vértice pai.
 5. Timer e vetores devem ser reinicializados a cada caso de teste.
+
+## Limite da versão recursiva
+
+A DFS acima é O(V+E), mas pode atingir profundidade V em um caminho. Para V próximo de 2e5, a pilha de chamadas pode estourar. Use uma implementação iterativa com pilha explícita ou aumente a stack somente quando o ambiente permitir.
+
+## Depois de encontrar as pontes
+
+- Marque as arestas por ID em isBridge[id].
+- Remova-as e encontre componentes restantes com DFS/BFS.
+- Contraia cada componente em um vértice; cada ponte vira uma aresta da bridge forest.
+- Para pontos de articulação, use low[filho] >= tin[v] em vértices não raiz e conte filhos DFS na raiz.
+
+Não misture os critérios: ponte usa low[filho] > tin[v], articulação usa >=.
