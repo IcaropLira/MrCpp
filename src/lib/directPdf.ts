@@ -49,7 +49,7 @@ function pdf(images: Uint8Array[], w: number, h: number, pxW: number, pxH: numbe
 }
 
 function clean(s: string) {
-  return s.replace(/```[a-zA-Z0-9_+-]*\n([\s\S]*?)```/g, '\n$1\n')
+  return s.replace(/(?:```|~~~)[a-zA-Z0-9_+-]*\n([\s\S]*?)(?:```|~~~)/g, '\n$1\n')
     .replace(/^#{1,6}\s*/gm, '').replace(/\*\*|__|~~|\*/g, '')
     .replace(/\$([^$]+)\$/g, '$1').replace(/^`|`$/gm, '')
     .replace(/^\s*[-*+]\s+/gm, '• ').trim();
@@ -126,7 +126,7 @@ export async function downloadDirectPdf(sections: Section[], title: string, auth
       text(topic.title, o.fontSize + 1, '#252b36', true);
       text([topic.complexity, topic.tags.join(' / ')].filter(Boolean).join(' · '), Math.max(6, o.fontSize - 2), '#777f8b');
       if (topic.summary) text(topic.summary, o.fontSize, '#4b5563');
-      const blocks = topic.body.split(/```(?:cpp|c\+\+|c|python)?\s*\n/);
+      const blocks = topic.body.split(/(?:```|~~~)(?:cpp|c\+\+|c|python)?\s*\n/);
       blocks.forEach((block, i) => {
         const value = i % 2 ? block.split(/```/)[0].trim() : clean(block);
         if (value) text(value, i % 2 ? Math.max(5, o.fontSize - 2) : o.fontSize, i % 2 ? '#263445' : '#303642', false, i % 2 === 1);
