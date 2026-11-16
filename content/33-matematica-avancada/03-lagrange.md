@@ -29,7 +29,7 @@ long long lagrange(const vector<long long>& y, long long x) {
     if (0 <= x && x <= n) return y[x];
 
     vector<long long> pref(n + 2, 1), suff(n + 2, 1), fact(n + 1, 1);
-    for (int i = 0; i <= n; i++) fact[i] = fact[i - 1 < 0 ? 0 : i - 1] * (i ? i : 1) % MOD;
+    for (int i = 1; i <= n; i++) fact[i] = fact[i - 1] * i % MOD;
     for (int i = 0; i <= n; i++) pref[i + 1] = pref[i] * ((x - i + MOD) % MOD) % MOD;
     for (int i = n; i >= 0; i--) suff[i] = suff[i + 1] * ((x - i + MOD) % MOD) % MOD;
 
