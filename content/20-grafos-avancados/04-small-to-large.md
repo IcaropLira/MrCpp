@@ -59,3 +59,24 @@ void dfs(int u, int p) {
 - Com std::map, cada inserção custa O(log n), resultando em O(n log² n) no pior caso.
 - O exemplo calcula a frequência máxima na subárvore. Adapte o agregado ao problema.
 - Small to Large é uma técnica de merge; DSU on Tree com sack (mantendo a maior subárvore) é uma implementação relacionada, mas não idêntica.
+
+## Como escolher entre Small to Large e Sack
+
+| Situação | Técnica |
+|---|---|
+| Cada nó precisa mesclar um contêiner próprio com os filhos | Small to Large |
+| Há um único estado global de frequências e consultas por subárvore | DSU on Tree (Sack) |
+| A resposta depende de um conjunto de cores/valores e a operação de merge é barata | Ambas podem ser adaptadas |
+
+### Prova do fator logarítmico
+
+Um elemento só é movido quando está no contêiner menor. Depois do merge, o contêiner que o contém tem tamanho pelo menos duas vezes maior. Logo, cada elemento é movido no máximo floor(log2 n) vezes.
+
+Com std::map, cada inserção custa O(log n), então o total é O(n log² n) quando cada elemento é inserido O(log n) vezes. O uso de unordered_map pode reduzir o custo esperado por inserção para O(1), mas não garante pior caso constante.
+
+### Cuidados adicionais
+
+- O contêiner maior deve ser escolhido por tamanho total de elementos representados, não necessariamente pelo número de chaves distintas.
+- Se cada chave guarda uma frequência, ao mesclar some a frequência inteira, não apenas 1.
+- O agregado (máxima frequência, soma ponderada, número de distintos) deve ser atualizado no próprio merge.
+- Se o contêiner guarda conjuntos ordenados, avalie se uma estrutura especializada oferece melhor limite.
