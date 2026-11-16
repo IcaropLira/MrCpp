@@ -5,7 +5,7 @@ import rehypeHighlight from 'rehype-highlight';
 import remarkGfm from 'remark-gfm';
 import type { Section, Topic } from '../types';
 import { downloadDirectPdf } from '../lib/directPdf';
-import { buildAlmanacHtml, buildAlmanacLatex } from '../lib/almanacExport';
+import { buildAlmanacLatex } from '../lib/almanacExport';
 
 type Props = { sections: Section[]; onClose: () => void };
 
@@ -48,8 +48,6 @@ export default function ExportLibraryDialog({ sections, onClose }: Props) {
   const chosen = useMemo(() => sections.filter((s) => selected.includes(s.slug)).map((s) => ({ ...s, topics: s.topics.filter((t) => includeTodo || t.status === 'done') })).filter((s) => s.topics.length), [sections, selected, includeTodo]);
 
   const toggle = (slug: string) => setSelected((old) => old.includes(slug) ? old.filter((x) => x !== slug) : [...old, slug]);
-  const almanacHtml = () => buildAlmanacHtml(chosen, title, author);
-
   const almanacLatex = () => buildAlmanacLatex(chosen, title, author);
 
   const html = () => {

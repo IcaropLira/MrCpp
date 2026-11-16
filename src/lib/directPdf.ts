@@ -35,7 +35,8 @@ function pdf(images: Uint8Array[], w: number, h: number, pxW: number, pxH: numbe
   obj(1, '<< /Type /Catalog /Pages 2 0 R >>');
   obj(2, '<< /Type /Pages /Count ' + n + ' /Kids [' + pageIds.map(x => x + ' 0 R').join(' ') + '] >>');
   images.forEach((bytes, i) => {
-    const p = pageIds[i], c = p + 1, im = p + 2;
+    const p = pageIds[i]!;
+    const c = p + 1, im = p + 2;
     obj(p, '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ' + w + ' ' + h + '] /Resources << /XObject << /Im0 ' + im + ' 0 R >> >> /Contents ' + c + ' 0 R >>');
     const stream = enc.encode('q\n' + w + ' 0 0 ' + h + ' 0 0 cm\n/Im0 Do\nQ');
     obj(c, join(enc.encode('<< /Length ' + stream.length + ' >>\nstream\n'), stream, enc.encode('\nendstream')));
@@ -57,8 +58,10 @@ function clean(s: string) {
 
 export async function downloadDirectPdf(sections: Section[], title: string, author: string, o: DirectPdfOptions) {
   const raw = sizes[o.page];
-  const w = o.orientation === 'landscape' ? raw[1] : raw[0];
-  const h = o.orientation === 'landscape' ? raw[0] : raw[1];
+  const pageWidth = raw[0] ?? 595.28;
+  const pageHeight = raw[1] ?? 841.89;
+  const w = o.orientation === 'landscape' ? pageHeight : pageWidth;
+  const h = o.orientation === 'landscape' ? pageWidth : pageHeight;
   const scale = 2, canvas = document.createElement('canvas');
   canvas.width = Math.round(w * scale); canvas.height = Math.round(h * scale);
   const ctx = canvas.getContext('2d');
@@ -80,7 +83,9 @@ export async function downloadDirectPdf(sections: Section[], title: string, auth
       ctx.fillStyle = '#777'; ctx.font = 13 * scale + 'px Arial'; ctx.textAlign = 'right';
       ctx.fillText(String(page), (w - margin) * scale, (h - 12) * scale); ctx.textAlign = 'left';
     }
-    const b64 = canvas.toDataURL('image/jpeg', .9).split(',')[1], bin = atob(b64), bytes = new Uint8Array(bin.length);
+    const b64 = canvas.toDataURL('image/jpeg', .9).split(',')[1];
+    if (!b64) throw new Error('Não foi possível codificar a página do PDF.');
+    const bin = atob(b64), bytes = new Uint8Array(bin.length);
     for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
     pages.push(bytes);
   };
