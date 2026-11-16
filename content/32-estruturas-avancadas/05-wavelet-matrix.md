@@ -56,6 +56,8 @@ struct WaveletMatrix {
     }
 
     int count_less(int l, int r, int x) const {
+        if (x <= 0) return 0;
+        if (x >= (1 << LOG)) return r - l;
         int ans = 0;
         for (int lv = 0; lv < LOG; lv++) {
             int bit = LOG - 1 - lv;
