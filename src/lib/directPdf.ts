@@ -93,7 +93,7 @@ export async function downloadDirectPdf(sections: Section[], title: string, auth
   const text = (value: string, size: number, color = '#252a33', bold = false, mono = false) => {
     ctx.font = (bold ? 'bold ' : '') + size * scale + 'px ' + (mono ? 'monospace' : 'Arial');
     ctx.fillStyle = color;
-    const max = (cw - 8) * scale, lh = size * 1.35;
+    const max = (cw - 8) * scale, lh = size * (mono ? 1.65 : 1.45);
     for (const para of value.split('\n')) {
       const words = para.split(/\s+/); let line = '';
       for (const word of words) {
@@ -134,7 +134,27 @@ export async function downloadDirectPdf(sections: Section[], title: string, auth
       const blocks = topic.body.split(/(?:```|~~~)(?:cpp|c\+\+|c|python)?\s*\n/);
       blocks.forEach((block, i) => {
         const value = i % 2 ? (block.split(/(?:```|~~~)/)[0] ?? '').trim() : clean(block);
-        if (value) text(value, i % 2 ? Math.max(5, o.fontSize - 2) : o.fontSize, i % 2 ? '#263445' : '#303642', false, i % 2 === 1);
+        if (value) {
+          const mono = i % 2 === 1;
+          const size = mono ? Math.max(5, o.fontSize - 2) : o.fontSize;
+          if (mono) {
+            ctx.font = size * scale + 'px monospace';
+            const max = (cw - 8) * scale;
+            const estimatedLines = value.split('\n').reduce((total, line) => {
+              let current = '';
+              let count = 0;
+              for (const word of line.split(/\s+/)) {
+                const next = current ? current + ' ' + word : word;
+                if (current && ctx.measureText(next).width > max) { count++; current = word; }
+                else current = next;
+              }
+              return total + Math.max(1, count + (current ? 1 : 0));
+            }, 0);
+            const blockHeight = estimatedLines * size * 1.65;
+            if (blockHeight <= h - margin * 2 && y + blockHeight > h - margin) advance();
+          }
+          text(value, size, mono ? '#263445' : '#303642', false, mono);
+        }
       });
       y += 4;
     }

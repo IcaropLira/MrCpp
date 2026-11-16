@@ -39,6 +39,7 @@ function texText(s: string): string {
     '≈': slash + 'ensuremath{\\approx}',
     '×': slash + 'ensuremath{\\times}',
     '√': slash + 'ensuremath{\\surd}',
+    'Σ': slash + 'ensuremath{\\Sigma}',
     'α': slash + 'ensuremath{\\alpha}',
     'β': slash + 'ensuremath{\\beta}',
     'π': slash + 'ensuremath{\\pi}',
@@ -63,7 +64,7 @@ function texText(s: string): string {
     '—': '---',
     '⁹': slash + 'ensuremath{^9}'
   };
-  const escaped = s.replace(/[\\{}#$%&_~^∞−·≤≥≈×√αβπθε⊕→←↔²³≠∑∏∈∉∪∩∝±–—⁹]/g, (ch) => replacements[ch] ?? ch);
+  const escaped = s.replace(/[\\{}#$%&_~^∞−·≤≥≈×√αβπθεΣ⊕→←↔²³≠∑∏∈∉∪∩∝±–—⁹]/g, (ch) => replacements[ch] ?? ch);
   return escaped.replace(/ROOTPH(\d+)END/g, (_, index: string) =>
     slash + 'ensuremath{\\sqrt{' + roots[Number(index)] + '}}');
 }
