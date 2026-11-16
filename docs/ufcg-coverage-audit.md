@@ -35,8 +35,8 @@ Fonte — UFCG:
 
 MrCpp:
 - Já existentes antes desta etapa: DSU, LCA, HLD, Centroid Decomposition, DFS/BFS, componentes, bipartido, ciclos, ordenação topológica e MST.
-- Incluídos nesta etapa: pontes e pontos de articulação, Dinic, fluxo de custo mínimo, SCC (Kosaraju), 2-SAT, caminho euleriano, matching bipartido (Hopcroft-Karp), Small to Large e modelagem com vértices auxiliares.
-- Pendentes de conferência/possível inclusão: Block-Cut Tree, Link-Cut Tree e variantes específicas do código-fonte.
+- Incluídos nesta etapa: pontes e pontos de articulação, Dinic, fluxo de custo mínimo, SCC (Kosaraju), 2-SAT, caminho euleriano, matching bipartido (Hopcroft-Karp), Bridge Tree, Block-Cut Tree, DSU com rollback, Small to Large e modelagem com vértices auxiliares.
+- Pendentes de conferência/possível inclusão: Link-Cut Tree, conectividade dinâmica offline e variantes específicas do código-fonte.
 
 ## Estruturas de dados
 
