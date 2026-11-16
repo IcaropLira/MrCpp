@@ -87,3 +87,22 @@ struct Dinic {
 - Use long long para capacidades e fluxo total.
 - A implementação considera arestas dirigidas; para uma aresta não dirigida, adicione duas arestas dirigidas com a capacidade especificada.
 - O bound geral é O(V²E); o desempenho depende da estrutura da rede.
+
+## Recuperar um corte mínimo
+
+Depois de calcular fluxo máximo, faça DFS/BFS a partir de s usando somente arestas residuais com capacidade positiva. Seja R o conjunto alcançável. O corte mínimo é formado pelas arestas originais de R para fora de R; sua capacidade total é igual ao fluxo máximo.
+
+Na struct acima, as arestas reversas também estão no grafo residual. Para listar arestas originais do corte, guarde separadamente seus IDs/destinos ou percorra apenas as arestas originais com capacidade residual menor que a capacidade inicial.
+
+## Variações de modelagem
+
+- Caminhos disjuntos por arestas: capacidade 1 em cada aresta.
+- Caminhos disjuntos por vértices: divida cada vértice em entrada/saída com capacidade 1 entre eles.
+- Matching bipartido: fonte -> lado esquerdo -> lado direito -> sorvedouro, todas as capacidades 1.
+- Circulação com limites inferiores: transforme em superfonte/supersorvedouro após retirar o limite inferior de cada aresta.
+
+## Observações
+
+- Arestas paralelas são permitidas se cada uma tiver seu próprio par residual.
+- Para arestas não dirigidas, uma modelagem comum adiciona duas arestas dirigidas independentes com capacidade c; não confunda isso com criar apenas uma aresta residual reversa de capacidade c.
+- O algoritmo recursivo pode estourar a pilha em caminhos residuais longos.
