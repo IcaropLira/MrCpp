@@ -16,7 +16,7 @@ Procurar muitas palavras em um mesmo texto. A trie compartilha prefixos e os lin
 struct AhoCorasick {
     static const int K = 26;
     struct Node {
-        int next[K], link = 0;
+        int next[K], link = 0, outLink = -1;
         vector<int> out;
         Node() { fill(next, next + K, -1); }
     };
@@ -49,13 +49,14 @@ struct AhoCorasick {
         while (!q.empty()) {
             int u = q.front(); q.pop();
             int f = t[u].link;
-            for (int id : t[f].out) t[u].out.push_back(id);
 
             for (int c = 0; c < K; c++) {
                 int v = t[u].next[c];
                 if (v == -1) t[u].next[c] = t[f].next[c];
                 else {
                     t[v].link = t[f].next[c];
+                    int link = t[v].link;
+                    t[v].outLink = t[link].out.empty() ? t[link].outLink : link;
                     q.push(v);
                 }
             }
@@ -68,12 +69,13 @@ struct AhoCorasick {
         for (int i = 0; i < (int)s.size(); i++) {
             int c = s[i] - 'a';
             u = t[u].next[c];
-            for (int id : t[u].out) ans.push_back({i+1, id});
+            for (int v = u; v != -1; v = t[v].outLink)
+                for (int id : t[v].out) ans.push_back({i+1, id});
         }
         return ans;
     }
 };
 
-// Padrões e texto devem conter apenas 'a'..'z'.
+// Padrões não vazios e texto devem conter apenas 'a'..'z'.
 // Armazene também o tamanho de cada padrão para recuperar o início.
 ~~~
