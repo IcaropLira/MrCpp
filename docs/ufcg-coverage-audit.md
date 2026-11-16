@@ -86,7 +86,7 @@ Pendentes de conferência/possível inclusão: KMP, Trie, hashing, Manacher, Z, 
 
 ## Matemática
 
-MrCpp adicionou nesta frente: Euclides estendido, inverso modular, CRT generalizado, crivo linear/fatoração por menor primo e NTT para 998244353. Ainda faltam FFT, FWHT, Gauss, Möbius, Lagrange, Simplex, Pollard Rho, log discreto, floor_sum e demais variantes.
+MrCpp adicionou nesta frente: Euclides estendido, inverso modular, CRT generalizado, crivo linear/fatoração por menor primo, NTT para 998244353, eliminação de Gauss e Floor Sum. Ainda faltam FFT, FWHT, Möbius, Lagrange, Simplex, Pollard Rho, log discreto e demais variantes.
 
 Fonte — UFCG:
 - math/ntt.cpp
