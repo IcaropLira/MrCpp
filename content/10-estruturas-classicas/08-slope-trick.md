@@ -1,49 +1,58 @@
 ---
-title: Slope Trick — soma de valores absolutos
-summary: Mantém o mínimo de uma soma de funções |x-a| usando duas heaps.
+title: Mediana dinâmica — soma de distâncias
+summary: Mantém a mediana e a soma de |x-a[i]| com duas heaps.
 status: done
 complexity: O(log n) por inserção
-tags: dp, convexidade, heaps
+tags: heaps, mediana, valores absolutos
 ---
 
 ## Quando usar
 
-DPs convexas em que a função de custo é uma soma de distâncias absolutas, como minimizar `Σ |x-a[i]|`. O mínimo ocorre em uma mediana.
+Inserções online de valores com consultas ao mínimo de `Σ |x-a[i]|`. O mínimo é atingido em qualquer mediana.
 
 ## Código
 
 ```cpp
-struct SlopeTrickAbs {
-    priority_queue<long long> left;
-    priority_queue<long long, vector<long long>, greater<long long>> right;
-    long long cost = 0;
+struct DynamicMedian {
+    priority_queue<long long> lo;
+    priority_queue<long long, vector<long long>, greater<long long>> hi;
+    long long sumLo = 0, sumHi = 0;
 
-    void add_abs(long long a) {
-        if (!left.empty() && left.top() > a) {
-            cost += left.top() - a;
-            left.pop();
-            left.push(a);
+    void add(long long x) {
+        if (lo.empty() || x <= lo.top()) {
+            lo.push(x);
+            sumLo += x;
+        } else {
+            hi.push(x);
+            sumHi += x;
         }
-        if (!right.empty() && right.top() < a) {
-            cost += a - right.top();
-            right.pop();
-            right.push(a);
+
+        if (lo.size() > hi.size() + 1) {
+            long long v = lo.top(); lo.pop();
+            sumLo -= v;
+            hi.push(v); sumHi += v;
+        } else if (hi.size() > lo.size()) {
+            long long v = hi.top(); hi.pop();
+            sumHi -= v;
+            lo.push(v); sumLo += v;
         }
-        left.push(a);
-        right.push(a);
     }
 
-    long long minimum() const { return cost; }
+    long long median() const {
+        assert(!lo.empty());
+        return lo.top();
+    }
 
-    // Um ponto minimizador fica entre max(left) e min(right).
-    pair<long long, long long> minimizer_interval() const {
-        if (left.empty()) return {LLONG_MIN, LLONG_MAX};
-        return {left.top(), right.top()};
+    long long min_sum_abs() const {
+        if (lo.empty()) return 0;
+        long long m = lo.top();
+        return m * (long long)lo.size() - sumLo
+             + sumHi - m * (long long)hi.size();
     }
 };
 ```
 
-- Esta é a versão especializada para inserir termos `|x-a|`; não é a implementação genérica de todas as operações do Slope Trick.
-- O valor mínimo é a soma das distâncias até uma mediana.
-- Para DP com deslocamentos, `add_a_x`, `min` e operações de corte, use a representação completa com heaps e lazy offsets.
-- A soma e as diferenças devem caber em `long long`.
+- `lo` contém a metade inferior e tem o mesmo tamanho de `hi` ou um elemento a mais.
+- `median()` devolve a mediana inferior; qualquer valor entre as duas medianas minimiza a soma quando n é par.
+- A soma, os produtos e as diferenças devem caber em `long long`.
+- Esta ficha resolve inserção + custo mínimo absoluto; não é o Slope Trick genérico para DP convexa com operações de deslocamento e corte.
