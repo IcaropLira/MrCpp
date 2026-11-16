@@ -37,7 +37,8 @@ Fonte — UFCG:
 MrCpp:
 - Já existentes antes desta etapa: DSU, LCA, HLD, Centroid Decomposition, DFS/BFS, componentes, bipartido, ciclos, ordenação topológica e MST.
 - Incluídos nesta etapa: pontes e pontos de articulação, Dinic, fluxo de custo mínimo, SCC (Kosaraju), 2-SAT, caminho euleriano, matching bipartido (Hopcroft-Karp), Bridge Tree, Block-Cut Tree, DSU com rollback, Small to Large e modelagem com vértices auxiliares.
-- Pendentes de conferência/possível inclusão: Link-Cut Tree, conectividade dinâmica offline e variantes específicas do código-fonte.
+- Incluído nesta continuação: Link-Cut Tree para floresta dinâmica (link/cut/path sum).
+- Pendentes de conferência/possível inclusão: conectividade dinâmica offline e variantes específicas do código-fonte.
 
 ## Estruturas de dados
 
@@ -66,7 +67,7 @@ Fonte — UFCG:
 - data-structures/persistent_lichao.cpp
 - data-structures/implicit_treap.cpp
 
-MrCpp já possui fichas para DSU, Treap, sqrt decomposition, Mo, HLD, Centroid Decomposition, Segment Tree (incluindo variantes), Fenwick 2D e Disjoint Sparse Table. A correspondência fina entre implementações UFCG e variantes MrCpp ainda precisa ser marcada uma a uma.
+MrCpp já possui fichas para DSU, Treap, sqrt decomposition, Mo, HLD, Centroid Decomposition, Segment Tree (incluindo variantes), Fenwick 2D e Disjoint Sparse Table. Nesta continuação foram adicionados Segment Tree Beats (range chmin + soma), Li Chao Tree, base linear de XOR e mediana dinâmica para soma de valores absolutos. A correspondência fina entre implementações UFCG e variantes MrCpp ainda precisa ser marcada uma a uma.
 
 ## Strings
 
