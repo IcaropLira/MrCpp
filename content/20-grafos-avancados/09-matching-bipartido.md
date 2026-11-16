@@ -21,47 +21,50 @@ struct HopcroftKarp {
     int n, m;
     vector<vector<int>> g;
     vector<int> L, R, dist;
+    static const int INF = 1e9;
 
-    HopcroftKarp(int n, int m) : n(n), m(m), g(n), L(n, -1), R(m, -1), dist(n) {}
+    HopcroftKarp(int n, int m) : n(n), m(m), g(n), L(n, -1), R(m, -1), dist(n+1) {}
 
     void add_edge(int u, int v) { // u na esquerda, v na direita
         g[u].push_back(v);
     }
 
     bool bfs() {
+        const int NIL = n;
         queue<int> q;
-        const int INF = 1e9;
         for (int u = 0; u < n; u++) {
             if (L[u] == -1) dist[u] = 0, q.push(u);
             else dist[u] = INF;
         }
+        dist[NIL] = INF;
 
-        int found = INF;
         while (!q.empty()) {
             int u = q.front(); q.pop();
-            if (dist[u] >= found) continue;
+            if (dist[u] >= dist[NIL]) continue;
             for (int v : g[u]) {
                 int w = R[v];
-                if (w == -1) found = dist[u] + 1;
+                if (w == -1) dist[NIL] = dist[u] + 1;
                 else if (dist[w] == INF) {
                     dist[w] = dist[u] + 1;
                     q.push(w);
                 }
             }
         }
-        return found != INF;
+        return dist[NIL] != INF;
     }
 
     bool dfs(int u) {
+        if (u == n) return true;
         for (int v : g[u]) {
             int w = R[v];
-            if (w == -1 || (dist[w] == dist[u] + 1 && dfs(w))) {
+            if ((w == -1 && dist[u] + 1 == dist[n]) ||
+                (w != -1 && dist[w] == dist[u] + 1 && dfs(w))) {
                 L[u] = v;
                 R[v] = u;
                 return true;
             }
         }
-        dist[u] = 1e9;
+        dist[u] = INF;
         return false;
     }
 
@@ -73,8 +76,6 @@ struct HopcroftKarp {
         return ans;
     }
 };
-
-// L[u] é o par de u na esquerda; R[v] é o par de v na direita.
 ~~~
 
 ## Cuidados
