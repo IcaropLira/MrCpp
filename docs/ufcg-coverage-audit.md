@@ -9,6 +9,7 @@ Este documento registra o inventário inicial obtido do índice de código do re
 - [x] Inventário inicial de caminhos de código coletado.
 - [x] Pontes, Dinic, fluxo de custo mínimo e Small to Large adicionados nesta etapa.
 - [ ] Conferir individualmente todos os itens abaixo contra o conteúdo do MrCpp.
+- [x] Adicionar primeira leva de fichas de strings (KMP, Z, Manacher, Aho-Corasick, Suffix Array/LCP e Suffix Automaton).
 - [ ] Portar o que estiver ausente, mantendo autoria/referências e adaptando para snippets autocontidos.
 - [ ] Compilar e testar cada implementação portada.
 - [x] Criar fichas de SCC, 2-SAT, caminho euleriano e Hopcroft-Karp (primeira revisão estática realizada).
@@ -68,6 +69,8 @@ Fonte — UFCG:
 MrCpp já possui fichas para DSU, Treap, sqrt decomposition, Mo, HLD, Centroid Decomposition, Segment Tree (incluindo variantes), Fenwick 2D e Disjoint Sparse Table. A correspondência fina entre implementações UFCG e variantes MrCpp ainda precisa ser marcada uma a uma.
 
 ## Strings
+
+MrCpp adicionou nesta frente: KMP/prefix function, Z-function, Manacher, Aho-Corasick, Suffix Array + LCP e Suffix Automaton. Ainda faltam hash/rolling hash e a comparação item a item com os fontes da UFCG.
 
 Fonte — UFCG:
 - string/kmp.cpp
