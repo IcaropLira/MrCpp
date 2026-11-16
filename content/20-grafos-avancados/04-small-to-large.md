@@ -12,37 +12,48 @@ Quando cada vértice precisa responder algo sobre a frequência dos valores em s
 
 ## Ideia
 
-Cada subárvore mantém um contêiner. Ao combinar dois contêineres, percorremos o menor e inserimos seus elementos no maior. Um elemento só é movido O(log n) vezes, pois o contêiner de destino pelo menos dobra de tamanho.
+Cada subárvore mantém um contêiner. Reaproveitamos o contêiner da maior subárvore e inserimos nele os dados das menores. Cada vértice pertence a uma subárvore menor apenas O(log n) vezes, pois a subárvore-base pelo menos dobra de tamanho.
 
 ## Código
 
 ~~~cpp
 vector<vector<int>> g;
-vector<int> a, ans;
+vector<int> a, ans, sz;
 vector<map<int,int>> bag;
 
 void dfs(int u, int p) {
-    bag[u][a[u]] = 1;
+    sz[u] = 1;
+    int heavy = -1;
+
     for (int v : g[u]) if (v != p) {
         dfs(v, u);
-        if (bag[u].size() < bag[v].size())
-            bag[u].swap(bag[v]);
+        sz[u] += sz[v];
+        if (heavy == -1 || sz[v] > sz[heavy]) heavy = v;
+    }
+
+    // Reaproveita o contêiner da maior subárvore.
+    if (heavy != -1) bag[u].swap(bag[heavy]);
+
+    bag[u][a[u]]++;
+    for (int v : g[u]) if (v != p && v != heavy) {
         for (auto [value, freq] : bag[v])
             bag[u][value] += freq;
         bag[v].clear();
     }
+
     int best = 0;
     for (auto [value, freq] : bag[u])
         best = max(best, freq);
     ans[u] = best; // maior frequência na subárvore de u
 }
 
-// Inicialize g, a, ans(n) e bag(n); chame dfs(raiz, -1).
+// Inicialize g, a, ans(n), sz(n) e bag(n);
+// chame dfs(raiz, -1).
 ~~~
 
 ## Cuidados
 
-- A propriedade de dobrar o tamanho limita a quantidade de movimentos por elemento.
+- A escolha é feita pelo tamanho da subárvore (quantidade de vértices), não pelo número de chaves distintas do map.
 - Com std::map, cada inserção custa O(log n), resultando em O(n log² n) no pior caso.
 - O exemplo calcula a frequência máxima na subárvore. Adapte o agregado ao problema.
 - Small to Large é uma técnica de merge; DSU on Tree com sack (mantendo a maior subárvore) é uma implementação relacionada, mas não idêntica.
