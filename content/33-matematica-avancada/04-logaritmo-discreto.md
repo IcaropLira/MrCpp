@@ -14,7 +14,7 @@ Quando precisamos resolver a^x = b (mod p), com p primo e a não nulo módulo p.
 
 ~~~cpp
 long long modpow_bsgs(long long a, long long e, long long mod) {\n    long long r = 1;\n    for (; e; e >>= 1, a = a * a % mod)\n        if (e & 1) r = r * a % mod;\n    return r;\n}\n\nlong long discrete_log(long long a, long long b, long long p) {
-    a %= p; b %= p;
+    a %= p; b %= p;\n    if (a < 0) a += p;\n    if (b < 0) b += p;
     if (b == 1) return 0;
     if (a == 0) return b == 0 ? 1 : -1;
 
