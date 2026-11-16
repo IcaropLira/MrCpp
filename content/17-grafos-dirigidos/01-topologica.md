@@ -25,3 +25,37 @@ vector<int> topo(const vector<vector<int>>& g) { // vazio se há ciclo
     return (int)order.size() == n ? order : vector<int>();
 }
 ```
+
+## Variante — DFS e ordem de término
+
+Também é possível obter uma ordem topológica com DFS: ao terminar de processar u, adicione u à lista; ao final, inverta a lista. Uma aresta para um vértice cinza (na pilha de recursão) denuncia ciclo.
+
+~~~cpp
+vector<int> topo_dfs(const vector<vector<int>>& g) {
+    int n = g.size();
+    vector<int> state(n), order;
+    bool ciclo = false;
+
+    function<void(int)> dfs = [&](int u) {
+        state[u] = 1;
+        for (int v : g[u]) {
+            if (state[v] == 1) ciclo = true;
+            else if (state[v] == 0) dfs(v);
+        }
+        state[u] = 2;
+        order.push_back(u);
+    };
+
+    for (int u = 0; u < n; u++)
+        if (!state[u]) dfs(u);
+
+    if (ciclo) return {};
+    reverse(order.begin(), order.end());
+    return order;
+}
+~~~
+
+- state = 0: não visitado; 1: ativo na recursão; 2: finalizado.
+- Complexidade O(V + E).
+- Use Kahn quando também precisar detectar ciclo pelo tamanho da ordem ou processar vértices em ordem de grau de entrada.
+- A versão recursiva pode estourar a pilha em grafos muito profundos.
