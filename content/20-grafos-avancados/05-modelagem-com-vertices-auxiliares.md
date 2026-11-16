@@ -39,3 +39,29 @@ long long resposta = dinic.flow(out(s), in(t));
 - Ajuste fonte e sorvedouro para não aplicar indevidamente a capacidade de vértice a eles.
 - A transformação aumenta o número de vértices, mas mantém o tamanho do grafo linear.
 - Desenhe o grafo transformado e prove a correspondência entre soluções.
+
+## Outras reduções recorrentes
+
+### Caminhos disjuntos por vértices
+
+Divida cada vértice v em entrada e saída e conecte in(v) -> out(v) com capacidade 1 (ou capacidade específica). Cada aresta original u -> v vira out(u) -> in(v). O fluxo máximo passa a contar caminhos internamente disjuntos por vértices. Se a fonte e o destino puderem ser usados várias vezes, atribua capacidade alta a eles.
+
+### Matching bipartido
+
+Crie fonte S, nós da partição esquerda, nós da direita e sorvedouro T. Use capacidade 1 em S -> L, L -> R quando houver compatibilidade e R -> T. O fluxo máximo é o tamanho do matching.
+
+### Fechamento de peso máximo
+
+Para escolher um conjunto de projetos com lucro positivo e dependências, ligue S aos projetos de lucro positivo com capacidade lucro; projetos de lucro negativo a T com capacidade oposto do custo. Para dependência u exige v, adicione aresta u -> v com capacidade INF. A resposta é soma dos lucros positivos menos o corte mínimo.
+
+### Restrições de atribuição
+
+Uma tarefa por agente e agente por tarefa: reduza a matching bipartida. Se houver custos, use fluxo de custo mínimo em vez de Dinic.
+
+## Modelagem antes do código
+
+1. Identifique o que cada vértice representa.
+2. Defina exatamente o significado de cada aresta.
+3. Escolha capacidade 1, capacidade do objeto ou INF conforme a restrição.
+4. Prove que toda solução original corresponde a um fluxo/corte e vice-versa.
+5. Verifique se a capacidade da fonte e do sorvedouro deve ser preservada na transformação.
