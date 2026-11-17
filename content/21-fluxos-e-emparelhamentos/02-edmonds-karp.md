@@ -1,75 +1,68 @@
 ---
 title: Edmonds-Karp
-summary: Em breve.
+summary: Ford-Fulkerson com BFS: sempre o caminho de aumento mais curto; O(V·E²) independente das capacidades.
 status: done
-complexity: tags:
-tags: ---
+complexity: O(V · E²)
+tags: fluxo, edmonds-karp, bfs, corte mínimo
 ---
 
-## Ideia e quando usar
+## Ideia
 
-Edmonds-Karp é uma técnica/estrutura que aparece quando o problema tem a seguinte necessidade: reconhecer o padrão pedido no enunciado, representar os estados relevantes e escolher uma operação que possa ser executada dentro do limite de tempo. Não decore só o código: identifique **o que cada variável significa**, qual é a condição de validade e qual é o custo de cada operação.
+Trocar a DFS por uma BFS escolhe o caminho de aumento com menos arestas. Isso garante no máximo `O(V · E)` aumentos, cada um custando `O(E)`, sem depender do valor das capacidades. Depois do fluxo, os vértices alcançáveis de `s` no grafo residual formam o lado `S` de um corte mínimo.
 
-## Como pensar na solução
-
-1. **Defina a entrada e a resposta.** Escreva em uma frase o que precisa ser calculado e quais restrições importam (`n`, número de arestas, tamanho das strings, valores máximos).
-2. **Escolha a representação.** Vetor, lista de adjacência, estado de DP, estrutura de dados ou ordenação devem refletir diretamente as operações necessárias.
-3. **Mantenha um invariante.** Antes de cada iteração/consulta, diga o que a estrutura representa. Depois da operação, prove que continua representando isso.
-4. **Analise a complexidade.** Conte quantas vezes cada elemento/aresta/estado é processado. Uma solução correta que faz `O(n²)` pode falhar para `n=2e5`.
-5. **Trate os casos-limite.** Entrada vazia ou mínima, duplicatas, valores negativos, grafo desconexo, ciclos, limites de índice e overflow.
-
-## Modelo de implementação
-
-O esqueleto depende do problema concreto; não existe um único código que resolva todas as variantes. Em C++ competitivo, mantenha a implementação enxuta e explícita, no estilo deste material:
+## Código
 
 ```cpp
-#include <bits/stdc++.h>
-using namespace std;
-using ll = long long;
+struct EdmondsKarp {
+    struct Aresta { int to; ll cap; };
+    vector<Aresta> a;
+    vector<vector<int>> g;
+    EdmondsKarp(int n) : g(n) {}
 
-int main() {
-    ios::sync_with_stdio(false);
-    cin.tie(nullptr);
-
-    int n;
-    cin >> n;
-    vector<int> a(n);
-    for (int i = 0; i < n; i++) cin >> a[i];
-
-    // 1. Inicialize a estrutura/estado.
-    // 2. Processe os dados mantendo o invariante.
-    // 3. Extraia e imprima a resposta.
-    return 0;
-}
+    void add(int u, int v, ll c) {
+        g[u].push_back(a.size()); a.push_back({v, c});
+        g[v].push_back(a.size()); a.push_back({u, 0});
+    }
+    // vértices 0..n-1, s != t
+    ll fluxo(int s, int t) {
+        int n = g.size();
+        ll total = 0;
+        while (true) {
+            vector<int> via(n, -1);  // aresta usada para chegar em cada vértice
+            queue<int> q;
+            q.push(s);
+            via[s] = -2;
+            while (!q.empty() && via[t] == -1) {
+                int u = q.front(); q.pop();
+                for (int id : g[u])
+                    if (a[id].cap > 0 && via[a[id].to] == -1) via[a[id].to] = id, q.push(a[id].to);
+            }
+            if (via[t] == -1) break;
+            ll f = LLONG_MAX;
+            for (int v = t; v != s; v = a[via[v] ^ 1].to) f = min(f, a[via[v]].cap);
+            for (int v = t; v != s; v = a[via[v] ^ 1].to) a[via[v]].cap -= f, a[via[v] ^ 1].cap += f;
+            total += f;
+        }
+        return total;
+    }
+    // após fluxo(s, t): lado S do corte mínimo (alcançáveis de s no resíduo)
+    vector<bool> lado_s(int s) {
+        vector<bool> ok(g.size(), false);
+        vector<int> pilha = {s};
+        ok[s] = true;
+        while (!pilha.empty()) {
+            int u = pilha.back(); pilha.pop_back();
+            for (int id : g[u])
+                if (a[id].cap > 0 && !ok[a[id].to]) ok[a[id].to] = true, pilha.push_back(a[id].to);
+        }
+        return ok;
+    }
+};
 ```
 
-Não copie o esqueleto literalmente quando a técnica exigir DFS, recursão, uma estrutura persistente ou várias consultas. Use o código específico da seção como base e adapte os tipos aos limites do enunciado.
+## Complexidade e cuidados
 
-## Complexidade: como conferir
-
-- Um laço sobre `n` elementos é `O(n)`.
-- Dois laços aninhados sobre `n` normalmente são `O(n²)`.
-- Ordenar costuma custar `O(n log n)`.
-- Uma busca binária custa `O(log n)`; fazer isso para cada elemento dá `O(n log n)`.
-- Em grafos, a DFS/BFS com lista de adjacência custa `O(n+m)`.
-- Uma estrutura de consultas pode ter custo de construção diferente do custo de cada consulta; informe os dois.
-
-A complexidade indicada no cabeçalho é uma referência para a implementação padrão. Variantes do mesmo algoritmo podem ter custos diferentes conforme a estrutura auxiliar, o domínio dos valores e as operações exigidas.
-
-## Erros comuns
-
-- Usar a técnica só porque o nome aparece no enunciado, sem verificar suas pré-condições.
-- Não decidir se os intervalos são inclusivos `[l,r]` ou semiabertos `[l,r)`.
-- Misturar índices `0..n-1` com índices `1..n`.
-- Usar `int` para somas, distâncias ou produtos que podem ultrapassar `2^31-1`; use `long long` quando necessário.
-- Esquecer de limpar vetores globais entre casos de teste.
-- Não testar duplicatas, casos mínimos e o maior caso permitido.
-
-## Checklist de prova/contest
-
-- [ ] Sei explicar o que representa cada estado/estrutura?
-- [ ] Sei por que a transição/operação é correta?
-- [ ] Sei justificar a complexidade total, não apenas de uma operação?
-- [ ] Os limites e sentinelas estão corretos?
-- [ ] A solução trata o caso mínimo e os empates?
-- [ ] O tipo numérico comporta a resposta máxima?
+- Para grafos grandes prefira Dinic (`21-fluxos-e-emparelhamentos/03-dinic`), que é bem mais rápido na prática.
+- O corte mínimo é formado pelas arestas originais de `S` para fora de `S`; sua capacidade total é igual ao fluxo.
+- Para recuperar o fluxo em cada aresta original: `cap_original - cap_residual`, ou a capacidade da aresta reversa.
+- Vários `s` ou `t`: crie uma super-fonte e um super-sumidouro com capacidade infinita.
