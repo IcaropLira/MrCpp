@@ -1,75 +1,44 @@
 ---
 title: Lema de Burnside
-summary: Em breve.
+summary: Conta colares e pulseiras distintos (a menos de rotação e reflexão) fazendo a média dos pontos fixos.
 status: done
-complexity: tags:
-tags: ---
+complexity: O(n log n)
+tags: combinatória, burnside, colares, simetria
 ---
 
-## Ideia e quando usar
+## Ideia
 
-Lema de Burnside é uma técnica/estrutura que aparece quando o problema tem a seguinte necessidade: reconhecer o padrão pedido no enunciado, representar os estados relevantes e escolher uma operação que possa ser executada dentro do limite de tempo. Não decore só o código: identifique **o que cada variável significa**, qual é a condição de validade e qual é o custo de cada operação.
+O número de órbitas (configurações distintas a menos de simetria) é a média, sobre os elementos do grupo, do número de configurações que cada elemento deixa fixas. Para colares de `n` contas e `k` cores, a rotação por `i` posições divide as contas em `gcd(i, n)` ciclos, e cada ciclo tem uma cor: `k^gcd(i, n)` pontos fixos. Para pulseiras, some também as `n` reflexões.
 
-## Como pensar na solução
-
-1. **Defina a entrada e a resposta.** Escreva em uma frase o que precisa ser calculado e quais restrições importam (`n`, número de arestas, tamanho das strings, valores máximos).
-2. **Escolha a representação.** Vetor, lista de adjacência, estado de DP, estrutura de dados ou ordenação devem refletir diretamente as operações necessárias.
-3. **Mantenha um invariante.** Antes de cada iteração/consulta, diga o que a estrutura representa. Depois da operação, prove que continua representando isso.
-4. **Analise a complexidade.** Conte quantas vezes cada elemento/aresta/estado é processado. Uma solução correta que faz `O(n²)` pode falhar para `n=2e5`.
-5. **Trate os casos-limite.** Entrada vazia ou mínima, duplicatas, valores negativos, grafo desconexo, ciclos, limites de índice e overflow.
-
-## Modelo de implementação
-
-O esqueleto depende do problema concreto; não existe um único código que resolva todas as variantes. Em C++ competitivo, mantenha a implementação enxuta e explícita, no estilo deste material:
+## Código
 
 ```cpp
-#include <bits/stdc++.h>
-using namespace std;
-using ll = long long;
+// colares: n contas, k cores, rotações. Exato enquanto k^n couber em __int128 (k^n < 1.7e38)
+ll colares(int n, int k) {
+    __int128 soma = 0;
+    for (int i = 0; i < n; i++) {
+        int g = __gcd(i, n);  // gcd(0, n) = n
+        __int128 p = 1;
+        for (int j = 0; j < g; j++) p *= k;
+        soma += p;
+    }
+    return (ll)(soma / n);
+}
 
-int main() {
-    ios::sync_with_stdio(false);
-    cin.tie(nullptr);
-
-    int n;
-    cin >> n;
-    vector<int> a(n);
-    for (int i = 0; i < n; i++) cin >> a[i];
-
-    // 1. Inicialize a estrutura/estado.
-    // 2. Processe os dados mantendo o invariante.
-    // 3. Extraia e imprima a resposta.
-    return 0;
+// pulseiras: rotações e reflexões
+ll pulseiras(int n, int k) {
+    auto pot = [&](int e) { __int128 p = 1; for (int j = 0; j < e; j++) p *= k; return p; };
+    __int128 soma = 0;
+    for (int i = 0; i < n; i++) soma += pot(__gcd(i, n));
+    if (n % 2) soma += (__int128)n * pot((n + 1) / 2);
+    else soma += (__int128)(n / 2) * pot(n / 2 + 1) + (__int128)(n / 2) * pot(n / 2);
+    return (ll)(soma / (2 * n));
 }
 ```
 
-Não copie o esqueleto literalmente quando a técnica exigir DFS, recursão, uma estrutura persistente ou várias consultas. Use o código específico da seção como base e adapte os tipos aos limites do enunciado.
+## Complexidade e cuidados
 
-## Complexidade: como conferir
-
-- Um laço sobre `n` elementos é `O(n)`.
-- Dois laços aninhados sobre `n` normalmente são `O(n²)`.
-- Ordenar costuma custar `O(n log n)`.
-- Uma busca binária custa `O(log n)`; fazer isso para cada elemento dá `O(n log n)`.
-- Em grafos, a DFS/BFS com lista de adjacência custa `O(n+m)`.
-- Uma estrutura de consultas pode ter custo de construção diferente do custo de cada consulta; informe os dois.
-
-A complexidade indicada no cabeçalho é uma referência para a implementação padrão. Variantes do mesmo algoritmo podem ter custos diferentes conforme a estrutura auxiliar, o domínio dos valores e as operações exigidas.
-
-## Erros comuns
-
-- Usar a técnica só porque o nome aparece no enunciado, sem verificar suas pré-condições.
-- Não decidir se os intervalos são inclusivos `[l,r]` ou semiabertos `[l,r)`.
-- Misturar índices `0..n-1` com índices `1..n`.
-- Usar `int` para somas, distâncias ou produtos que podem ultrapassar `2^31-1`; use `long long` quando necessário.
-- Esquecer de limpar vetores globais entre casos de teste.
-- Não testar duplicatas, casos mínimos e o maior caso permitido.
-
-## Checklist de prova/contest
-
-- [ ] Sei explicar o que representa cada estado/estrutura?
-- [ ] Sei por que a transição/operação é correta?
-- [ ] Sei justificar a complexidade total, não apenas de uma operação?
-- [ ] Os limites e sentinelas estão corretos?
-- [ ] A solução trata o caso mínimo e os empates?
-- [ ] O tipo numérico comporta a resposta máxima?
+- Resultados curtos: `colares(4, 2) = 6`, `pulseiras(4, 2) = 6`, `colares(6, 2) = 14`, `pulseiras(6, 2) = 13`.
+- Para `n` grande, sob módulo primo, troque a divisão por `n` pelo inverso modular e some `phi(d) · k^(n/d)` sobre divisores `d` de `n`.
+- Outras simetrias (rotações de um cubo, de uma grade) seguem o mesmo molde: liste o grupo e conte os ciclos de cada elemento.
+- Confira sempre o caso `n = 0` ou `n = 1` quando o enunciado permitir.

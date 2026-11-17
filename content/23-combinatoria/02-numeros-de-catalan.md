@@ -1,75 +1,48 @@
 ---
 title: Números de Catalan
-summary: Em breve.
+summary: C_n conta sequências de parênteses válidas, árvores binárias e caminhos de Dyck.
 status: done
-complexity: tags:
-tags: ---
+complexity: O(n) com fatoriais; O(n²) pela recorrência
+tags: combinatória, catalan, parênteses
 ---
 
-## Ideia e quando usar
+## Ideia
 
-Números de Catalan é uma técnica/estrutura que aparece quando o problema tem a seguinte necessidade: reconhecer o padrão pedido no enunciado, representar os estados relevantes e escolher uma operação que possa ser executada dentro do limite de tempo. Não decore só o código: identifique **o que cada variável significa**, qual é a condição de validade e qual é o custo de cada operação.
+`C_n = (2n)! / (n! (n+1)!)` conta: sequências de parênteses balanceadas com `n` pares, árvores binárias com `n` nós, triangulações de um polígono convexo de `n+2` lados e caminhos que não cruzam a diagonal. A recorrência `C_{n+1} = sum C_i · C_{n-i}` vem de separar o primeiro parêntese e o que o fecha.
 
-## Como pensar na solução
-
-1. **Defina a entrada e a resposta.** Escreva em uma frase o que precisa ser calculado e quais restrições importam (`n`, número de arestas, tamanho das strings, valores máximos).
-2. **Escolha a representação.** Vetor, lista de adjacência, estado de DP, estrutura de dados ou ordenação devem refletir diretamente as operações necessárias.
-3. **Mantenha um invariante.** Antes de cada iteração/consulta, diga o que a estrutura representa. Depois da operação, prove que continua representando isso.
-4. **Analise a complexidade.** Conte quantas vezes cada elemento/aresta/estado é processado. Uma solução correta que faz `O(n²)` pode falhar para `n=2e5`.
-5. **Trate os casos-limite.** Entrada vazia ou mínima, duplicatas, valores negativos, grafo desconexo, ciclos, limites de índice e overflow.
-
-## Modelo de implementação
-
-O esqueleto depende do problema concreto; não existe um único código que resolva todas as variantes. Em C++ competitivo, mantenha a implementação enxuta e explícita, no estilo deste material:
+## Código
 
 ```cpp
-#include <bits/stdc++.h>
-using namespace std;
-using ll = long long;
+const ll MOD = 1e9 + 7;
+ll pw(ll a, ll e) {
+    ll r = 1;
+    for (a %= MOD; e; e >>= 1, a = a * a % MOD) if (e & 1) r = r * a % MOD;
+    return r;
+}
 
-int main() {
-    ios::sync_with_stdio(false);
-    cin.tie(nullptr);
+// C_0..C_n mod MOD pela recorrência, O(n²)
+vector<ll> catalan_dp(int n) {
+    vector<ll> c(n + 1, 0);
+    c[0] = 1;
+    for (int i = 1; i <= n; i++)
+        for (int j = 0; j < i; j++) c[i] = (c[i] + c[j] * c[i - 1 - j]) % MOD;
+    return c;
+}
 
-    int n;
-    cin >> n;
-    vector<int> a(n);
-    for (int i = 0; i < n; i++) cin >> a[i];
-
-    // 1. Inicialize a estrutura/estado.
-    // 2. Processe os dados mantendo o invariante.
-    // 3. Extraia e imprima a resposta.
-    return 0;
+// C_0..C_n mod MOD por fatoriais, O(n); vale para 2n < MOD
+vector<ll> catalan_fat(int n) {
+    vector<ll> f(2 * n + 2, 1), inv(2 * n + 2, 1), c(n + 1);
+    for (int i = 1; i < (int)f.size(); i++) f[i] = f[i - 1] * i % MOD;
+    inv.back() = pw(f.back(), MOD - 2);
+    for (int i = (int)f.size() - 1; i > 0; i--) inv[i - 1] = inv[i] * i % MOD;
+    for (int i = 0; i <= n; i++) c[i] = f[2 * i] * inv[i] % MOD * inv[i + 1] % MOD;
+    return c;
 }
 ```
 
-Não copie o esqueleto literalmente quando a técnica exigir DFS, recursão, uma estrutura persistente ou várias consultas. Use o código específico da seção como base e adapte os tipos aos limites do enunciado.
+## Complexidade e cuidados
 
-## Complexidade: como conferir
-
-- Um laço sobre `n` elementos é `O(n)`.
-- Dois laços aninhados sobre `n` normalmente são `O(n²)`.
-- Ordenar costuma custar `O(n log n)`.
-- Uma busca binária custa `O(log n)`; fazer isso para cada elemento dá `O(n log n)`.
-- Em grafos, a DFS/BFS com lista de adjacência custa `O(n+m)`.
-- Uma estrutura de consultas pode ter custo de construção diferente do custo de cada consulta; informe os dois.
-
-A complexidade indicada no cabeçalho é uma referência para a implementação padrão. Variantes do mesmo algoritmo podem ter custos diferentes conforme a estrutura auxiliar, o domínio dos valores e as operações exigidas.
-
-## Erros comuns
-
-- Usar a técnica só porque o nome aparece no enunciado, sem verificar suas pré-condições.
-- Não decidir se os intervalos são inclusivos `[l,r]` ou semiabertos `[l,r)`.
-- Misturar índices `0..n-1` com índices `1..n`.
-- Usar `int` para somas, distâncias ou produtos que podem ultrapassar `2^31-1`; use `long long` quando necessário.
-- Esquecer de limpar vetores globais entre casos de teste.
-- Não testar duplicatas, casos mínimos e o maior caso permitido.
-
-## Checklist de prova/contest
-
-- [ ] Sei explicar o que representa cada estado/estrutura?
-- [ ] Sei por que a transição/operação é correta?
-- [ ] Sei justificar a complexidade total, não apenas de uma operação?
-- [ ] Os limites e sentinelas estão corretos?
-- [ ] A solução trata o caso mínimo e os empates?
-- [ ] O tipo numérico comporta a resposta máxima?
+- Valores exatos: 1, 1, 2, 5, 14, 42, 132, 429, 1430, 4862, ... `C_35` já passa de `2^63`; use módulo ou inteiros grandes.
+- Parênteses com `k` tipos diferentes: multiplique por `k^n`. Prefixos com restrição (nunca negativo) são o princípio da reflexão: `C(2n, n) - C(2n, n+1)`.
+- Para `n` grande e consultas isoladas use fatoriais pré-calculados (`O(1)` por consulta).
+- O módulo precisa ser primo e maior que `2n`.

@@ -1,75 +1,66 @@
 ---
 title: Aho-Corasick
-summary: Em breve.
+summary: Autômato que procura vários padrões ao mesmo tempo em O(|texto| + total de padrões + ocorrências).
 status: done
-complexity: tags:
-tags: ---
+complexity: O(Σ|padrões| · alfabeto + |texto|)
+tags: strings, aho-corasick, trie, múltiplos padrões
 ---
 
-## Ideia e quando usar
+## Ideia
 
-Aho-Corasick é uma técnica/estrutura que aparece quando o problema tem a seguinte necessidade: reconhecer o padrão pedido no enunciado, representar os estados relevantes e escolher uma operação que possa ser executada dentro do limite de tempo. Não decore só o código: identifique **o que cada variável significa**, qual é a condição de validade e qual é o custo de cada operação.
+Monte uma trie com todos os padrões. Para cada nó, o *link de falha* aponta para o maior sufixo próprio dele que também é prefixo de algum padrão. Calculando por BFS, completa-se o autômato (transições que faltam herdam as do link). Ao percorrer o texto, cada posição está em um nó; todos os padrões que terminam ali são o próprio nó e os nós da cadeia de links. Para contar ocorrências de cada padrão, conte visitas por nó e propague para os links em ordem inversa da BFS.
 
-## Como pensar na solução
-
-1. **Defina a entrada e a resposta.** Escreva em uma frase o que precisa ser calculado e quais restrições importam (`n`, número de arestas, tamanho das strings, valores máximos).
-2. **Escolha a representação.** Vetor, lista de adjacência, estado de DP, estrutura de dados ou ordenação devem refletir diretamente as operações necessárias.
-3. **Mantenha um invariante.** Antes de cada iteração/consulta, diga o que a estrutura representa. Depois da operação, prove que continua representando isso.
-4. **Analise a complexidade.** Conte quantas vezes cada elemento/aresta/estado é processado. Uma solução correta que faz `O(n²)` pode falhar para `n=2e5`.
-5. **Trate os casos-limite.** Entrada vazia ou mínima, duplicatas, valores negativos, grafo desconexo, ciclos, limites de índice e overflow.
-
-## Modelo de implementação
-
-O esqueleto depende do problema concreto; não existe um único código que resolva todas as variantes. Em C++ competitivo, mantenha a implementação enxuta e explícita, no estilo deste material:
+## Código
 
 ```cpp
-#include <bits/stdc++.h>
-using namespace std;
-using ll = long long;
+struct AhoCorasick {
+    static const int A = 26;
+    vector<array<int, A>> nx;
+    vector<int> link, ordem, fim;  // fim[i] = nó em que o padrão i termina
+    AhoCorasick() { novo(); }
+    int novo() { nx.push_back({}); nx.back().fill(-1); link.push_back(0); return nx.size() - 1; }
 
-int main() {
-    ios::sync_with_stdio(false);
-    cin.tie(nullptr);
-
-    int n;
-    cin >> n;
-    vector<int> a(n);
-    for (int i = 0; i < n; i++) cin >> a[i];
-
-    // 1. Inicialize a estrutura/estado.
-    // 2. Processe os dados mantendo o invariante.
-    // 3. Extraia e imprima a resposta.
-    return 0;
-}
+    void add(const string& s) {  // letras minúsculas
+        int v = 0;
+        for (char ch : s) {
+            int c = ch - 'a';
+            if (nx[v][c] < 0) { int u = novo(); nx[v][c] = u; }
+            v = nx[v][c];
+        }
+        fim.push_back(v);
+    }
+    void constroi() {
+        queue<int> q;
+        for (int c = 0; c < A; c++) {
+            if (nx[0][c] < 0) nx[0][c] = 0;
+            else q.push(nx[0][c]);
+        }
+        while (!q.empty()) {
+            int v = q.front(); q.pop();
+            ordem.push_back(v);
+            for (int c = 0; c < A; c++) {
+                int u = nx[v][c];
+                if (u < 0) nx[v][c] = nx[link[v]][c];
+                else { link[u] = nx[link[v]][c]; q.push(u); }
+            }
+        }
+    }
+    // ocorrências (com sobreposição) de cada padrão no texto
+    vector<ll> conta(const string& t) {
+        vector<ll> visitas(nx.size(), 0);
+        int v = 0;
+        for (char ch : t) v = nx[v][ch - 'a'], visitas[v]++;
+        for (int i = (int)ordem.size() - 1; i >= 0; i--) visitas[link[ordem[i]]] += visitas[ordem[i]];
+        vector<ll> r(fim.size());
+        for (size_t i = 0; i < fim.size(); i++) r[i] = visitas[fim[i]];
+        return r;
+    }
+};
 ```
 
-Não copie o esqueleto literalmente quando a técnica exigir DFS, recursão, uma estrutura persistente ou várias consultas. Use o código específico da seção como base e adapte os tipos aos limites do enunciado.
+## Complexidade e cuidados
 
-## Complexidade: como conferir
-
-- Um laço sobre `n` elementos é `O(n)`.
-- Dois laços aninhados sobre `n` normalmente são `O(n²)`.
-- Ordenar costuma custar `O(n log n)`.
-- Uma busca binária custa `O(log n)`; fazer isso para cada elemento dá `O(n log n)`.
-- Em grafos, a DFS/BFS com lista de adjacência custa `O(n+m)`.
-- Uma estrutura de consultas pode ter custo de construção diferente do custo de cada consulta; informe os dois.
-
-A complexidade indicada no cabeçalho é uma referência para a implementação padrão. Variantes do mesmo algoritmo podem ter custos diferentes conforme a estrutura auxiliar, o domínio dos valores e as operações exigidas.
-
-## Erros comuns
-
-- Usar a técnica só porque o nome aparece no enunciado, sem verificar suas pré-condições.
-- Não decidir se os intervalos são inclusivos `[l,r]` ou semiabertos `[l,r)`.
-- Misturar índices `0..n-1` com índices `1..n`.
-- Usar `int` para somas, distâncias ou produtos que podem ultrapassar `2^31-1`; use `long long` quando necessário.
-- Esquecer de limpar vetores globais entre casos de teste.
-- Não testar duplicatas, casos mínimos e o maior caso permitido.
-
-## Checklist de prova/contest
-
-- [ ] Sei explicar o que representa cada estado/estrutura?
-- [ ] Sei por que a transição/operação é correta?
-- [ ] Sei justificar a complexidade total, não apenas de uma operação?
-- [ ] Os limites e sentinelas estão corretos?
-- [ ] A solução trata o caso mínimo e os empates?
-- [ ] O tipo numérico comporta a resposta máxima?
+- Chame `constroi()` depois de adicionar todos os padrões e antes de `conta`.
+- Padrões repetidos terminam no mesmo nó e recebem a mesma contagem. Padrão vazio não é suportado.
+- Memória `O(nós · 26)` inteiros; para alfabeto grande use `map` ou ordene os filhos.
+- Para só saber *se* algum padrão aparece, marque `terminal[v] |= terminal[link[v]]` na BFS.
