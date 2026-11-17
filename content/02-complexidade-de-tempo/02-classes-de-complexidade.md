@@ -1,75 +1,47 @@
 ---
 title: Classes de complexidade
-summary: Em breve.
+summary: O(1), O(log n), O(√n), O(n), O(n log n), O(n²), O(n³), O(2^n) e O(n!): o maior n que cabe em cada uma.
 status: done
-complexity: tags:
-tags: ---
+complexity: —
+tags: complexidade, classes, limites
 ---
 
-## Ideia e quando usar
+## Ideia
 
-Classes de complexidade é uma técnica/estrutura que aparece quando o problema tem a seguinte necessidade: reconhecer o padrão pedido no enunciado, representar os estados relevantes e escolher uma operação que possa ser executada dentro do limite de tempo. Não decore só o código: identifique **o que cada variável significa**, qual é a condição de validade e qual é o custo de cada operação.
+Em um juiz, conte com cerca de `10^8` a `10^9` operações simples por segundo. Cada classe, então, tem um tamanho máximo de entrada: `O(n²)` aguenta `n` da ordem de `10^4`; `O(n log n)`, `10^6` a `10^7`; `O(2^n)`, `n` perto de 25; `O(n!)`, `n` perto de 11. Antes de programar, compare o limite do enunciado com essa tabela para decidir a abordagem.
 
-## Como pensar na solução
-
-1. **Defina a entrada e a resposta.** Escreva em uma frase o que precisa ser calculado e quais restrições importam (`n`, número de arestas, tamanho das strings, valores máximos).
-2. **Escolha a representação.** Vetor, lista de adjacência, estado de DP, estrutura de dados ou ordenação devem refletir diretamente as operações necessárias.
-3. **Mantenha um invariante.** Antes de cada iteração/consulta, diga o que a estrutura representa. Depois da operação, prove que continua representando isso.
-4. **Analise a complexidade.** Conte quantas vezes cada elemento/aresta/estado é processado. Uma solução correta que faz `O(n²)` pode falhar para `n=2e5`.
-5. **Trate os casos-limite.** Entrada vazia ou mínima, duplicatas, valores negativos, grafo desconexo, ciclos, limites de índice e overflow.
-
-## Modelo de implementação
-
-O esqueleto depende do problema concreto; não existe um único código que resolva todas as variantes. Em C++ competitivo, mantenha a implementação enxuta e explícita, no estilo deste material:
+## Código
 
 ```cpp
-#include <bits/stdc++.h>
-using namespace std;
-using ll = long long;
+// custo de cada classe para uma entrada de tamanho n
+double custo(const string& classe, double n) {
+    if (classe == "1") return 1;
+    if (classe == "log n") return log2(n);
+    if (classe == "sqrt n") return sqrt(n);
+    if (classe == "n") return n;
+    if (classe == "n log n") return n * log2(max(2.0, n));
+    if (classe == "n^2") return n * n;
+    if (classe == "n^3") return n * n * n;
+    if (classe == "2^n") return pow(2.0, n);
+    if (classe == "n!") return tgamma(n + 1);
+    return NAN;
+}
 
-int main() {
-    ios::sync_with_stdio(false);
-    cin.tie(nullptr);
-
-    int n;
-    cin >> n;
-    vector<int> a(n);
-    for (int i = 0; i < n; i++) cin >> a[i];
-
-    // 1. Inicialize a estrutura/estado.
-    // 2. Processe os dados mantendo o invariante.
-    // 3. Extraia e imprima a resposta.
-    return 0;
+// maior n inteiro (até 1e18) com custo(classe, n) <= ops
+ll maior_n(const string& classe, double ops) {
+    ll lo = 1, hi = 1e18;
+    if (custo(classe, 1) > ops) return 0;
+    while (lo < hi) {
+        ll mid = lo + (hi - lo + 1) / 2;
+        if (custo(classe, (double)mid) <= ops) lo = mid; else hi = mid - 1;
+    }
+    return lo;
 }
 ```
 
-Não copie o esqueleto literalmente quando a técnica exigir DFS, recursão, uma estrutura persistente ou várias consultas. Use o código específico da seção como base e adapte os tipos aos limites do enunciado.
+## Complexidade e cuidados
 
-## Complexidade: como conferir
-
-- Um laço sobre `n` elementos é `O(n)`.
-- Dois laços aninhados sobre `n` normalmente são `O(n²)`.
-- Ordenar costuma custar `O(n log n)`.
-- Uma busca binária custa `O(log n)`; fazer isso para cada elemento dá `O(n log n)`.
-- Em grafos, a DFS/BFS com lista de adjacência custa `O(n+m)`.
-- Uma estrutura de consultas pode ter custo de construção diferente do custo de cada consulta; informe os dois.
-
-A complexidade indicada no cabeçalho é uma referência para a implementação padrão. Variantes do mesmo algoritmo podem ter custos diferentes conforme a estrutura auxiliar, o domínio dos valores e as operações exigidas.
-
-## Erros comuns
-
-- Usar a técnica só porque o nome aparece no enunciado, sem verificar suas pré-condições.
-- Não decidir se os intervalos são inclusivos `[l,r]` ou semiabertos `[l,r)`.
-- Misturar índices `0..n-1` com índices `1..n`.
-- Usar `int` para somas, distâncias ou produtos que podem ultrapassar `2^31-1`; use `long long` quando necessário.
-- Esquecer de limpar vetores globais entre casos de teste.
-- Não testar duplicatas, casos mínimos e o maior caso permitido.
-
-## Checklist de prova/contest
-
-- [ ] Sei explicar o que representa cada estado/estrutura?
-- [ ] Sei por que a transição/operação é correta?
-- [ ] Sei justificar a complexidade total, não apenas de uma operação?
-- [ ] Os limites e sentinelas estão corretos?
-- [ ] A solução trata o caso mínimo e os empates?
-- [ ] O tipo numérico comporta a resposta máxima?
+- Com `ops = 10^8`: `n^2` dá `n = 10000`, `n^3` dá `464`, `2^n` dá `26`, `n!` dá `11` e `n log n` dá cerca de `5 · 10^6`.
+- Para `1` e `log n` o resultado satura em `10^18` (o teto da busca): significa "qualquer n".
+- A constante escondida pesa: um laço com `map` ou divisão `%` custa vários nanossegundos por operação; deixe margem de 3 a 10 vezes.
+- `O(n log n)` com `n = 10^6` são cerca de `2 · 10^7` operações, folgado; `O(n²)` com o mesmo `n` seria `10^12`, impossível.
