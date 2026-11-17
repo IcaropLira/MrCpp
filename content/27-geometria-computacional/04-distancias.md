@@ -1,75 +1,52 @@
 ---
 title: Distâncias
-summary: Em breve.
+summary: Euclidiana, Manhattan, Chebyshev, o truque da rotação de 45° e distância de ponto a reta/segmento.
 status: done
-complexity: tags:
-tags: ---
+complexity: O(n) para o maior Manhattan
+tags: geometria, distância, manhattan, chebyshev
 ---
 
-## Ideia e quando usar
+## Ideia
 
-Distâncias é uma técnica/estrutura que aparece quando o problema tem a seguinte necessidade: reconhecer o padrão pedido no enunciado, representar os estados relevantes e escolher uma operação que possa ser executada dentro do limite de tempo. Não decore só o código: identifique **o que cada variável significa**, qual é a condição de validade e qual é o custo de cada operação.
+A distância de Manhattan `|dx| + |dy|` vira Chebyshev `max(|dx'|, |dy'|)` após girar 45°: `(x, y) -> (x + y, x - y)`. Isso resolve em `O(n)` o par mais distante em Manhattan: é `max(maior(x+y) - menor(x+y), maior(x-y) - menor(x-y))`. A distância de ponto à reta é `|cross| / |ab|`; ao segmento, é a distância à reta se a projeção cai dentro, senão a menor distância a um extremo.
 
-## Como pensar na solução
-
-1. **Defina a entrada e a resposta.** Escreva em uma frase o que precisa ser calculado e quais restrições importam (`n`, número de arestas, tamanho das strings, valores máximos).
-2. **Escolha a representação.** Vetor, lista de adjacência, estado de DP, estrutura de dados ou ordenação devem refletir diretamente as operações necessárias.
-3. **Mantenha um invariante.** Antes de cada iteração/consulta, diga o que a estrutura representa. Depois da operação, prove que continua representando isso.
-4. **Analise a complexidade.** Conte quantas vezes cada elemento/aresta/estado é processado. Uma solução correta que faz `O(n²)` pode falhar para `n=2e5`.
-5. **Trate os casos-limite.** Entrada vazia ou mínima, duplicatas, valores negativos, grafo desconexo, ciclos, limites de índice e overflow.
-
-## Modelo de implementação
-
-O esqueleto depende do problema concreto; não existe um único código que resolva todas as variantes. Em C++ competitivo, mantenha a implementação enxuta e explícita, no estilo deste material:
+## Código
 
 ```cpp
-#include <bits/stdc++.h>
-using namespace std;
-using ll = long long;
+using P = pair<double, double>;
 
-int main() {
-    ios::sync_with_stdio(false);
-    cin.tie(nullptr);
+double euclid(P a, P b) { return hypot(a.first - b.first, a.second - b.second); }
+double manhattan(P a, P b) { return fabs(a.first - b.first) + fabs(a.second - b.second); }
+double chebyshev(P a, P b) { return max(fabs(a.first - b.first), fabs(a.second - b.second)); }
 
-    int n;
-    cin >> n;
-    vector<int> a(n);
-    for (int i = 0; i < n; i++) cin >> a[i];
+// maior distância de Manhattan entre dois pontos do conjunto, O(n)
+double maior_manhattan(const vector<P>& p) {
+    double mn1 = 1e18, mx1 = -1e18, mn2 = 1e18, mx2 = -1e18;
+    for (auto [x, y] : p) {
+        mn1 = min(mn1, x + y); mx1 = max(mx1, x + y);
+        mn2 = min(mn2, x - y); mx2 = max(mx2, x - y);
+    }
+    return max(mx1 - mn1, mx2 - mn2);
+}
 
-    // 1. Inicialize a estrutura/estado.
-    // 2. Processe os dados mantendo o invariante.
-    // 3. Extraia e imprima a resposta.
-    return 0;
+double dist_ponto_reta(P p, P a, P b) {  // a != b
+    double cr = (b.first - a.first) * (p.second - a.second) - (b.second - a.second) * (p.first - a.first);
+    return fabs(cr) / euclid(a, b);
+}
+
+double dist_ponto_segmento(P p, P a, P b) {
+    double dx = b.first - a.first, dy = b.second - a.second;
+    double len2 = dx * dx + dy * dy;
+    if (len2 == 0) return euclid(p, a);
+    double t = ((p.first - a.first) * dx + (p.second - a.second) * dy) / len2;
+    t = max(0.0, min(1.0, t));
+    return euclid(p, {a.first + t * dx, a.second + t * dy});
 }
 ```
 
-Não copie o esqueleto literalmente quando a técnica exigir DFS, recursão, uma estrutura persistente ou várias consultas. Use o código específico da seção como base e adapte os tipos aos limites do enunciado.
+## Complexidade e cuidados
 
-## Complexidade: como conferir
-
-- Um laço sobre `n` elementos é `O(n)`.
-- Dois laços aninhados sobre `n` normalmente são `O(n²)`.
-- Ordenar costuma custar `O(n log n)`.
-- Uma busca binária custa `O(log n)`; fazer isso para cada elemento dá `O(n log n)`.
-- Em grafos, a DFS/BFS com lista de adjacência custa `O(n+m)`.
-- Uma estrutura de consultas pode ter custo de construção diferente do custo de cada consulta; informe os dois.
-
-A complexidade indicada no cabeçalho é uma referência para a implementação padrão. Variantes do mesmo algoritmo podem ter custos diferentes conforme a estrutura auxiliar, o domínio dos valores e as operações exigidas.
-
-## Erros comuns
-
-- Usar a técnica só porque o nome aparece no enunciado, sem verificar suas pré-condições.
-- Não decidir se os intervalos são inclusivos `[l,r]` ou semiabertos `[l,r)`.
-- Misturar índices `0..n-1` com índices `1..n`.
-- Usar `int` para somas, distâncias ou produtos que podem ultrapassar `2^31-1`; use `long long` quando necessário.
-- Esquecer de limpar vetores globais entre casos de teste.
-- Não testar duplicatas, casos mínimos e o maior caso permitido.
-
-## Checklist de prova/contest
-
-- [ ] Sei explicar o que representa cada estado/estrutura?
-- [ ] Sei por que a transição/operação é correta?
-- [ ] Sei justificar a complexidade total, não apenas de uma operação?
-- [ ] Os limites e sentinelas estão corretos?
-- [ ] A solução trata o caso mínimo e os empates?
-- [ ] O tipo numérico comporta a resposta máxima?
+- Para inteiros mantenha o quadrado da distância (`dx² + dy²`) em `long long` e só tire a raiz no fim; comparar quadrados evita erro.
+- O truque da rotação também mostra que o círculo de Manhattan é um quadrado girado 45°.
+- A menor distância de Manhattan entre pares não sai desse truque: use sweep ou k-d tree.
+- `hypot` é mais estável que `sqrt(dx*dx + dy*dy)` para valores muito grandes ou pequenos.

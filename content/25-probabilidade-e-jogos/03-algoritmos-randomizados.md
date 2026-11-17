@@ -1,75 +1,61 @@
 ---
 title: Algoritmos randomizados
-summary: Em breve.
+summary: Quickselect, embaralhamento de Fisher-Yates e o teste de Freivalds para produto de matrizes.
 status: done
-complexity: tags:
-tags: ---
+complexity: O(n) esperado; O(k n²) para Freivalds
+tags: probabilidade, randomização, quickselect, freivalds
 ---
 
-## Ideia e quando usar
+## Ideia
 
-Algoritmos randomizados é uma técnica/estrutura que aparece quando o problema tem a seguinte necessidade: reconhecer o padrão pedido no enunciado, representar os estados relevantes e escolher uma operação que possa ser executada dentro do limite de tempo. Não decore só o código: identifique **o que cada variável significa**, qual é a condição de validade e qual é o custo de cada operação.
+Aleatoriedade evita entradas adversariais e simplifica algoritmos. *Quickselect* acha o `k`-ésimo menor em `O(n)` esperado escolhendo o pivô ao acaso. *Fisher-Yates* gera uma permutação uniforme em `O(n)`. *Freivalds* confere se `A · B = C` em `O(n²)` por rodada: multiplica ambos os lados por um vetor aleatório `r` de 0/1 e compara; se `AB ≠ C`, cada rodada falha em detectar com probabilidade no máximo `1/2`.
 
-## Como pensar na solução
-
-1. **Defina a entrada e a resposta.** Escreva em uma frase o que precisa ser calculado e quais restrições importam (`n`, número de arestas, tamanho das strings, valores máximos).
-2. **Escolha a representação.** Vetor, lista de adjacência, estado de DP, estrutura de dados ou ordenação devem refletir diretamente as operações necessárias.
-3. **Mantenha um invariante.** Antes de cada iteração/consulta, diga o que a estrutura representa. Depois da operação, prove que continua representando isso.
-4. **Analise a complexidade.** Conte quantas vezes cada elemento/aresta/estado é processado. Uma solução correta que faz `O(n²)` pode falhar para `n=2e5`.
-5. **Trate os casos-limite.** Entrada vazia ou mínima, duplicatas, valores negativos, grafo desconexo, ciclos, limites de índice e overflow.
-
-## Modelo de implementação
-
-O esqueleto depende do problema concreto; não existe um único código que resolva todas as variantes. Em C++ competitivo, mantenha a implementação enxuta e explícita, no estilo deste material:
+## Código
 
 ```cpp
-#include <bits/stdc++.h>
-using namespace std;
-using ll = long long;
+mt19937_64 rng(712367);
 
-int main() {
-    ios::sync_with_stdio(false);
-    cin.tie(nullptr);
+// k-ésimo menor (k de 0 a n-1), O(n) esperado
+int quickselect(vector<int> a, int k) {
+    int lo = 0, hi = a.size() - 1;
+    while (true) {
+        if (lo == hi) return a[lo];
+        int pivo = a[lo + rng() % (hi - lo + 1)];
+        int i = lo, lt = lo, gt = hi;  // partição em três: < pivo | == pivo | > pivo
+        while (i <= gt) {
+            if (a[i] < pivo) swap(a[i++], a[lt++]);
+            else if (a[i] > pivo) swap(a[i], a[gt--]);
+            else i++;
+        }
+        if (k < lt) hi = lt - 1;
+        else if (k > gt) lo = gt + 1;
+        else return pivo;
+    }
+}
 
-    int n;
-    cin >> n;
-    vector<int> a(n);
-    for (int i = 0; i < n; i++) cin >> a[i];
+// embaralhamento uniforme
+void embaralha(vector<int>& v) {
+    for (int i = (int)v.size() - 1; i > 0; i--) swap(v[i], v[rng() % (i + 1)]);
+}
 
-    // 1. Inicialize a estrutura/estado.
-    // 2. Processe os dados mantendo o invariante.
-    // 3. Extraia e imprima a resposta.
-    return 0;
+// A, B, C matrizes n x n; devolve false se encontrou prova de que A*B != C
+bool freivalds(const vector<vector<ll>>& A, const vector<vector<ll>>& B, const vector<vector<ll>>& C, int rodadas = 30) {
+    int n = A.size();
+    for (int it = 0; it < rodadas; it++) {
+        vector<ll> r(n), Br(n, 0), ABr(n, 0), Cr(n, 0);
+        for (auto& x : r) x = rng() & 1;
+        for (int i = 0; i < n; i++) for (int j = 0; j < n; j++) Br[i] += B[i][j] * r[j];
+        for (int i = 0; i < n; i++) for (int j = 0; j < n; j++) ABr[i] += A[i][j] * Br[j];
+        for (int i = 0; i < n; i++) for (int j = 0; j < n; j++) Cr[i] += C[i][j] * r[j];
+        if (ABr != Cr) return false;
+    }
+    return true;
 }
 ```
 
-Não copie o esqueleto literalmente quando a técnica exigir DFS, recursão, uma estrutura persistente ou várias consultas. Use o código específico da seção como base e adapte os tipos aos limites do enunciado.
+## Complexidade e cuidados
 
-## Complexidade: como conferir
-
-- Um laço sobre `n` elementos é `O(n)`.
-- Dois laços aninhados sobre `n` normalmente são `O(n²)`.
-- Ordenar costuma custar `O(n log n)`.
-- Uma busca binária custa `O(log n)`; fazer isso para cada elemento dá `O(n log n)`.
-- Em grafos, a DFS/BFS com lista de adjacência custa `O(n+m)`.
-- Uma estrutura de consultas pode ter custo de construção diferente do custo de cada consulta; informe os dois.
-
-A complexidade indicada no cabeçalho é uma referência para a implementação padrão. Variantes do mesmo algoritmo podem ter custos diferentes conforme a estrutura auxiliar, o domínio dos valores e as operações exigidas.
-
-## Erros comuns
-
-- Usar a técnica só porque o nome aparece no enunciado, sem verificar suas pré-condições.
-- Não decidir se os intervalos são inclusivos `[l,r]` ou semiabertos `[l,r)`.
-- Misturar índices `0..n-1` com índices `1..n`.
-- Usar `int` para somas, distâncias ou produtos que podem ultrapassar `2^31-1`; use `long long` quando necessário.
-- Esquecer de limpar vetores globais entre casos de teste.
-- Não testar duplicatas, casos mínimos e o maior caso permitido.
-
-## Checklist de prova/contest
-
-- [ ] Sei explicar o que representa cada estado/estrutura?
-- [ ] Sei por que a transição/operação é correta?
-- [ ] Sei justificar a complexidade total, não apenas de uma operação?
-- [ ] Os limites e sentinelas estão corretos?
-- [ ] A solução trata o caso mínimo e os empates?
-- [ ] O tipo numérico comporta a resposta máxima?
+- A partição em três evita o pior caso quando há muitos elementos iguais.
+- Troque `rng() % (i + 1)` por uma distribuição uniforme exata (`uniform_int_distribution`) se o viés (ínfimo) importar.
+- Use uma semente fixa em contests para reproduzir o erro e `chrono::steady_clock::now().time_since_epoch().count()` quando a entrada puder ser adversarial (hash hacking).
+- Freivalds com `k` rodadas erra com probabilidade menor que `2^-k`; só falso positivo (aceitar um produto errado) é possível.

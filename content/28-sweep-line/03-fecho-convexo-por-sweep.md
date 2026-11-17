@@ -1,75 +1,46 @@
 ---
-title: Fecho convexo por sweep
-summary: Em breve.
+title: Fecho convexo por sweep (Andrew)
+summary: Monotone chain: ordena os pontos e constrói as cadeias inferior e superior com uma pilha.
 status: done
-complexity: tags:
-tags: ---
+complexity: O(n log n)
+tags: sweep line, geometria, fecho convexo, monotone chain
 ---
 
-## Ideia e quando usar
+## Ideia
 
-Fecho convexo por sweep é uma técnica/estrutura que aparece quando o problema tem a seguinte necessidade: reconhecer o padrão pedido no enunciado, representar os estados relevantes e escolher uma operação que possa ser executada dentro do limite de tempo. Não decore só o código: identifique **o que cada variável significa**, qual é a condição de validade e qual é o custo de cada operação.
+Ordene os pontos por `(x, y)` e varra duas vezes. Na primeira, mantenha uma pilha que só aceita curvas à esquerda: ao chegar um ponto, retire do topo enquanto os dois últimos mais o novo não fizerem curva à esquerda estrita. Isso constrói a cadeia inferior. A segunda varredura, em ordem reversa, constrói a superior. Juntas formam o fecho em sentido anti-horário, sem pontos colineares nas arestas.
 
-## Como pensar na solução
-
-1. **Defina a entrada e a resposta.** Escreva em uma frase o que precisa ser calculado e quais restrições importam (`n`, número de arestas, tamanho das strings, valores máximos).
-2. **Escolha a representação.** Vetor, lista de adjacência, estado de DP, estrutura de dados ou ordenação devem refletir diretamente as operações necessárias.
-3. **Mantenha um invariante.** Antes de cada iteração/consulta, diga o que a estrutura representa. Depois da operação, prove que continua representando isso.
-4. **Analise a complexidade.** Conte quantas vezes cada elemento/aresta/estado é processado. Uma solução correta que faz `O(n²)` pode falhar para `n=2e5`.
-5. **Trate os casos-limite.** Entrada vazia ou mínima, duplicatas, valores negativos, grafo desconexo, ciclos, limites de índice e overflow.
-
-## Modelo de implementação
-
-O esqueleto depende do problema concreto; não existe um único código que resolva todas as variantes. Em C++ competitivo, mantenha a implementação enxuta e explícita, no estilo deste material:
+## Código
 
 ```cpp
-#include <bits/stdc++.h>
-using namespace std;
-using ll = long long;
+using P = pair<ll, ll>;
 
-int main() {
-    ios::sync_with_stdio(false);
-    cin.tie(nullptr);
+ll cross(P o, P a, P b) { return (a.first - o.first) * (b.second - o.second) - (a.second - o.second) * (b.first - o.first); }
 
-    int n;
-    cin >> n;
-    vector<int> a(n);
-    for (int i = 0; i < n; i++) cin >> a[i];
-
-    // 1. Inicialize a estrutura/estado.
-    // 2. Processe os dados mantendo o invariante.
-    // 3. Extraia e imprima a resposta.
-    return 0;
+// vértices do fecho em sentido anti-horário, sem colineares; começa pelo menor (x, y)
+vector<P> fecho_convexo(vector<P> p) {
+    sort(p.begin(), p.end());
+    p.erase(unique(p.begin(), p.end()), p.end());
+    int n = p.size();
+    if (n < 3) return p;
+    vector<P> h(2 * n);
+    int k = 0;
+    for (int i = 0; i < n; i++) {  // cadeia inferior
+        while (k >= 2 && cross(h[k - 2], h[k - 1], p[i]) <= 0) k--;
+        h[k++] = p[i];
+    }
+    for (int i = n - 2, t = k + 1; i >= 0; i--) {  // cadeia superior
+        while (k >= t && cross(h[k - 2], h[k - 1], p[i]) <= 0) k--;
+        h[k++] = p[i];
+    }
+    h.resize(k - 1);  // o último ponto repete o primeiro
+    return h;
 }
 ```
 
-Não copie o esqueleto literalmente quando a técnica exigir DFS, recursão, uma estrutura persistente ou várias consultas. Use o código específico da seção como base e adapte os tipos aos limites do enunciado.
+## Complexidade e cuidados
 
-## Complexidade: como conferir
-
-- Um laço sobre `n` elementos é `O(n)`.
-- Dois laços aninhados sobre `n` normalmente são `O(n²)`.
-- Ordenar costuma custar `O(n log n)`.
-- Uma busca binária custa `O(log n)`; fazer isso para cada elemento dá `O(n log n)`.
-- Em grafos, a DFS/BFS com lista de adjacência custa `O(n+m)`.
-- Uma estrutura de consultas pode ter custo de construção diferente do custo de cada consulta; informe os dois.
-
-A complexidade indicada no cabeçalho é uma referência para a implementação padrão. Variantes do mesmo algoritmo podem ter custos diferentes conforme a estrutura auxiliar, o domínio dos valores e as operações exigidas.
-
-## Erros comuns
-
-- Usar a técnica só porque o nome aparece no enunciado, sem verificar suas pré-condições.
-- Não decidir se os intervalos são inclusivos `[l,r]` ou semiabertos `[l,r)`.
-- Misturar índices `0..n-1` com índices `1..n`.
-- Usar `int` para somas, distâncias ou produtos que podem ultrapassar `2^31-1`; use `long long` quando necessário.
-- Esquecer de limpar vetores globais entre casos de teste.
-- Não testar duplicatas, casos mínimos e o maior caso permitido.
-
-## Checklist de prova/contest
-
-- [ ] Sei explicar o que representa cada estado/estrutura?
-- [ ] Sei por que a transição/operação é correta?
-- [ ] Sei justificar a complexidade total, não apenas de uma operação?
-- [ ] Os limites e sentinelas estão corretos?
-- [ ] A solução trata o caso mínimo e os empates?
-- [ ] O tipo numérico comporta a resposta máxima?
+- Troque `<= 0` por `< 0` para manter pontos colineares sobre as arestas do fecho.
+- Todos os pontos colineares: o resultado é só os dois extremos (a implementação acima devolve 2 pontos).
+- `cross` com coordenadas até `1e9` cabe em `long long` (até `~4e18`).
+- Área do fecho: fórmula do cadarço (`sum cross(h[0], h[i], h[i+1])`).
