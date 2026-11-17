@@ -1,75 +1,62 @@
 ---
 title: Digit DP
-summary: Em breve.
+summary: Contar números até N com uma propriedade nos dígitos, usando a flag "tight".
 status: done
-complexity: tags:
-tags: ---
+complexity: O(dígitos · estados · 10)
+tags: dp, dígitos, contagem
 ---
 
-## Ideia e quando usar
+## Ideia
 
-Digit DP é uma técnica/estrutura que aparece quando o problema tem a seguinte necessidade: reconhecer o padrão pedido no enunciado, representar os estados relevantes e escolher uma operação que possa ser executada dentro do limite de tempo. Não decore só o código: identifique **o que cada variável significa**, qual é a condição de validade e qual é o custo de cada operação.
+Construa o número dígito a dígito, da esquerda para a direita. O estado é a posição, o que a propriedade precisa lembrar (soma, último dígito) e a flag `tight`: enquanto os dígitos escolhidos são iguais ao prefixo de `N`, o próximo dígito não pode passar do de `N`; depois que se escolhe um menor, qualquer dígito vale. Para um intervalo `[L, R]` use `f(R) - f(L-1)`.
 
-## Como pensar na solução
-
-1. **Defina a entrada e a resposta.** Escreva em uma frase o que precisa ser calculado e quais restrições importam (`n`, número de arestas, tamanho das strings, valores máximos).
-2. **Escolha a representação.** Vetor, lista de adjacência, estado de DP, estrutura de dados ou ordenação devem refletir diretamente as operações necessárias.
-3. **Mantenha um invariante.** Antes de cada iteração/consulta, diga o que a estrutura representa. Depois da operação, prove que continua representando isso.
-4. **Analise a complexidade.** Conte quantas vezes cada elemento/aresta/estado é processado. Uma solução correta que faz `O(n²)` pode falhar para `n=2e5`.
-5. **Trate os casos-limite.** Entrada vazia ou mínima, duplicatas, valores negativos, grafo desconexo, ciclos, limites de índice e overflow.
-
-## Modelo de implementação
-
-O esqueleto depende do problema concreto; não existe um único código que resolva todas as variantes. Em C++ competitivo, mantenha a implementação enxuta e explícita, no estilo deste material:
+## Código
 
 ```cpp
-#include <bits/stdc++.h>
-using namespace std;
-using ll = long long;
+// quantos x em [0, N] têm soma dos dígitos == s
+ll soma_digitos(ll N, int s) {
+    string d = to_string(N);
+    int n = d.size();
+    vector<vector<array<ll, 2>>> memo(n + 1, vector<array<ll, 2>>(s + 1, {-1, -1}));
+    function<ll(int, int, int)> go = [&](int pos, int rem, int tight) -> ll {
+        if (rem < 0) return 0;
+        if (pos == n) return rem == 0;
+        ll& r = memo[pos][rem][tight];
+        if (r != -1) return r;
+        r = 0;
+        int lim = tight ? d[pos] - '0' : 9;
+        for (int x = 0; x <= lim; x++) r += go(pos + 1, rem - x, tight && x == lim);
+        return r;
+    };
+    return go(0, s, 1);
+}
 
-int main() {
-    ios::sync_with_stdio(false);
-    cin.tie(nullptr);
-
-    int n;
-    cin >> n;
-    vector<int> a(n);
-    for (int i = 0; i < n; i++) cin >> a[i];
-
-    // 1. Inicialize a estrutura/estado.
-    // 2. Processe os dados mantendo o invariante.
-    // 3. Extraia e imprima a resposta.
-    return 0;
+// quantos x em [1, N] não têm dois dígitos adjacentes iguais
+ll sem_adjacentes_iguais(ll N) {
+    if (N <= 0) return 0;
+    string d = to_string(N);
+    int n = d.size();
+    // memo[pos][último dígito (10 = ainda não começou)][tight]
+    vector<vector<array<ll, 2>>> memo(n + 1, vector<array<ll, 2>>(11, {-1, -1}));
+    function<ll(int, int, int)> go = [&](int pos, int last, int tight) -> ll {
+        if (pos == n) return last != 10;  // exclui o zero (nenhum dígito colocado)
+        ll& r = memo[pos][last][tight];
+        if (r != -1) return r;
+        r = 0;
+        int lim = tight ? d[pos] - '0' : 9;
+        for (int x = 0; x <= lim; x++) {
+            if (last == 10 && x == 0) r += go(pos + 1, 10, tight && x == lim);  // zeros à esquerda
+            else if (x != last) r += go(pos + 1, x, tight && x == lim);
+        }
+        return r;
+    };
+    return go(0, 10, 1);
 }
 ```
 
-Não copie o esqueleto literalmente quando a técnica exigir DFS, recursão, uma estrutura persistente ou várias consultas. Use o código específico da seção como base e adapte os tipos aos limites do enunciado.
+## Complexidade e cuidados
 
-## Complexidade: como conferir
-
-- Um laço sobre `n` elementos é `O(n)`.
-- Dois laços aninhados sobre `n` normalmente são `O(n²)`.
-- Ordenar costuma custar `O(n log n)`.
-- Uma busca binária custa `O(log n)`; fazer isso para cada elemento dá `O(n log n)`.
-- Em grafos, a DFS/BFS com lista de adjacência custa `O(n+m)`.
-- Uma estrutura de consultas pode ter custo de construção diferente do custo de cada consulta; informe os dois.
-
-A complexidade indicada no cabeçalho é uma referência para a implementação padrão. Variantes do mesmo algoritmo podem ter custos diferentes conforme a estrutura auxiliar, o domínio dos valores e as operações exigidas.
-
-## Erros comuns
-
-- Usar a técnica só porque o nome aparece no enunciado, sem verificar suas pré-condições.
-- Não decidir se os intervalos são inclusivos `[l,r]` ou semiabertos `[l,r)`.
-- Misturar índices `0..n-1` com índices `1..n`.
-- Usar `int` para somas, distâncias ou produtos que podem ultrapassar `2^31-1`; use `long long` quando necessário.
-- Esquecer de limpar vetores globais entre casos de teste.
-- Não testar duplicatas, casos mínimos e o maior caso permitido.
-
-## Checklist de prova/contest
-
-- [ ] Sei explicar o que representa cada estado/estrutura?
-- [ ] Sei por que a transição/operação é correta?
-- [ ] Sei justificar a complexidade total, não apenas de uma operação?
-- [ ] Os limites e sentinelas estão corretos?
-- [ ] A solução trata o caso mínimo e os empates?
-- [ ] O tipo numérico comporta a resposta máxima?
+- A memoização só vale para o mesmo `N`; zere/recrie a tabela para cada chamada (ou memoize só o caso `tight = 0`).
+- Zeros à esquerda não contam como dígitos em propriedades como "sem repetição"; por isso o estado `10` (ainda não começou).
+- Para `[L, R]`, use `f(R) - f(L-1)` com `L >= 1`.
+- Para propriedades em outra base, troque `to_string` e o limite `9` pela base.

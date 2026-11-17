@@ -1,75 +1,53 @@
 ---
-title: Divisão e conquista (otimização)
-summary: Em breve.
+title: Divisão e conquista (otimização de DP)
+summary: Acelera dp[k][i] = min_j dp[k-1][j] + custo(j,i) de O(k n²) para O(k n log n) quando o ótimo é monótono.
 status: done
-complexity: tags:
-tags: ---
+complexity: O(k · n log n)
+tags: dp, divisão e conquista, otimização
 ---
 
-## Ideia e quando usar
+## Ideia
 
-Divisão e conquista (otimização) é uma técnica/estrutura que aparece quando o problema tem a seguinte necessidade: reconhecer o padrão pedido no enunciado, representar os estados relevantes e escolher uma operação que possa ser executada dentro do limite de tempo. Não decore só o código: identifique **o que cada variável significa**, qual é a condição de validade e qual é o custo de cada operação.
+Se o índice ótimo `opt(i)` de `dp[k][i]` cresce junto com `i` (isto vale quando o custo satisfaz a desigualdade do quadrângulo), calcule o meio `mid` varrendo só `[optl, optr]`, descubra seu ótimo e recurse: a esquerda usa `[optl, opt]` e a direita `[opt, optr]`. Cada nível da recursão varre `O(n)` candidatos no total, e há `log n` níveis.
 
-## Como pensar na solução
-
-1. **Defina a entrada e a resposta.** Escreva em uma frase o que precisa ser calculado e quais restrições importam (`n`, número de arestas, tamanho das strings, valores máximos).
-2. **Escolha a representação.** Vetor, lista de adjacência, estado de DP, estrutura de dados ou ordenação devem refletir diretamente as operações necessárias.
-3. **Mantenha um invariante.** Antes de cada iteração/consulta, diga o que a estrutura representa. Depois da operação, prove que continua representando isso.
-4. **Analise a complexidade.** Conte quantas vezes cada elemento/aresta/estado é processado. Uma solução correta que faz `O(n²)` pode falhar para `n=2e5`.
-5. **Trate os casos-limite.** Entrada vazia ou mínima, duplicatas, valores negativos, grafo desconexo, ciclos, limites de índice e overflow.
-
-## Modelo de implementação
-
-O esqueleto depende do problema concreto; não existe um único código que resolva todas as variantes. Em C++ competitivo, mantenha a implementação enxuta e explícita, no estilo deste material:
+## Código
 
 ```cpp
-#include <bits/stdc++.h>
-using namespace std;
-using ll = long long;
+// divide a em k blocos contíguos não vazios minimizando a soma dos quadrados das somas dos blocos
+ll particao(const vector<ll>& a, int k) {
+    int n = a.size();
+    vector<ll> pre(n + 1, 0);
+    for (int i = 0; i < n; i++) pre[i + 1] = pre[i] + a[i];
+    auto cost = [&](int j, int i) { ll s = pre[i] - pre[j]; return s * s; };  // bloco a[j..i-1]
 
-int main() {
-    ios::sync_with_stdio(false);
-    cin.tie(nullptr);
-
-    int n;
-    cin >> n;
-    vector<int> a(n);
-    for (int i = 0; i < n; i++) cin >> a[i];
-
-    // 1. Inicialize a estrutura/estado.
-    // 2. Processe os dados mantendo o invariante.
-    // 3. Extraia e imprima a resposta.
-    return 0;
+    const ll INF = LLONG_MAX / 4;
+    vector<ll> prev(n + 1, INF), cur(n + 1, INF);
+    prev[0] = 0;  // camada 0: só o prefixo vazio
+    function<void(int, int, int, int)> go = [&](int l, int r, int optl, int optr) {
+        if (l > r) return;
+        int mid = (l + r) / 2, bi = -1;
+        ll best = INF;
+        for (int j = optl; j <= min(mid - 1, optr); j++) {
+            if (prev[j] >= INF) continue;
+            ll v = prev[j] + cost(j, mid);
+            if (v < best) best = v, bi = j;
+        }
+        cur[mid] = best;
+        go(l, mid - 1, optl, bi < 0 ? optl : bi);
+        go(mid + 1, r, bi < 0 ? optl : bi, optr);
+    };
+    for (int t = 1; t <= k; t++) {
+        fill(cur.begin(), cur.end(), INF);
+        go(t, n, t - 1, n - 1);  // com t blocos, o prefixo tem pelo menos t elementos
+        swap(prev, cur);
+    }
+    return prev[n];
 }
 ```
 
-Não copie o esqueleto literalmente quando a técnica exigir DFS, recursão, uma estrutura persistente ou várias consultas. Use o código específico da seção como base e adapte os tipos aos limites do enunciado.
+## Complexidade e cuidados
 
-## Complexidade: como conferir
-
-- Um laço sobre `n` elementos é `O(n)`.
-- Dois laços aninhados sobre `n` normalmente são `O(n²)`.
-- Ordenar costuma custar `O(n log n)`.
-- Uma busca binária custa `O(log n)`; fazer isso para cada elemento dá `O(n log n)`.
-- Em grafos, a DFS/BFS com lista de adjacência custa `O(n+m)`.
-- Uma estrutura de consultas pode ter custo de construção diferente do custo de cada consulta; informe os dois.
-
-A complexidade indicada no cabeçalho é uma referência para a implementação padrão. Variantes do mesmo algoritmo podem ter custos diferentes conforme a estrutura auxiliar, o domínio dos valores e as operações exigidas.
-
-## Erros comuns
-
-- Usar a técnica só porque o nome aparece no enunciado, sem verificar suas pré-condições.
-- Não decidir se os intervalos são inclusivos `[l,r]` ou semiabertos `[l,r)`.
-- Misturar índices `0..n-1` com índices `1..n`.
-- Usar `int` para somas, distâncias ou produtos que podem ultrapassar `2^31-1`; use `long long` quando necessário.
-- Esquecer de limpar vetores globais entre casos de teste.
-- Não testar duplicatas, casos mínimos e o maior caso permitido.
-
-## Checklist de prova/contest
-
-- [ ] Sei explicar o que representa cada estado/estrutura?
-- [ ] Sei por que a transição/operação é correta?
-- [ ] Sei justificar a complexidade total, não apenas de uma operação?
-- [ ] Os limites e sentinelas estão corretos?
-- [ ] A solução trata o caso mínimo e os empates?
-- [ ] O tipo numérico comporta a resposta máxima?
+- Só vale se o ótimo for monótono (custo com desigualdade do quadrângulo: `c(a,c) + c(b,d) <= c(a,d) + c(b,c)` para `a<=b<=c<=d`). Teste contra a DP cúbica antes de confiar.
+- Aqui `k <= n`; com `k > n` não há partição em blocos não vazios.
+- Para `k` grande, a técnica do Aliens (WQS) elimina o fator `k`.
+- `cost(j, i)` precisa ser `O(1)` (use somas de prefixo).
