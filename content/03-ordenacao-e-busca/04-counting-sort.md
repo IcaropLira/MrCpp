@@ -1,75 +1,42 @@
 ---
 title: Counting sort
-summary: Em breve.
+summary: Ordena chaves inteiras pequenas em O(n + K), de forma estável; base do radix sort.
 status: done
-complexity: tags:
-tags: ---
+complexity: O(n + K)
+tags: ordenação, counting sort, radix sort
 ---
 
-## Ideia e quando usar
+## Ideia
 
-Counting sort é uma técnica/estrutura que aparece quando o problema tem a seguinte necessidade: reconhecer o padrão pedido no enunciado, representar os estados relevantes e escolher uma operação que possa ser executada dentro do limite de tempo. Não decore só o código: identifique **o que cada variável significa**, qual é a condição de validade e qual é o custo de cada operação.
+Conte quantas vezes cada chave aparece e transforme as contagens em posições iniciais (soma de prefixos). Percorrendo a entrada na ordem original e colocando cada elemento na próxima posição livre de sua chave, a ordenação fica estável. Isso permite encadear passadas: o radix sort ordena por um dígito de cada vez, do menos para o mais significativo.
 
-## Como pensar na solução
-
-1. **Defina a entrada e a resposta.** Escreva em uma frase o que precisa ser calculado e quais restrições importam (`n`, número de arestas, tamanho das strings, valores máximos).
-2. **Escolha a representação.** Vetor, lista de adjacência, estado de DP, estrutura de dados ou ordenação devem refletir diretamente as operações necessárias.
-3. **Mantenha um invariante.** Antes de cada iteração/consulta, diga o que a estrutura representa. Depois da operação, prove que continua representando isso.
-4. **Analise a complexidade.** Conte quantas vezes cada elemento/aresta/estado é processado. Uma solução correta que faz `O(n²)` pode falhar para `n=2e5`.
-5. **Trate os casos-limite.** Entrada vazia ou mínima, duplicatas, valores negativos, grafo desconexo, ciclos, limites de índice e overflow.
-
-## Modelo de implementação
-
-O esqueleto depende do problema concreto; não existe um único código que resolva todas as variantes. Em C++ competitivo, mantenha a implementação enxuta e explícita, no estilo deste material:
+## Código
 
 ```cpp
-#include <bits/stdc++.h>
-using namespace std;
-using ll = long long;
+// ordena de forma estável por key(x) em [0, K)
+template <class T, class F> vector<T> counting_sort_by(const vector<T>& a, int K, F key) {
+    vector<int> pos(K + 1, 0);
+    for (auto& x : a) pos[key(x) + 1]++;
+    for (int k = 0; k < K; k++) pos[k + 1] += pos[k];  // pos[k] = início da chave k
+    vector<T> out(a.size());
+    for (auto& x : a) out[pos[key(x)]++] = x;
+    return out;
+}
 
-int main() {
-    ios::sync_with_stdio(false);
-    cin.tie(nullptr);
-
-    int n;
-    cin >> n;
-    vector<int> a(n);
-    for (int i = 0; i < n; i++) cin >> a[i];
-
-    // 1. Inicialize a estrutura/estado.
-    // 2. Processe os dados mantendo o invariante.
-    // 3. Extraia e imprima a resposta.
-    return 0;
+// radix sort de inteiros não negativos de 32 bits, 4 passadas de 8 bits
+void radix_sort(vector<unsigned>& a) {
+    for (int sh = 0; sh < 32; sh += 8)
+        a = counting_sort_by(a, 256, [&](unsigned x) { return (int)((x >> sh) & 255); });
 }
 ```
 
-Não copie o esqueleto literalmente quando a técnica exigir DFS, recursão, uma estrutura persistente ou várias consultas. Use o código específico da seção como base e adapte os tipos aos limites do enunciado.
+## Uso
 
-## Complexidade: como conferir
+`counting_sort_by(v, 101, [](pair<int,int> p){ return p.first; })` ordena pares pela primeira componente mantendo a ordem dos empates.
 
-- Um laço sobre `n` elementos é `O(n)`.
-- Dois laços aninhados sobre `n` normalmente são `O(n²)`.
-- Ordenar costuma custar `O(n log n)`.
-- Uma busca binária custa `O(log n)`; fazer isso para cada elemento dá `O(n log n)`.
-- Em grafos, a DFS/BFS com lista de adjacência custa `O(n+m)`.
-- Uma estrutura de consultas pode ter custo de construção diferente do custo de cada consulta; informe os dois.
+## Complexidade e cuidados
 
-A complexidade indicada no cabeçalho é uma referência para a implementação padrão. Variantes do mesmo algoritmo podem ter custos diferentes conforme a estrutura auxiliar, o domínio dos valores e as operações exigidas.
-
-## Erros comuns
-
-- Usar a técnica só porque o nome aparece no enunciado, sem verificar suas pré-condições.
-- Não decidir se os intervalos são inclusivos `[l,r]` ou semiabertos `[l,r)`.
-- Misturar índices `0..n-1` com índices `1..n`.
-- Usar `int` para somas, distâncias ou produtos que podem ultrapassar `2^31-1`; use `long long` quando necessário.
-- Esquecer de limpar vetores globais entre casos de teste.
-- Não testar duplicatas, casos mínimos e o maior caso permitido.
-
-## Checklist de prova/contest
-
-- [ ] Sei explicar o que representa cada estado/estrutura?
-- [ ] Sei por que a transição/operação é correta?
-- [ ] Sei justificar a complexidade total, não apenas de uma operação?
-- [ ] Os limites e sentinelas estão corretos?
-- [ ] A solução trata o caso mínimo e os empates?
-- [ ] O tipo numérico comporta a resposta máxima?
+- `K` é o tamanho do domínio das chaves; se `K` é muito maior que `n` (por exemplo `1e9`), não use: comprima as coordenadas ou use `sort`.
+- A estabilidade é o que faz o radix sort funcionar: cada passada preserva a ordem da passada anterior.
+- Chaves negativas: some o menor valor (deslocamento) antes de contar.
+- Memória extra `O(n + K)`.

@@ -1,75 +1,54 @@
 ---
-title: Compressão de dados (Huffman)
-summary: Em breve.
+title: Compressão de dados — Huffman
+summary: Código de prefixo ótimo: junte sempre os dois símbolos menos frequentes.
 status: done
-complexity: tags:
-tags: ---
+complexity: O(n log n)
+tags: guloso, huffman, compressão, heap
 ---
 
-## Ideia e quando usar
+## Ideia
 
-Compressão de dados (Huffman) é uma técnica/estrutura que aparece quando o problema tem a seguinte necessidade: reconhecer o padrão pedido no enunciado, representar os estados relevantes e escolher uma operação que possa ser executada dentro do limite de tempo. Não decore só o código: identifique **o que cada variável significa**, qual é a condição de validade e qual é o custo de cada operação.
+Dadas as frequências, repita: retire as duas menores, crie um nó com a soma e devolva-o à fila. A soma de todos os nós criados é o custo total (bits do texto codificado). O comprimento de cada símbolo é a profundidade da folha. É ótimo entre todos os códigos de prefixo.
 
-## Como pensar na solução
-
-1. **Defina a entrada e a resposta.** Escreva em uma frase o que precisa ser calculado e quais restrições importam (`n`, número de arestas, tamanho das strings, valores máximos).
-2. **Escolha a representação.** Vetor, lista de adjacência, estado de DP, estrutura de dados ou ordenação devem refletir diretamente as operações necessárias.
-3. **Mantenha um invariante.** Antes de cada iteração/consulta, diga o que a estrutura representa. Depois da operação, prove que continua representando isso.
-4. **Analise a complexidade.** Conte quantas vezes cada elemento/aresta/estado é processado. Uma solução correta que faz `O(n²)` pode falhar para `n=2e5`.
-5. **Trate os casos-limite.** Entrada vazia ou mínima, duplicatas, valores negativos, grafo desconexo, ciclos, limites de índice e overflow.
-
-## Modelo de implementação
-
-O esqueleto depende do problema concreto; não existe um único código que resolva todas as variantes. Em C++ competitivo, mantenha a implementação enxuta e explícita, no estilo deste material:
+## Código
 
 ```cpp
-#include <bits/stdc++.h>
-using namespace std;
-using ll = long long;
+// custo total (soma freq * comprimento do código); f.size() >= 1
+ll huffman_custo(const vector<ll>& f) {
+    priority_queue<ll, vector<ll>, greater<>> pq(f.begin(), f.end());
+    ll custo = 0;
+    while (pq.size() > 1) {
+        ll a = pq.top(); pq.pop();
+        ll b = pq.top(); pq.pop();
+        custo += a + b;
+        pq.push(a + b);
+    }
+    return custo;
+}
 
-int main() {
-    ios::sync_with_stdio(false);
-    cin.tie(nullptr);
-
-    int n;
-    cin >> n;
-    vector<int> a(n);
-    for (int i = 0; i < n; i++) cin >> a[i];
-
-    // 1. Inicialize a estrutura/estado.
-    // 2. Processe os dados mantendo o invariante.
-    // 3. Extraia e imprima a resposta.
-    return 0;
+// comprimento do código de cada símbolo (um único símbolo recebe 1 bit)
+vector<int> huffman_comprimentos(const vector<ll>& f) {
+    int n = f.size();
+    vector<int> pai(2 * n, -1), len(n, 0);
+    priority_queue<pair<ll, int>, vector<pair<ll, int>>, greater<>> pq;
+    for (int i = 0; i < n; i++) pq.push({f[i], i});
+    int prox = n;
+    while (pq.size() > 1) {
+        auto [wa, a] = pq.top(); pq.pop();
+        auto [wb, b] = pq.top(); pq.pop();
+        pai[a] = pai[b] = prox;
+        pq.push({wa + wb, prox++});
+    }
+    for (int i = 0; i < n; i++)
+        for (int v = i; pai[v] != -1; v = pai[v]) len[i]++;
+    if (n == 1) len[0] = 1;
+    return len;
 }
 ```
 
-Não copie o esqueleto literalmente quando a técnica exigir DFS, recursão, uma estrutura persistente ou várias consultas. Use o código específico da seção como base e adapte os tipos aos limites do enunciado.
+## Complexidade e cuidados
 
-## Complexidade: como conferir
-
-- Um laço sobre `n` elementos é `O(n)`.
-- Dois laços aninhados sobre `n` normalmente são `O(n²)`.
-- Ordenar costuma custar `O(n log n)`.
-- Uma busca binária custa `O(log n)`; fazer isso para cada elemento dá `O(n log n)`.
-- Em grafos, a DFS/BFS com lista de adjacência custa `O(n+m)`.
-- Uma estrutura de consultas pode ter custo de construção diferente do custo de cada consulta; informe os dois.
-
-A complexidade indicada no cabeçalho é uma referência para a implementação padrão. Variantes do mesmo algoritmo podem ter custos diferentes conforme a estrutura auxiliar, o domínio dos valores e as operações exigidas.
-
-## Erros comuns
-
-- Usar a técnica só porque o nome aparece no enunciado, sem verificar suas pré-condições.
-- Não decidir se os intervalos são inclusivos `[l,r]` ou semiabertos `[l,r)`.
-- Misturar índices `0..n-1` com índices `1..n`.
-- Usar `int` para somas, distâncias ou produtos que podem ultrapassar `2^31-1`; use `long long` quando necessário.
-- Esquecer de limpar vetores globais entre casos de teste.
-- Não testar duplicatas, casos mínimos e o maior caso permitido.
-
-## Checklist de prova/contest
-
-- [ ] Sei explicar o que representa cada estado/estrutura?
-- [ ] Sei por que a transição/operação é correta?
-- [ ] Sei justificar a complexidade total, não apenas de uma operação?
-- [ ] Os limites e sentinelas estão corretos?
-- [ ] A solução trata o caso mínimo e os empates?
-- [ ] O tipo numérico comporta a resposta máxima?
+- Os códigos concretos são `0`/`1` ao descer à esquerda/direita; existem vários códigos ótimos com o mesmo custo.
+- Com um único símbolo o custo da fórmula é 0, mas na prática ele precisa de 1 bit.
+- Para alfabeto grande e frequências ordenadas há versão `O(n)` com duas filas.
+- Pré-requisito: frequências positivas; símbolos de frequência zero não entram.
