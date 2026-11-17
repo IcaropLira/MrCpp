@@ -1,75 +1,80 @@
 ---
 title: Caminho euleriano (Hierholzer)
-summary: Em breve.
+summary: Percorre todas as arestas exatamente uma vez, em grafo dirigido e não dirigido.
 status: done
-complexity: tags:
-tags: ---
+complexity: O(V + E)
+tags: grafos, euleriano, hierholzer
 ---
 
-## Ideia e quando usar
+## Ideia
 
-Caminho euleriano (Hierholzer) é uma técnica/estrutura que aparece quando o problema tem a seguinte necessidade: reconhecer o padrão pedido no enunciado, representar os estados relevantes e escolher uma operação que possa ser executada dentro do limite de tempo. Não decore só o código: identifique **o que cada variável significa**, qual é a condição de validade e qual é o custo de cada operação.
+Existe caminho euleriano em um grafo dirigido se no máximo um vértice tem `saída - entrada = 1` (o início), no máximo um tem `entrada - saída = 1` (o fim) e todos os outros são equilibrados, além de todas as arestas estarem em um só componente. Em um não dirigido, no máximo dois vértices têm grau ímpar. Hierholzer: siga arestas não usadas, empilhando vértices; ao ficar preso, desempilhe e acrescente à resposta; o resultado sai invertido.
 
-## Como pensar na solução
-
-1. **Defina a entrada e a resposta.** Escreva em uma frase o que precisa ser calculado e quais restrições importam (`n`, número de arestas, tamanho das strings, valores máximos).
-2. **Escolha a representação.** Vetor, lista de adjacência, estado de DP, estrutura de dados ou ordenação devem refletir diretamente as operações necessárias.
-3. **Mantenha um invariante.** Antes de cada iteração/consulta, diga o que a estrutura representa. Depois da operação, prove que continua representando isso.
-4. **Analise a complexidade.** Conte quantas vezes cada elemento/aresta/estado é processado. Uma solução correta que faz `O(n²)` pode falhar para `n=2e5`.
-5. **Trate os casos-limite.** Entrada vazia ou mínima, duplicatas, valores negativos, grafo desconexo, ciclos, limites de índice e overflow.
-
-## Modelo de implementação
-
-O esqueleto depende do problema concreto; não existe um único código que resolva todas as variantes. Em C++ competitivo, mantenha a implementação enxuta e explícita, no estilo deste material:
+## Código
 
 ```cpp
-#include <bits/stdc++.h>
-using namespace std;
-using ll = long long;
+// dirigido, vértices 0..n-1: sequência de m+1 vértices ou vazio se não existe (ou m == 0)
+vector<int> euler_dirigido(int n, const vector<pair<int, int>>& E) {
+    int m = E.size();
+    vector<vector<int>> g(n);
+    vector<int> sai(n, 0), entra(n, 0), it(n, 0);
+    for (auto [u, v] : E) g[u].push_back(v), sai[u]++, entra[v]++;
+    int ini = -1, mais = 0, menos = 0;
+    for (int v = 0; v < n; v++) {
+        if (sai[v] - entra[v] == 1) mais++, ini = v;
+        else if (entra[v] - sai[v] == 1) menos++;
+        else if (sai[v] != entra[v]) return {};
+    }
+    if (mais > 1 || menos > 1 || mais != menos) return {};
+    if (ini < 0) for (int v = 0; v < n; v++) if (sai[v]) { ini = v; break; }
+    if (ini < 0) return {};
+    vector<int> pilha = {ini}, r;
+    while (!pilha.empty()) {
+        int u = pilha.back();
+        if (it[u] < (int)g[u].size()) pilha.push_back(g[u][it[u]++]);
+        else r.push_back(u), pilha.pop_back();
+    }
+    if ((int)r.size() != m + 1) return {};  // arestas em mais de um componente
+    reverse(r.begin(), r.end());
+    return r;
+}
 
-int main() {
-    ios::sync_with_stdio(false);
-    cin.tie(nullptr);
-
-    int n;
-    cin >> n;
-    vector<int> a(n);
-    for (int i = 0; i < n; i++) cin >> a[i];
-
-    // 1. Inicialize a estrutura/estado.
-    // 2. Processe os dados mantendo o invariante.
-    // 3. Extraia e imprima a resposta.
-    return 0;
+// não dirigido (laços e arestas paralelas permitidos): idem
+vector<int> euler_nao_dirigido(int n, const vector<pair<int, int>>& E) {
+    int m = E.size();
+    vector<vector<pair<int, int>>> g(n);  // (vizinho, id da aresta)
+    vector<int> grau(n, 0), it(n, 0);
+    for (int i = 0; i < m; i++) {
+        auto [u, v] = E[i];
+        g[u].push_back({v, i}); g[v].push_back({u, i});
+        grau[u]++; grau[v]++;
+    }
+    int ini = -1, impares = 0;
+    for (int v = 0; v < n; v++) if (grau[v] % 2) { impares++; if (ini < 0) ini = v; }
+    if (impares != 0 && impares != 2) return {};
+    if (ini < 0) for (int v = 0; v < n; v++) if (grau[v]) { ini = v; break; }
+    if (ini < 0) return {};
+    vector<char> usada(m, false);
+    vector<int> pilha = {ini}, r;
+    while (!pilha.empty()) {
+        int u = pilha.back();
+        while (it[u] < (int)g[u].size() && usada[g[u][it[u]].second]) it[u]++;
+        if (it[u] == (int)g[u].size()) r.push_back(u), pilha.pop_back();
+        else {
+            auto [v, id] = g[u][it[u]++];
+            usada[id] = true;
+            pilha.push_back(v);
+        }
+    }
+    if ((int)r.size() != m + 1) return {};
+    reverse(r.begin(), r.end());
+    return r;
 }
 ```
 
-Não copie o esqueleto literalmente quando a técnica exigir DFS, recursão, uma estrutura persistente ou várias consultas. Use o código específico da seção como base e adapte os tipos aos limites do enunciado.
+## Complexidade e cuidados
 
-## Complexidade: como conferir
-
-- Um laço sobre `n` elementos é `O(n)`.
-- Dois laços aninhados sobre `n` normalmente são `O(n²)`.
-- Ordenar costuma custar `O(n log n)`.
-- Uma busca binária custa `O(log n)`; fazer isso para cada elemento dá `O(n log n)`.
-- Em grafos, a DFS/BFS com lista de adjacência custa `O(n+m)`.
-- Uma estrutura de consultas pode ter custo de construção diferente do custo de cada consulta; informe os dois.
-
-A complexidade indicada no cabeçalho é uma referência para a implementação padrão. Variantes do mesmo algoritmo podem ter custos diferentes conforme a estrutura auxiliar, o domínio dos valores e as operações exigidas.
-
-## Erros comuns
-
-- Usar a técnica só porque o nome aparece no enunciado, sem verificar suas pré-condições.
-- Não decidir se os intervalos são inclusivos `[l,r]` ou semiabertos `[l,r)`.
-- Misturar índices `0..n-1` com índices `1..n`.
-- Usar `int` para somas, distâncias ou produtos que podem ultrapassar `2^31-1`; use `long long` quando necessário.
-- Esquecer de limpar vetores globais entre casos de teste.
-- Não testar duplicatas, casos mínimos e o maior caso permitido.
-
-## Checklist de prova/contest
-
-- [ ] Sei explicar o que representa cada estado/estrutura?
-- [ ] Sei por que a transição/operação é correta?
-- [ ] Sei justificar a complexidade total, não apenas de uma operação?
-- [ ] Os limites e sentinelas estão corretos?
-- [ ] A solução trata o caso mínimo e os empates?
-- [ ] O tipo numérico comporta a resposta máxima?
+- Se existir um vértice de grau ímpar, o caminho começa em um deles; senão é um circuito e começa em qualquer vértice com aresta.
+- A checagem final `r.size() == m + 1` garante que todas as arestas estão no mesmo componente.
+- Sem arestas (`m = 0`) as funções devolvem vazio.
+- Com arestas rotuladas (ids) é possível devolver as arestas em vez dos vértices.
