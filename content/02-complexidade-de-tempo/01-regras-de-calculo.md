@@ -1,75 +1,40 @@
 ---
 title: Regras de cálculo
-summary: Em breve.
+summary: Como obter a complexidade de laços: sequência soma, aninhamento multiplica, e os casos log e harmônico.
 status: done
-complexity: tags:
-tags: ---
+complexity: —
+tags: complexidade, análise, laços
 ---
 
-## Ideia e quando usar
+## Ideia
 
-Regras de cálculo é uma técnica/estrutura que aparece quando o problema tem a seguinte necessidade: reconhecer o padrão pedido no enunciado, representar os estados relevantes e escolher uma operação que possa ser executada dentro do limite de tempo. Não decore só o código: identifique **o que cada variável significa**, qual é a condição de validade e qual é o custo de cada operação.
+Regras práticas: (1) comandos em sequência *somam* custos e domina o maior; (2) laços aninhados *multiplicam*; (3) constantes e termos menores somem (`3n² + 5n` é `O(n²)`); (4) um laço em que a variável dobra (`i *= 2`) executa `log2 n` vezes; (5) um laço `j` de `i` a `n` em passos de `i` soma a série harmônica `n/1 + n/2 + ... = n ln n`; (6) em recursão, some o custo por chamada sobre todas as chamadas. As funções abaixo contam as operações de cada padrão, para conferir a fórmula.
 
-## Como pensar na solução
-
-1. **Defina a entrada e a resposta.** Escreva em uma frase o que precisa ser calculado e quais restrições importam (`n`, número de arestas, tamanho das strings, valores máximos).
-2. **Escolha a representação.** Vetor, lista de adjacência, estado de DP, estrutura de dados ou ordenação devem refletir diretamente as operações necessárias.
-3. **Mantenha um invariante.** Antes de cada iteração/consulta, diga o que a estrutura representa. Depois da operação, prove que continua representando isso.
-4. **Analise a complexidade.** Conte quantas vezes cada elemento/aresta/estado é processado. Uma solução correta que faz `O(n²)` pode falhar para `n=2e5`.
-5. **Trate os casos-limite.** Entrada vazia ou mínima, duplicatas, valores negativos, grafo desconexo, ciclos, limites de índice e overflow.
-
-## Modelo de implementação
-
-O esqueleto depende do problema concreto; não existe um único código que resolva todas as variantes. Em C++ competitivo, mantenha a implementação enxuta e explícita, no estilo deste material:
+## Código
 
 ```cpp
-#include <bits/stdc++.h>
-using namespace std;
-using ll = long long;
+// um laço: n execuções
+ll um_laco(ll n) { ll c = 0; for (ll i = 0; i < n; i++) c++; return c; }
 
-int main() {
-    ios::sync_with_stdio(false);
-    cin.tie(nullptr);
+// dois laços aninhados completos: n * n
+ll dois_lacos(ll n) { ll c = 0; for (ll i = 0; i < n; i++) for (ll j = 0; j < n; j++) c++; return c; }
 
-    int n;
-    cin >> n;
-    vector<int> a(n);
-    for (int i = 0; i < n; i++) cin >> a[i];
+// laço interno triangular: n(n-1)/2, ainda O(n^2)
+ll triangular(ll n) { ll c = 0; for (ll i = 0; i < n; i++) for (ll j = 0; j < i; j++) c++; return c; }
 
-    // 1. Inicialize a estrutura/estado.
-    // 2. Processe os dados mantendo o invariante.
-    // 3. Extraia e imprima a resposta.
-    return 0;
-}
+// variável que dobra: floor(log2 n) + 1 execuções
+ll dobrando(ll n) { ll c = 0; for (ll i = 1; i <= n; i *= 2) c++; return c; }
+
+// harmônico: sum_{i=1..n} floor(n / i) = O(n log n)
+ll harmonico(ll n) { ll c = 0; for (ll i = 1; i <= n; i++) for (ll j = i; j <= n; j += i) c++; return c; }
+
+// raiz: i * i <= n executa floor(sqrt n) vezes
+ll raiz(ll n) { ll c = 0; for (ll i = 1; i * i <= n; i++) c++; return c; }
 ```
 
-Não copie o esqueleto literalmente quando a técnica exigir DFS, recursão, uma estrutura persistente ou várias consultas. Use o código específico da seção como base e adapte os tipos aos limites do enunciado.
+## Complexidade e cuidados
 
-## Complexidade: como conferir
-
-- Um laço sobre `n` elementos é `O(n)`.
-- Dois laços aninhados sobre `n` normalmente são `O(n²)`.
-- Ordenar costuma custar `O(n log n)`.
-- Uma busca binária custa `O(log n)`; fazer isso para cada elemento dá `O(n log n)`.
-- Em grafos, a DFS/BFS com lista de adjacência custa `O(n+m)`.
-- Uma estrutura de consultas pode ter custo de construção diferente do custo de cada consulta; informe os dois.
-
-A complexidade indicada no cabeçalho é uma referência para a implementação padrão. Variantes do mesmo algoritmo podem ter custos diferentes conforme a estrutura auxiliar, o domínio dos valores e as operações exigidas.
-
-## Erros comuns
-
-- Usar a técnica só porque o nome aparece no enunciado, sem verificar suas pré-condições.
-- Não decidir se os intervalos são inclusivos `[l,r]` ou semiabertos `[l,r)`.
-- Misturar índices `0..n-1` com índices `1..n`.
-- Usar `int` para somas, distâncias ou produtos que podem ultrapassar `2^31-1`; use `long long` quando necessário.
-- Esquecer de limpar vetores globais entre casos de teste.
-- Não testar duplicatas, casos mínimos e o maior caso permitido.
-
-## Checklist de prova/contest
-
-- [ ] Sei explicar o que representa cada estado/estrutura?
-- [ ] Sei por que a transição/operação é correta?
-- [ ] Sei justificar a complexidade total, não apenas de uma operação?
-- [ ] Os limites e sentinelas estão corretos?
-- [ ] A solução trata o caso mínimo e os empates?
-- [ ] O tipo numérico comporta a resposta máxima?
+- Conte o laço *interno* com os limites reais: `j < i` dá metade do `n²`, mas continua `O(n²)`.
+- `harmonico(n)` vale cerca de `n ln n`: para `n = 10^6` são `1,4 · 10^7` operações, muito menos que `n²`.
+- Chamadas a funções da STL entram na conta: `sort` custa `O(n log n)`, `set::insert` custa `O(log n)`, `string::substr` e `vector` copiados custam `O(tamanho)`.
+- Se o custo depende de mais de uma variável (`n` e `m`), mantenha as duas: `O(n + m)` ou `O(n · m)`.

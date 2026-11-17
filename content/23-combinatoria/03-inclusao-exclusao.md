@@ -1,75 +1,63 @@
 ---
 title: Inclusão-exclusão
-summary: Em breve.
+summary: Conta a união (ou o complemento) alternando sinais; exemplos: coprimos, desarranjos e sobrejeções.
 status: done
-complexity: tags:
-tags: ---
+complexity: O(2^k) subconjuntos
+tags: combinatória, inclusão-exclusão
 ---
 
-## Ideia e quando usar
+## Ideia
 
-Inclusão-exclusão é uma técnica/estrutura que aparece quando o problema tem a seguinte necessidade: reconhecer o padrão pedido no enunciado, representar os estados relevantes e escolher uma operação que possa ser executada dentro do limite de tempo. Não decore só o código: identifique **o que cada variável significa**, qual é a condição de validade e qual é o custo de cada operação.
+`|A_1 ∪ ... ∪ A_k| = sum_{S ≠ ∅} (-1)^{|S|+1} |∩_{i∈S} A_i|`. Costuma ser usada pelo complemento: "quantos itens não têm nenhuma propriedade" é `sum_S (-1)^{|S|} |∩ A_i|`. Quando as interseções são fáceis (por exemplo, divisibilidade, onde a interseção é o mínimo múltiplo comum), enumera-se `S` por DFS e poda-se quando o produto passa de `N`.
 
-## Como pensar na solução
-
-1. **Defina a entrada e a resposta.** Escreva em uma frase o que precisa ser calculado e quais restrições importam (`n`, número de arestas, tamanho das strings, valores máximos).
-2. **Escolha a representação.** Vetor, lista de adjacência, estado de DP, estrutura de dados ou ordenação devem refletir diretamente as operações necessárias.
-3. **Mantenha um invariante.** Antes de cada iteração/consulta, diga o que a estrutura representa. Depois da operação, prove que continua representando isso.
-4. **Analise a complexidade.** Conte quantas vezes cada elemento/aresta/estado é processado. Uma solução correta que faz `O(n²)` pode falhar para `n=2e5`.
-5. **Trate os casos-limite.** Entrada vazia ou mínima, duplicatas, valores negativos, grafo desconexo, ciclos, limites de índice e overflow.
-
-## Modelo de implementação
-
-O esqueleto depende do problema concreto; não existe um único código que resolva todas as variantes. Em C++ competitivo, mantenha a implementação enxuta e explícita, no estilo deste material:
+## Código
 
 ```cpp
-#include <bits/stdc++.h>
-using namespace std;
-using ll = long long;
+// quantos x em [1, N] não são divisíveis por nenhum dos primos/inteiros d[i] (d[i] >= 1, 2 a 2 coprimos ou não: usa lcm)
+ll sem_divisores(ll N, const vector<ll>& d) {
+    int k = d.size();
+    ll total = 0;
+    function<void(int, ll, int)> go = [&](int i, ll l, int sinal) {
+        if (i == k) { total += sinal * (N / l); return; }
+        go(i + 1, l, sinal);                       // não escolhe d[i]
+        ll g = __gcd(l, d[i]);
+        __int128 nl = (__int128)l / g * d[i];
+        if (nl <= N) go(i + 1, (ll)nl, -sinal);    // escolhe (poda se o lcm passa de N)
+    };
+    go(0, 1, 1);
+    return total;
+}
 
-int main() {
-    ios::sync_with_stdio(false);
-    cin.tie(nullptr);
+const ll MOD = 1e9 + 7;
+ll C[1005][1005];  // binomiais (preencher com Pascal até 1000)
 
-    int n;
-    cin >> n;
-    vector<int> a(n);
-    for (int i = 0; i < n; i++) cin >> a[i];
+// permutações de n elementos sem ponto fixo, por inclusão-exclusão
+ll desarranjos(int n) {
+    vector<ll> f(n + 1, 1);
+    for (int i = 1; i <= n; i++) f[i] = f[i - 1] * i % MOD;
+    ll r = 0;
+    for (int k = 0; k <= n; k++) {
+        ll t = C[n][k] * f[n - k] % MOD;
+        r = (r + (k % 2 ? MOD - t : t)) % MOD;
+    }
+    return r;
+}
 
-    // 1. Inicialize a estrutura/estado.
-    // 2. Processe os dados mantendo o invariante.
-    // 3. Extraia e imprima a resposta.
-    return 0;
+// funções sobrejetoras de n elementos em k: sum_j (-1)^j C(k,j) (k-j)^n
+ll sobrejecoes(int n, int k) {
+    auto pw = [&](ll a, ll e) { ll r = 1; for (a %= MOD; e; e >>= 1, a = a * a % MOD) if (e & 1) r = r * a % MOD; return r; };
+    ll r = 0;
+    for (int j = 0; j <= k; j++) {
+        ll t = C[k][j] * pw(k - j, n) % MOD;
+        r = (r + (j % 2 ? MOD - t : t)) % MOD;
+    }
+    return r;
 }
 ```
 
-Não copie o esqueleto literalmente quando a técnica exigir DFS, recursão, uma estrutura persistente ou várias consultas. Use o código específico da seção como base e adapte os tipos aos limites do enunciado.
+## Complexidade e cuidados
 
-## Complexidade: como conferir
-
-- Um laço sobre `n` elementos é `O(n)`.
-- Dois laços aninhados sobre `n` normalmente são `O(n²)`.
-- Ordenar costuma custar `O(n log n)`.
-- Uma busca binária custa `O(log n)`; fazer isso para cada elemento dá `O(n log n)`.
-- Em grafos, a DFS/BFS com lista de adjacência custa `O(n+m)`.
-- Uma estrutura de consultas pode ter custo de construção diferente do custo de cada consulta; informe os dois.
-
-A complexidade indicada no cabeçalho é uma referência para a implementação padrão. Variantes do mesmo algoritmo podem ter custos diferentes conforme a estrutura auxiliar, o domínio dos valores e as operações exigidas.
-
-## Erros comuns
-
-- Usar a técnica só porque o nome aparece no enunciado, sem verificar suas pré-condições.
-- Não decidir se os intervalos são inclusivos `[l,r]` ou semiabertos `[l,r)`.
-- Misturar índices `0..n-1` com índices `1..n`.
-- Usar `int` para somas, distâncias ou produtos que podem ultrapassar `2^31-1`; use `long long` quando necessário.
-- Esquecer de limpar vetores globais entre casos de teste.
-- Não testar duplicatas, casos mínimos e o maior caso permitido.
-
-## Checklist de prova/contest
-
-- [ ] Sei explicar o que representa cada estado/estrutura?
-- [ ] Sei por que a transição/operação é correta?
-- [ ] Sei justificar a complexidade total, não apenas de uma operação?
-- [ ] Os limites e sentinelas estão corretos?
-- [ ] A solução trata o caso mínimo e os empates?
-- [ ] O tipo numérico comporta a resposta máxima?
+- Antes de usar `desarranjos` e `sobrejecoes`, preencha `C` com Pascal: `C[i][0] = 1; C[i][j] = (C[i-1][j-1] + C[i-1][j]) % MOD`.
+- `sem_divisores` aceita divisores não coprimos porque usa o `lcm`; a poda `lcm > N` torna o DFS bem menor que `2^k`.
+- O sinal é `(-1)^{|S|}`: erros de sinal são o bug mais comum; teste com `N` pequeno.
+- Para `k` grande (mais de ~20 propriedades) prefira DP ou funções multiplicativas (Möbius).

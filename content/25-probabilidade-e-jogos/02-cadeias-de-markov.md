@@ -1,75 +1,73 @@
 ---
 title: Cadeias de Markov
-summary: Em breve.
+summary: Tempo esperado até absorção e distribuição estacionária resolvendo sistemas lineares.
 status: done
-complexity: tags:
-tags: ---
+complexity: O(n³)
+tags: probabilidade, markov, absorção, gauss
 ---
 
-## Ideia e quando usar
+## Ideia
 
-Cadeias de Markov é uma técnica/estrutura que aparece quando o problema tem a seguinte necessidade: reconhecer o padrão pedido no enunciado, representar os estados relevantes e escolher uma operação que possa ser executada dentro do limite de tempo. Não decore só o código: identifique **o que cada variável significa**, qual é a condição de validade e qual é o custo de cada operação.
+Uma cadeia de Markov é uma matriz de transição `P` (cada linha soma 1). Em uma cadeia com estados absorventes, sejam `Q` os estados transitórios; o número esperado de passos até a absorção a partir de cada um é a solução de `(I - Q) t = 1`. A probabilidade de absorver em um estado dado resolve `(I - Q) a = r`. A distribuição estacionária `π` satisfaz `π P = π` e `sum π = 1`.
 
-## Como pensar na solução
-
-1. **Defina a entrada e a resposta.** Escreva em uma frase o que precisa ser calculado e quais restrições importam (`n`, número de arestas, tamanho das strings, valores máximos).
-2. **Escolha a representação.** Vetor, lista de adjacência, estado de DP, estrutura de dados ou ordenação devem refletir diretamente as operações necessárias.
-3. **Mantenha um invariante.** Antes de cada iteração/consulta, diga o que a estrutura representa. Depois da operação, prove que continua representando isso.
-4. **Analise a complexidade.** Conte quantas vezes cada elemento/aresta/estado é processado. Uma solução correta que faz `O(n²)` pode falhar para `n=2e5`.
-5. **Trate os casos-limite.** Entrada vazia ou mínima, duplicatas, valores negativos, grafo desconexo, ciclos, limites de índice e overflow.
-
-## Modelo de implementação
-
-O esqueleto depende do problema concreto; não existe um único código que resolva todas as variantes. Em C++ competitivo, mantenha a implementação enxuta e explícita, no estilo deste material:
+## Código
 
 ```cpp
-#include <bits/stdc++.h>
-using namespace std;
-using ll = long long;
+// resolve A x = b por Gauss com pivô parcial (A quadrada e não singular)
+vector<double> resolve(vector<vector<double>> A, vector<double> b) {
+    int n = A.size();
+    for (int c = 0; c < n; c++) {
+        int p = c;
+        for (int i = c + 1; i < n; i++) if (fabs(A[i][c]) > fabs(A[p][c])) p = i;
+        swap(A[c], A[p]); swap(b[c], b[p]);
+        for (int i = 0; i < n; i++) {
+            if (i == c) continue;
+            double f = A[i][c] / A[c][c];
+            for (int j = c; j < n; j++) A[i][j] -= f * A[c][j];
+            b[i] -= f * b[c];
+        }
+    }
+    vector<double> x(n);
+    for (int i = 0; i < n; i++) x[i] = b[i] / A[i][i];
+    return x;
+}
 
-int main() {
-    ios::sync_with_stdio(false);
-    cin.tie(nullptr);
+// P[i][j] = prob. de i -> j; absorvente[i] = true se i é absorvente.
+// Devolve t[i] = nº esperado de passos até ser absorvido (0 nos absorventes).
+// Pressupõe que a absorção é alcançável de todo estado transitório.
+vector<double> passos_ate_absorcao(const vector<vector<double>>& P, const vector<bool>& absorvente) {
+    int n = P.size();
+    vector<int> id(n, -1), est;
+    for (int i = 0; i < n; i++) if (!absorvente[i]) id[i] = est.size(), est.push_back(i);
+    int k = est.size();
+    vector<vector<double>> A(k, vector<double>(k, 0));
+    vector<double> b(k, 1.0);
+    for (int a = 0; a < k; a++) {
+        A[a][a] += 1;
+        for (int j = 0; j < n; j++) if (id[j] >= 0) A[a][id[j]] -= P[est[a]][j];
+    }
+    vector<double> t = k ? resolve(A, b) : vector<double>();
+    vector<double> r(n, 0);
+    for (int a = 0; a < k; a++) r[est[a]] = t[a];
+    return r;
+}
 
-    int n;
-    cin >> n;
-    vector<int> a(n);
-    for (int i = 0; i < n; i++) cin >> a[i];
-
-    // 1. Inicialize a estrutura/estado.
-    // 2. Processe os dados mantendo o invariante.
-    // 3. Extraia e imprima a resposta.
-    return 0;
+// distribuição estacionária (cadeia irredutível e finita): pi P = pi, soma 1
+vector<double> estacionaria(const vector<vector<double>>& P) {
+    int n = P.size();
+    vector<vector<double>> A(n, vector<double>(n));
+    vector<double> b(n, 0);
+    for (int j = 0; j < n; j++)
+        for (int i = 0; i < n; i++) A[j][i] = P[i][j] - (i == j);
+    for (int i = 0; i < n; i++) A[n - 1][i] = 1;  // troca a última equação por sum pi = 1
+    b[n - 1] = 1;
+    return resolve(A, b);
 }
 ```
 
-Não copie o esqueleto literalmente quando a técnica exigir DFS, recursão, uma estrutura persistente ou várias consultas. Use o código específico da seção como base e adapte os tipos aos limites do enunciado.
+## Complexidade e cuidados
 
-## Complexidade: como conferir
-
-- Um laço sobre `n` elementos é `O(n)`.
-- Dois laços aninhados sobre `n` normalmente são `O(n²)`.
-- Ordenar costuma custar `O(n log n)`.
-- Uma busca binária custa `O(log n)`; fazer isso para cada elemento dá `O(n log n)`.
-- Em grafos, a DFS/BFS com lista de adjacência custa `O(n+m)`.
-- Uma estrutura de consultas pode ter custo de construção diferente do custo de cada consulta; informe os dois.
-
-A complexidade indicada no cabeçalho é uma referência para a implementação padrão. Variantes do mesmo algoritmo podem ter custos diferentes conforme a estrutura auxiliar, o domínio dos valores e as operações exigidas.
-
-## Erros comuns
-
-- Usar a técnica só porque o nome aparece no enunciado, sem verificar suas pré-condições.
-- Não decidir se os intervalos são inclusivos `[l,r]` ou semiabertos `[l,r)`.
-- Misturar índices `0..n-1` com índices `1..n`.
-- Usar `int` para somas, distâncias ou produtos que podem ultrapassar `2^31-1`; use `long long` quando necessário.
-- Esquecer de limpar vetores globais entre casos de teste.
-- Não testar duplicatas, casos mínimos e o maior caso permitido.
-
-## Checklist de prova/contest
-
-- [ ] Sei explicar o que representa cada estado/estrutura?
-- [ ] Sei por que a transição/operação é correta?
-- [ ] Sei justificar a complexidade total, não apenas de uma operação?
-- [ ] Os limites e sentinelas estão corretos?
-- [ ] A solução trata o caso mínimo e os empates?
-- [ ] O tipo numérico comporta a resposta máxima?
+- Se algum estado transitório não alcança absorvente, `I - Q` é singular e o resultado é inválido.
+- Para `n` grande e modular, use Gauss módulo primo (`24-matrizes-e-algebra/03-eliminacao-gaussiana`).
+- Passeio aleatório em `0..N` com extremos absorventes: `t[i] = i (N - i)` e a probabilidade de chegar a `N` é `i / N`.
+- Para muitas consultas com `P` fixa, eleve a matriz à potência `k` para a distribuição após `k` passos.

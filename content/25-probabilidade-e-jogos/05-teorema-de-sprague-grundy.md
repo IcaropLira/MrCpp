@@ -1,75 +1,48 @@
 ---
 title: Teorema de Sprague-Grundy
-summary: Em breve.
+summary: Cada jogo imparcial vale um número de Grundy; a soma de jogos é ganha por quem move se o XOR for diferente de zero.
 status: done
-complexity: tags:
-tags: ---
+complexity: O(n · |S|)
+tags: jogos, sprague-grundy, nim, mex
 ---
 
-## Ideia e quando usar
+## Ideia
 
-Teorema de Sprague-Grundy é uma técnica/estrutura que aparece quando o problema tem a seguinte necessidade: reconhecer o padrão pedido no enunciado, representar os estados relevantes e escolher uma operação que possa ser executada dentro do limite de tempo. Não decore só o código: identifique **o que cada variável significa**, qual é a condição de validade e qual é o custo de cada operação.
+Em um jogo imparcial (os dois jogadores têm os mesmos movimentos) em que perde quem não pode mover, o *número de Grundy* de uma posição é `mex` dos Grundy das posições alcançáveis (o menor natural ausente). Posição com Grundy 0 é perdedora. Uma soma de jogos independentes (cada jogador move em um deles por vez) tem Grundy igual ao XOR dos Grundy das componentes, e o primeiro jogador vence se e só se esse XOR for diferente de zero. O Nim com pilhas `a_i` é o caso `g(a_i) = a_i`.
 
-## Como pensar na solução
-
-1. **Defina a entrada e a resposta.** Escreva em uma frase o que precisa ser calculado e quais restrições importam (`n`, número de arestas, tamanho das strings, valores máximos).
-2. **Escolha a representação.** Vetor, lista de adjacência, estado de DP, estrutura de dados ou ordenação devem refletir diretamente as operações necessárias.
-3. **Mantenha um invariante.** Antes de cada iteração/consulta, diga o que a estrutura representa. Depois da operação, prove que continua representando isso.
-4. **Analise a complexidade.** Conte quantas vezes cada elemento/aresta/estado é processado. Uma solução correta que faz `O(n²)` pode falhar para `n=2e5`.
-5. **Trate os casos-limite.** Entrada vazia ou mínima, duplicatas, valores negativos, grafo desconexo, ciclos, limites de índice e overflow.
-
-## Modelo de implementação
-
-O esqueleto depende do problema concreto; não existe um único código que resolva todas as variantes. Em C++ competitivo, mantenha a implementação enxuta e explícita, no estilo deste material:
+## Código
 
 ```cpp
-#include <bits/stdc++.h>
-using namespace std;
-using ll = long long;
+int mex(const vector<int>& v) {
+    vector<char> vis(v.size() + 1, 0);
+    for (int x : v) if (x <= (int)v.size()) vis[x] = 1;
+    int m = 0;
+    while (vis[m]) m++;
+    return m;
+}
 
-int main() {
-    ios::sync_with_stdio(false);
-    cin.tie(nullptr);
+// jogo de retirar de uma pilha qualquer quantidade em S; g[i] = Grundy de uma pilha com i pedras
+vector<int> grundy_subtracao(int n, const vector<int>& S) {
+    vector<int> g(n + 1, 0);
+    for (int i = 1; i <= n; i++) {
+        vector<int> alc;
+        for (int s : S) if (s <= i) alc.push_back(g[i - s]);
+        g[i] = mex(alc);
+    }
+    return g;
+}
 
-    int n;
-    cin >> n;
-    vector<int> a(n);
-    for (int i = 0; i < n; i++) cin >> a[i];
-
-    // 1. Inicialize a estrutura/estado.
-    // 2. Processe os dados mantendo o invariante.
-    // 3. Extraia e imprima a resposta.
-    return 0;
+// soma de pilhas: o primeiro jogador vence?
+bool primeiro_vence(const vector<int>& pilhas, const vector<int>& g) {
+    int x = 0;
+    for (int p : pilhas) x ^= g[p];
+    return x != 0;
 }
 ```
 
-Não copie o esqueleto literalmente quando a técnica exigir DFS, recursão, uma estrutura persistente ou várias consultas. Use o código específico da seção como base e adapte os tipos aos limites do enunciado.
+## Complexidade e cuidados
 
-## Complexidade: como conferir
-
-- Um laço sobre `n` elementos é `O(n)`.
-- Dois laços aninhados sobre `n` normalmente são `O(n²)`.
-- Ordenar costuma custar `O(n log n)`.
-- Uma busca binária custa `O(log n)`; fazer isso para cada elemento dá `O(n log n)`.
-- Em grafos, a DFS/BFS com lista de adjacência custa `O(n+m)`.
-- Uma estrutura de consultas pode ter custo de construção diferente do custo de cada consulta; informe os dois.
-
-A complexidade indicada no cabeçalho é uma referência para a implementação padrão. Variantes do mesmo algoritmo podem ter custos diferentes conforme a estrutura auxiliar, o domínio dos valores e as operações exigidas.
-
-## Erros comuns
-
-- Usar a técnica só porque o nome aparece no enunciado, sem verificar suas pré-condições.
-- Não decidir se os intervalos são inclusivos `[l,r]` ou semiabertos `[l,r)`.
-- Misturar índices `0..n-1` com índices `1..n`.
-- Usar `int` para somas, distâncias ou produtos que podem ultrapassar `2^31-1`; use `long long` quando necessário.
-- Esquecer de limpar vetores globais entre casos de teste.
-- Não testar duplicatas, casos mínimos e o maior caso permitido.
-
-## Checklist de prova/contest
-
-- [ ] Sei explicar o que representa cada estado/estrutura?
-- [ ] Sei por que a transição/operação é correta?
-- [ ] Sei justificar a complexidade total, não apenas de uma operação?
-- [ ] Os limites e sentinelas estão corretos?
-- [ ] A solução trata o caso mínimo e os empates?
-- [ ] O tipo numérico comporta a resposta máxima?
+- Vale para jogos *finitos* e imparciais com a regra normal (quem não pode mover perde). Na regra misère (quem não pode mover vence) o Nim muda e o teorema não se aplica diretamente.
+- Para jogos em que as componentes são estados mais complexos (por exemplo, um tabuleiro que se parte em dois), calcule `g` por memoização sobre o estado.
+- O valor de Grundy de uma pilha em `{1, 2, 3}` é `i mod 4`.
+- Na prática, imprima os primeiros Grundy e procure padrão periódico para `n` grande.

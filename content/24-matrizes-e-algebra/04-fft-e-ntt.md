@@ -1,75 +1,110 @@
 ---
 title: FFT e NTT
-summary: Em breve.
+summary: Multiplicação de polinômios em O(n log n): FFT com complexos (arredondada) e NTT módulo 998244353 (exata).
 status: done
-complexity: tags:
-tags: ---
+complexity: O(n log n)
+tags: polinômios, fft, ntt, convolução
 ---
 
-## Ideia e quando usar
+## Ideia
 
-FFT e NTT é uma técnica/estrutura que aparece quando o problema tem a seguinte necessidade: reconhecer o padrão pedido no enunciado, representar os estados relevantes e escolher uma operação que possa ser executada dentro do limite de tempo. Não decore só o código: identifique **o que cada variável significa**, qual é a condição de validade e qual é o custo de cada operação.
+A convolução `c_k = sum a_i b_{k-i}` é o produto de polinômios. A FFT avalia os polinômios nas raízes da unidade, multiplica ponto a ponto e interpola. Com números complexos a resposta é arredondada (cuidado com precisão: valores finais até cerca de `1e14`); a NTT usa raízes da unidade módulo `998244353 = 119 · 2^23 + 1` e é exata módulo esse primo.
 
-## Como pensar na solução
-
-1. **Defina a entrada e a resposta.** Escreva em uma frase o que precisa ser calculado e quais restrições importam (`n`, número de arestas, tamanho das strings, valores máximos).
-2. **Escolha a representação.** Vetor, lista de adjacência, estado de DP, estrutura de dados ou ordenação devem refletir diretamente as operações necessárias.
-3. **Mantenha um invariante.** Antes de cada iteração/consulta, diga o que a estrutura representa. Depois da operação, prove que continua representando isso.
-4. **Analise a complexidade.** Conte quantas vezes cada elemento/aresta/estado é processado. Uma solução correta que faz `O(n²)` pode falhar para `n=2e5`.
-5. **Trate os casos-limite.** Entrada vazia ou mínima, duplicatas, valores negativos, grafo desconexo, ciclos, limites de índice e overflow.
-
-## Modelo de implementação
-
-O esqueleto depende do problema concreto; não existe um único código que resolva todas as variantes. Em C++ competitivo, mantenha a implementação enxuta e explícita, no estilo deste material:
+## Código
 
 ```cpp
-#include <bits/stdc++.h>
-using namespace std;
-using ll = long long;
+using cd = complex<double>;
 
-int main() {
-    ios::sync_with_stdio(false);
-    cin.tie(nullptr);
+void fft(vector<cd>& a, bool inv) {
+    int n = a.size();
+    for (int i = 1, j = 0; i < n; i++) {
+        int bit = n >> 1;
+        for (; j & bit; bit >>= 1) j ^= bit;
+        j ^= bit;
+        if (i < j) swap(a[i], a[j]);
+    }
+    for (int len = 2; len <= n; len <<= 1) {
+        double ang = 2 * acos(-1.0) / len * (inv ? -1 : 1);
+        cd wl(cos(ang), sin(ang));
+        for (int i = 0; i < n; i += len) {
+            cd w(1);
+            for (int j = 0; j < len / 2; j++, w *= wl) {
+                cd u = a[i + j], v = a[i + j + len / 2] * w;
+                a[i + j] = u + v;
+                a[i + j + len / 2] = u - v;
+            }
+        }
+    }
+    if (inv) for (auto& x : a) x /= n;
+}
 
-    int n;
-    cin >> n;
-    vector<int> a(n);
-    for (int i = 0; i < n; i++) cin >> a[i];
+// produto exato de polinômios com coeficientes inteiros (|resultado| até ~1e14)
+vector<ll> multiplica_fft(const vector<ll>& a, const vector<ll>& b) {
+    if (a.empty() || b.empty()) return {};
+    int n = 1;
+    while (n < (int)(a.size() + b.size() - 1)) n <<= 1;
+    vector<cd> fa(a.begin(), a.end()), fb(b.begin(), b.end());
+    fa.resize(n); fb.resize(n);
+    fft(fa, false); fft(fb, false);
+    for (int i = 0; i < n; i++) fa[i] *= fb[i];
+    fft(fa, true);
+    vector<ll> r(a.size() + b.size() - 1);
+    for (size_t i = 0; i < r.size(); i++) r[i] = llround(fa[i].real());
+    return r;
+}
 
-    // 1. Inicialize a estrutura/estado.
-    // 2. Processe os dados mantendo o invariante.
-    // 3. Extraia e imprima a resposta.
-    return 0;
+const ll MOD = 998244353, G = 3;
+ll pw(ll a, ll e) {
+    ll r = 1;
+    for (a %= MOD; e; e >>= 1, a = a * a % MOD) if (e & 1) r = r * a % MOD;
+    return r;
+}
+
+void ntt(vector<ll>& a, bool inv) {
+    int n = a.size();
+    for (int i = 1, j = 0; i < n; i++) {
+        int bit = n >> 1;
+        for (; j & bit; bit >>= 1) j ^= bit;
+        j ^= bit;
+        if (i < j) swap(a[i], a[j]);
+    }
+    for (int len = 2; len <= n; len <<= 1) {
+        ll wl = pw(G, (MOD - 1) / len);
+        if (inv) wl = pw(wl, MOD - 2);
+        for (int i = 0; i < n; i += len) {
+            ll w = 1;
+            for (int j = 0; j < len / 2; j++, w = w * wl % MOD) {
+                ll u = a[i + j], v = a[i + j + len / 2] * w % MOD;
+                a[i + j] = (u + v) % MOD;
+                a[i + j + len / 2] = (u - v + MOD) % MOD;
+            }
+        }
+    }
+    if (inv) {
+        ll ni = pw(n, MOD - 2);
+        for (auto& x : a) x = x * ni % MOD;
+    }
+}
+
+// produto módulo 998244353 (tamanho do resultado até 2^23)
+vector<ll> multiplica_ntt(vector<ll> a, vector<ll> b) {
+    if (a.empty() || b.empty()) return {};
+    int need = a.size() + b.size() - 1, n = 1;
+    while (n < need) n <<= 1;
+    for (auto& x : a) x = ((x % MOD) + MOD) % MOD;
+    for (auto& x : b) x = ((x % MOD) + MOD) % MOD;
+    a.resize(n); b.resize(n);
+    ntt(a, false); ntt(b, false);
+    for (int i = 0; i < n; i++) a[i] = a[i] * b[i] % MOD;
+    ntt(a, true);
+    a.resize(need);
+    return a;
 }
 ```
 
-Não copie o esqueleto literalmente quando a técnica exigir DFS, recursão, uma estrutura persistente ou várias consultas. Use o código específico da seção como base e adapte os tipos aos limites do enunciado.
+## Complexidade e cuidados
 
-## Complexidade: como conferir
-
-- Um laço sobre `n` elementos é `O(n)`.
-- Dois laços aninhados sobre `n` normalmente são `O(n²)`.
-- Ordenar costuma custar `O(n log n)`.
-- Uma busca binária custa `O(log n)`; fazer isso para cada elemento dá `O(n log n)`.
-- Em grafos, a DFS/BFS com lista de adjacência custa `O(n+m)`.
-- Uma estrutura de consultas pode ter custo de construção diferente do custo de cada consulta; informe os dois.
-
-A complexidade indicada no cabeçalho é uma referência para a implementação padrão. Variantes do mesmo algoritmo podem ter custos diferentes conforme a estrutura auxiliar, o domínio dos valores e as operações exigidas.
-
-## Erros comuns
-
-- Usar a técnica só porque o nome aparece no enunciado, sem verificar suas pré-condições.
-- Não decidir se os intervalos são inclusivos `[l,r]` ou semiabertos `[l,r)`.
-- Misturar índices `0..n-1` com índices `1..n`.
-- Usar `int` para somas, distâncias ou produtos que podem ultrapassar `2^31-1`; use `long long` quando necessário.
-- Esquecer de limpar vetores globais entre casos de teste.
-- Não testar duplicatas, casos mínimos e o maior caso permitido.
-
-## Checklist de prova/contest
-
-- [ ] Sei explicar o que representa cada estado/estrutura?
-- [ ] Sei por que a transição/operação é correta?
-- [ ] Sei justificar a complexidade total, não apenas de uma operação?
-- [ ] Os limites e sentinelas estão corretos?
-- [ ] A solução trata o caso mínimo e os empates?
-- [ ] O tipo numérico comporta a resposta máxima?
+- Na FFT o erro cresce com `n` e com o tamanho dos coeficientes: se o resultado passa de `1e14`, divida os coeficientes em pedaços (por exemplo 15 bits) ou use NTT com vários módulos.
+- A NTT só funciona para tamanhos até `2^23`; para outros módulos primos ache a raiz primitiva e confira que `2^k` divide `MOD - 1`.
+- Para multiplicar números grandes, trate os dígitos como coeficientes e propague o vai-um depois.
+- Há versões mais rápidas (pré-calcular raízes, FFT de tamanho real); esta é a mais curta e legível.

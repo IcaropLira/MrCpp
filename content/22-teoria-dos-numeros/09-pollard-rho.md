@@ -1,75 +1,78 @@
 ---
 title: Pollard rho
-summary: Em breve.
+summary: Fatora inteiros de até 64 bits em O(n^(1/4)) esperado, usando Miller-Rabin para parar.
 status: done
-complexity: tags:
-tags: ---
+complexity: O(n^(1/4)) esperado
+tags: teoria dos números, fatoração, pollard rho
 ---
 
-## Ideia e quando usar
+## Ideia
 
-Pollard rho é uma técnica/estrutura que aparece quando o problema tem a seguinte necessidade: reconhecer o padrão pedido no enunciado, representar os estados relevantes e escolher uma operação que possa ser executada dentro do limite de tempo. Não decore só o código: identifique **o que cada variável significa**, qual é a condição de validade e qual é o custo de cada operação.
+Iterando `x -> x² + c (mod n)`, a sequência entra em ciclo módulo cada fator primo `p` de `n` depois de cerca de `√p` passos, mas só entra em ciclo módulo `n` bem mais tarde. Quando dois valores coincidem módulo `p` mas não módulo `n`, `gcd(|x - y|, n)` é um fator não trivial. Floyd (tartaruga e lebre) detecta o ciclo. Fatore recursivamente e use Miller-Rabin para saber quando um fator já é primo.
 
-## Como pensar na solução
-
-1. **Defina a entrada e a resposta.** Escreva em uma frase o que precisa ser calculado e quais restrições importam (`n`, número de arestas, tamanho das strings, valores máximos).
-2. **Escolha a representação.** Vetor, lista de adjacência, estado de DP, estrutura de dados ou ordenação devem refletir diretamente as operações necessárias.
-3. **Mantenha um invariante.** Antes de cada iteração/consulta, diga o que a estrutura representa. Depois da operação, prove que continua representando isso.
-4. **Analise a complexidade.** Conte quantas vezes cada elemento/aresta/estado é processado. Uma solução correta que faz `O(n²)` pode falhar para `n=2e5`.
-5. **Trate os casos-limite.** Entrada vazia ou mínima, duplicatas, valores negativos, grafo desconexo, ciclos, limites de índice e overflow.
-
-## Modelo de implementação
-
-O esqueleto depende do problema concreto; não existe um único código que resolva todas as variantes. Em C++ competitivo, mantenha a implementação enxuta e explícita, no estilo deste material:
+## Código
 
 ```cpp
-#include <bits/stdc++.h>
-using namespace std;
-using ll = long long;
+using u64 = unsigned long long;
+using u128 = unsigned __int128;
 
-int main() {
-    ios::sync_with_stdio(false);
-    cin.tie(nullptr);
+u64 mulmod(u64 a, u64 b, u64 m) { return (u128)a * b % m; }
+u64 powmod(u64 a, u64 e, u64 m) {
+    u64 r = 1;
+    for (a %= m; e; e >>= 1, a = mulmod(a, a, m)) if (e & 1) r = mulmod(r, a, m);
+    return r;
+}
+bool primo(u64 n) {  // Miller-Rabin determinístico para 64 bits
+    if (n < 2) return false;
+    for (u64 p : {2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37}) if (n % p == 0) return n == p;
+    u64 d = n - 1; int s = 0;
+    while (!(d & 1)) d >>= 1, s++;
+    for (u64 a : {2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37}) {
+        u64 x = powmod(a, d, n);
+        if (x == 1 || x == n - 1) continue;
+        bool composto = true;
+        for (int r = 1; r < s && composto; r++) { x = mulmod(x, x, n); if (x == n - 1) composto = false; }
+        if (composto) return false;
+    }
+    return true;
+}
 
-    int n;
-    cin >> n;
-    vector<int> a(n);
-    for (int i = 0; i < n; i++) cin >> a[i];
+mt19937_64 rng_rho(712367);
 
-    // 1. Inicialize a estrutura/estado.
-    // 2. Processe os dados mantendo o invariante.
-    // 3. Extraia e imprima a resposta.
-    return 0;
+u64 rho(u64 n) {  // n composto e ímpar: devolve um divisor não trivial
+    while (true) {
+        u64 c = rng_rho() % (n - 1) + 1, x = rng_rho() % n, y = x, d = 1;
+        auto f = [&](u64 v) { return (u64)(((u128)mulmod(v, v, n) + c) % n); };
+        while (d == 1) {
+            x = f(x); y = f(f(y));
+            d = __gcd(x > y ? x - y : y - x, n);
+        }
+        if (d != n) return d;  // d == n: ciclo coincidiu; tenta outro c
+    }
+}
+
+void fatora(u64 n, vector<u64>& out) {
+    if (n == 1) return;
+    if (primo(n)) { out.push_back(n); return; }
+    u64 d = rho(n);
+    fatora(d, out);
+    fatora(n / d, out);
+}
+
+// fatores primos de n em ordem crescente, com repetição
+vector<u64> fatorar(u64 n) {
+    vector<u64> r;
+    for (u64 p = 2; p < 100 && p * p <= n; p++)
+        while (n % p == 0) r.push_back(p), n /= p;
+    fatora(n, r);
+    sort(r.begin(), r.end());
+    return r;
 }
 ```
 
-Não copie o esqueleto literalmente quando a técnica exigir DFS, recursão, uma estrutura persistente ou várias consultas. Use o código específico da seção como base e adapte os tipos aos limites do enunciado.
+## Complexidade e cuidados
 
-## Complexidade: como conferir
-
-- Um laço sobre `n` elementos é `O(n)`.
-- Dois laços aninhados sobre `n` normalmente são `O(n²)`.
-- Ordenar costuma custar `O(n log n)`.
-- Uma busca binária custa `O(log n)`; fazer isso para cada elemento dá `O(n log n)`.
-- Em grafos, a DFS/BFS com lista de adjacência custa `O(n+m)`.
-- Uma estrutura de consultas pode ter custo de construção diferente do custo de cada consulta; informe os dois.
-
-A complexidade indicada no cabeçalho é uma referência para a implementação padrão. Variantes do mesmo algoritmo podem ter custos diferentes conforme a estrutura auxiliar, o domínio dos valores e as operações exigidas.
-
-## Erros comuns
-
-- Usar a técnica só porque o nome aparece no enunciado, sem verificar suas pré-condições.
-- Não decidir se os intervalos são inclusivos `[l,r]` ou semiabertos `[l,r)`.
-- Misturar índices `0..n-1` com índices `1..n`.
-- Usar `int` para somas, distâncias ou produtos que podem ultrapassar `2^31-1`; use `long long` quando necessário.
-- Esquecer de limpar vetores globais entre casos de teste.
-- Não testar duplicatas, casos mínimos e o maior caso permitido.
-
-## Checklist de prova/contest
-
-- [ ] Sei explicar o que representa cada estado/estrutura?
-- [ ] Sei por que a transição/operação é correta?
-- [ ] Sei justificar a complexidade total, não apenas de uma operação?
-- [ ] Os limites e sentinelas estão corretos?
-- [ ] A solução trata o caso mínimo e os empates?
-- [ ] O tipo numérico comporta a resposta máxima?
+- As divisões por primos pequenos antes do `rho` evitam o caso `n` par, que o `rho` não trata.
+- Para muitas consultas, agrupe os `gcd` de 64 em 64 passos (versão de Brent): fica mais rápido por um fator constante.
+- Perfeitos quadrados de primos (`p²`) também são fatorados corretamente.
+- O pior caso é um semiprimo com dois fatores de ~`1e9`: cerca de `3 · 10^4` iterações.

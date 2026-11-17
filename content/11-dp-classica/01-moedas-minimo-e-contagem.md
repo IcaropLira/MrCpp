@@ -1,75 +1,54 @@
 ---
-title: Moedas (mínimo e contagem)
-summary: Em breve.
+title: Moedas: mínimo e contagem
+summary: DP de troco: menor número de moedas, formas sem ordem e formas com ordem.
 status: done
-complexity: tags:
-tags: ---
+complexity: O(n · x)
+tags: dp, moedas, mochila ilimitada
 ---
 
-## Ideia e quando usar
+## Ideia
 
-Moedas (mínimo e contagem) é uma técnica/estrutura que aparece quando o problema tem a seguinte necessidade: reconhecer o padrão pedido no enunciado, representar os estados relevantes e escolher uma operação que possa ser executada dentro do limite de tempo. Não decore só o código: identifique **o que cada variável significa**, qual é a condição de validade e qual é o custo de cada operação.
+`dp[s]` é a resposta para o valor `s`. Para o mínimo: `dp[s] = 1 + min dp[s - v]`. Para contar, a ordem dos laços decide o que se conta: moedas no laço externo contam *combinações* (cada conjunto uma vez); valor no laço externo conta *sequências* (a ordem importa).
 
-## Como pensar na solução
-
-1. **Defina a entrada e a resposta.** Escreva em uma frase o que precisa ser calculado e quais restrições importam (`n`, número de arestas, tamanho das strings, valores máximos).
-2. **Escolha a representação.** Vetor, lista de adjacência, estado de DP, estrutura de dados ou ordenação devem refletir diretamente as operações necessárias.
-3. **Mantenha um invariante.** Antes de cada iteração/consulta, diga o que a estrutura representa. Depois da operação, prove que continua representando isso.
-4. **Analise a complexidade.** Conte quantas vezes cada elemento/aresta/estado é processado. Uma solução correta que faz `O(n²)` pode falhar para `n=2e5`.
-5. **Trate os casos-limite.** Entrada vazia ou mínima, duplicatas, valores negativos, grafo desconexo, ciclos, limites de índice e overflow.
-
-## Modelo de implementação
-
-O esqueleto depende do problema concreto; não existe um único código que resolva todas as variantes. Em C++ competitivo, mantenha a implementação enxuta e explícita, no estilo deste material:
+## Código
 
 ```cpp
-#include <bits/stdc++.h>
-using namespace std;
-using ll = long long;
+const ll MOD = 1e9 + 7;
 
-int main() {
-    ios::sync_with_stdio(false);
-    cin.tie(nullptr);
+// menor número de moedas que somam x, ou -1
+int min_moedas(const vector<int>& c, int x) {
+    const int INF = INT_MAX;
+    vector<int> dp(x + 1, INF);
+    dp[0] = 0;
+    for (int s = 1; s <= x; s++)
+        for (int v : c)
+            if (v <= s && dp[s - v] != INF) dp[s] = min(dp[s], dp[s - v] + 1);
+    return dp[x] == INF ? -1 : dp[x];
+}
 
-    int n;
-    cin >> n;
-    vector<int> a(n);
-    for (int i = 0; i < n; i++) cin >> a[i];
+// formas de somar x sem importar a ordem (1+2 e 2+1 contam uma vez)
+ll combinacoes(const vector<int>& c, int x) {
+    vector<ll> dp(x + 1, 0);
+    dp[0] = 1;
+    for (int v : c)
+        for (int s = v; s <= x; s++) dp[s] = (dp[s] + dp[s - v]) % MOD;
+    return dp[x];
+}
 
-    // 1. Inicialize a estrutura/estado.
-    // 2. Processe os dados mantendo o invariante.
-    // 3. Extraia e imprima a resposta.
-    return 0;
+// formas de somar x importando a ordem (1+2 e 2+1 são diferentes)
+ll sequencias(const vector<int>& c, int x) {
+    vector<ll> dp(x + 1, 0);
+    dp[0] = 1;
+    for (int s = 1; s <= x; s++)
+        for (int v : c)
+            if (v <= s) dp[s] = (dp[s] + dp[s - v]) % MOD;
+    return dp[x];
 }
 ```
 
-Não copie o esqueleto literalmente quando a técnica exigir DFS, recursão, uma estrutura persistente ou várias consultas. Use o código específico da seção como base e adapte os tipos aos limites do enunciado.
+## Complexidade e cuidados
 
-## Complexidade: como conferir
-
-- Um laço sobre `n` elementos é `O(n)`.
-- Dois laços aninhados sobre `n` normalmente são `O(n²)`.
-- Ordenar costuma custar `O(n log n)`.
-- Uma busca binária custa `O(log n)`; fazer isso para cada elemento dá `O(n log n)`.
-- Em grafos, a DFS/BFS com lista de adjacência custa `O(n+m)`.
-- Uma estrutura de consultas pode ter custo de construção diferente do custo de cada consulta; informe os dois.
-
-A complexidade indicada no cabeçalho é uma referência para a implementação padrão. Variantes do mesmo algoritmo podem ter custos diferentes conforme a estrutura auxiliar, o domínio dos valores e as operações exigidas.
-
-## Erros comuns
-
-- Usar a técnica só porque o nome aparece no enunciado, sem verificar suas pré-condições.
-- Não decidir se os intervalos são inclusivos `[l,r]` ou semiabertos `[l,r)`.
-- Misturar índices `0..n-1` com índices `1..n`.
-- Usar `int` para somas, distâncias ou produtos que podem ultrapassar `2^31-1`; use `long long` quando necessário.
-- Esquecer de limpar vetores globais entre casos de teste.
-- Não testar duplicatas, casos mínimos e o maior caso permitido.
-
-## Checklist de prova/contest
-
-- [ ] Sei explicar o que representa cada estado/estrutura?
-- [ ] Sei por que a transição/operação é correta?
-- [ ] Sei justificar a complexidade total, não apenas de uma operação?
-- [ ] Os limites e sentinelas estão corretos?
-- [ ] A solução trata o caso mínimo e os empates?
-- [ ] O tipo numérico comporta a resposta máxima?
+- As moedas devem ser positivas; moeda 0 gera laço infinito de formas.
+- Trocar a ordem dos laços em `combinacoes` conta sequências: é o erro mais comum.
+- Se o guloso funciona (sistema canônico), é mais rápido; veja a ficha do problema das moedas.
+- Memória `O(x)`; para `x` muito grande use meet in the middle ou matrizes.

@@ -1,75 +1,84 @@
 ---
 title: Interseção de segmentos
-summary: Em breve.
+summary: Detecta se algum par de segmentos se cruza com uma varredura em O(n log n) (Shamos-Hoey).
 status: done
-complexity: tags:
-tags: ---
+complexity: O(n log n)
+tags: sweep line, geometria, segmentos, interseção
 ---
 
-## Ideia e quando usar
+## Ideia
 
-Interseção de segmentos é uma técnica/estrutura que aparece quando o problema tem a seguinte necessidade: reconhecer o padrão pedido no enunciado, representar os estados relevantes e escolher uma operação que possa ser executada dentro do limite de tempo. Não decore só o código: identifique **o que cada variável significa**, qual é a condição de validade e qual é o custo de cada operação.
+Varra da esquerda para a direita mantendo em um `set`, ordenado pela altura na posição atual, os segmentos que cruzam a reta de varredura. Dois segmentos que se cruzam são vizinhos no `set` em algum momento antes do cruzamento, então basta testar cada segmento que entra contra seu antecessor e sucessor, e, quando um sai, testar o antecessor contra o sucessor. Eventos de entrada vêm antes dos de saída na mesma coordenada, para detectar contatos nas pontas.
 
-## Como pensar na solução
-
-1. **Defina a entrada e a resposta.** Escreva em uma frase o que precisa ser calculado e quais restrições importam (`n`, número de arestas, tamanho das strings, valores máximos).
-2. **Escolha a representação.** Vetor, lista de adjacência, estado de DP, estrutura de dados ou ordenação devem refletir diretamente as operações necessárias.
-3. **Mantenha um invariante.** Antes de cada iteração/consulta, diga o que a estrutura representa. Depois da operação, prove que continua representando isso.
-4. **Analise a complexidade.** Conte quantas vezes cada elemento/aresta/estado é processado. Uma solução correta que faz `O(n²)` pode falhar para `n=2e5`.
-5. **Trate os casos-limite.** Entrada vazia ou mínima, duplicatas, valores negativos, grafo desconexo, ciclos, limites de índice e overflow.
-
-## Modelo de implementação
-
-O esqueleto depende do problema concreto; não existe um único código que resolva todas as variantes. Em C++ competitivo, mantenha a implementação enxuta e explícita, no estilo deste material:
+## Código
 
 ```cpp
-#include <bits/stdc++.h>
-using namespace std;
-using ll = long long;
+struct Seg {
+    double px, py, qx, qy;  // normalizado: px < qx, ou px == qx e py <= qy
+    int id;
+    double y(double x) const {
+        if (fabs(px - qx) < 1e-9) return py;
+        return py + (qy - py) * (x - px) / (qx - px);
+    }
+};
+const double EPS = 1e-9;
 
-int main() {
-    ios::sync_with_stdio(false);
-    cin.tie(nullptr);
+bool inter1d(double l1, double r1, double l2, double r2) {
+    if (l1 > r1) swap(l1, r1);
+    if (l2 > r2) swap(l2, r2);
+    return max(l1, l2) <= min(r1, r2) + EPS;
+}
+int sinal(double v) { return fabs(v) < EPS ? 0 : (v > 0 ? 1 : -1); }
+double orient(double ax, double ay, double bx, double by, double cx, double cy) {
+    return (bx - ax) * (cy - ay) - (by - ay) * (cx - ax);
+}
+bool interseca(const Seg& a, const Seg& b) {
+    return inter1d(a.px, a.qx, b.px, b.qx) && inter1d(a.py, a.qy, b.py, b.qy)
+        && sinal(orient(a.px, a.py, a.qx, a.qy, b.px, b.py)) * sinal(orient(a.px, a.py, a.qx, a.qy, b.qx, b.qy)) <= 0
+        && sinal(orient(b.px, b.py, b.qx, b.qy, a.px, a.py)) * sinal(orient(b.px, b.py, b.qx, b.qy, a.qx, a.qy)) <= 0;
+}
+struct Menor {
+    bool operator()(const Seg& a, const Seg& b) const {
+        double x = max(min(a.px, a.qx), min(b.px, b.qx));
+        return a.y(x) < b.y(x) - EPS;
+    }
+};
 
-    int n;
-    cin >> n;
-    vector<int> a(n);
-    for (int i = 0; i < n; i++) cin >> a[i];
-
-    // 1. Inicialize a estrutura/estado.
-    // 2. Processe os dados mantendo o invariante.
-    // 3. Extraia e imprima a resposta.
-    return 0;
+// segmentos {x1, y1, x2, y2}; devolve {i, j} de um par que se interseca (qualquer contato conta), ou {-1, -1}
+pair<int, int> algum_par(const vector<array<double, 4>>& in) {
+    int n = in.size();
+    vector<Seg> a(n);
+    for (int i = 0; i < n; i++) {
+        auto [x1, y1, x2, y2] = in[i];
+        if (make_pair(x1, y1) > make_pair(x2, y2)) swap(x1, x2), swap(y1, y2);
+        a[i] = {x1, y1, x2, y2, i};
+    }
+    vector<tuple<double, int, int>> ev;  // (x, tipo, id): tipo 0 = entra, 1 = sai
+    for (int i = 0; i < n; i++) ev.push_back({a[i].px, 0, i}), ev.push_back({a[i].qx, 1, i});
+    sort(ev.begin(), ev.end());
+    set<Seg, Menor> s;
+    vector<set<Seg, Menor>::iterator> onde(n);
+    for (auto [x, tipo, id] : ev) {
+        if (tipo == 0) {
+            auto nx = s.lower_bound(a[id]);
+            auto pv = nx == s.begin() ? s.end() : prev(nx);
+            if (nx != s.end() && interseca(*nx, a[id])) return {nx->id, id};
+            if (pv != s.end() && interseca(*pv, a[id])) return {pv->id, id};
+            onde[id] = s.insert(nx, a[id]);
+        } else {
+            auto nx = next(onde[id]);
+            auto pv = onde[id] == s.begin() ? s.end() : prev(onde[id]);
+            if (nx != s.end() && pv != s.end() && interseca(*nx, *pv)) return {nx->id, pv->id};
+            s.erase(onde[id]);
+        }
+    }
+    return {-1, -1};
 }
 ```
 
-Não copie o esqueleto literalmente quando a técnica exigir DFS, recursão, uma estrutura persistente ou várias consultas. Use o código específico da seção como base e adapte os tipos aos limites do enunciado.
+## Complexidade e cuidados
 
-## Complexidade: como conferir
-
-- Um laço sobre `n` elementos é `O(n)`.
-- Dois laços aninhados sobre `n` normalmente são `O(n²)`.
-- Ordenar costuma custar `O(n log n)`.
-- Uma busca binária custa `O(log n)`; fazer isso para cada elemento dá `O(n log n)`.
-- Em grafos, a DFS/BFS com lista de adjacência custa `O(n+m)`.
-- Uma estrutura de consultas pode ter custo de construção diferente do custo de cada consulta; informe os dois.
-
-A complexidade indicada no cabeçalho é uma referência para a implementação padrão. Variantes do mesmo algoritmo podem ter custos diferentes conforme a estrutura auxiliar, o domínio dos valores e as operações exigidas.
-
-## Erros comuns
-
-- Usar a técnica só porque o nome aparece no enunciado, sem verificar suas pré-condições.
-- Não decidir se os intervalos são inclusivos `[l,r]` ou semiabertos `[l,r)`.
-- Misturar índices `0..n-1` com índices `1..n`.
-- Usar `int` para somas, distâncias ou produtos que podem ultrapassar `2^31-1`; use `long long` quando necessário.
-- Esquecer de limpar vetores globais entre casos de teste.
-- Não testar duplicatas, casos mínimos e o maior caso permitido.
-
-## Checklist de prova/contest
-
-- [ ] Sei explicar o que representa cada estado/estrutura?
-- [ ] Sei por que a transição/operação é correta?
-- [ ] Sei justificar a complexidade total, não apenas de uma operação?
-- [ ] Os limites e sentinelas estão corretos?
-- [ ] A solução trata o caso mínimo e os empates?
-- [ ] O tipo numérico comporta a resposta máxima?
+- Aqui qualquer contato conta como interseção (pontas se tocando, segmentos colineares sobrepostos, pontos degenerados).
+- A comparação usa `double` com `EPS`; com coordenadas inteiras até cerca de `1e6` é segura. Para coordenadas maiores use aritmética exata com frações.
+- Só decide *se* existe um par que se cruza (e devolve um); contar ou listar todos os cruzamentos pede o algoritmo de Bentley-Ottmann.
+- Segmentos verticais são tratados com `y(x) = py` (a ponta inferior), o que basta para a ordem de varredura.

@@ -1,75 +1,53 @@
 ---
 title: Miller-Rabin
-summary: Em breve.
+summary: Teste de primalidade determinístico para qualquer inteiro de 64 bits.
 status: done
-complexity: tags:
-tags: ---
+complexity: O(k · log n) por teste, k = 12 bases
+tags: teoria dos números, primalidade, miller-rabin
 ---
 
-## Ideia e quando usar
+## Ideia
 
-Miller-Rabin é uma técnica/estrutura que aparece quando o problema tem a seguinte necessidade: reconhecer o padrão pedido no enunciado, representar os estados relevantes e escolher uma operação que possa ser executada dentro do limite de tempo. Não decore só o código: identifique **o que cada variável significa**, qual é a condição de validade e qual é o custo de cada operação.
+Escreva `n - 1 = d · 2^s` com `d` ímpar. Para uma base `a`, se `n` é primo então `a^d ≡ 1` ou `a^(d·2^r) ≡ -1` para algum `r < s`. Um composto que passa para a base `a` é um pseudoprimo forte; as 12 primeiras bases primas (2, 3, ..., 37) não têm pseudoprimo forte comum abaixo de `3,18 · 10^23`, logo o teste é exato para `n < 2^64`. O produto modular usa `__int128`.
 
-## Como pensar na solução
-
-1. **Defina a entrada e a resposta.** Escreva em uma frase o que precisa ser calculado e quais restrições importam (`n`, número de arestas, tamanho das strings, valores máximos).
-2. **Escolha a representação.** Vetor, lista de adjacência, estado de DP, estrutura de dados ou ordenação devem refletir diretamente as operações necessárias.
-3. **Mantenha um invariante.** Antes de cada iteração/consulta, diga o que a estrutura representa. Depois da operação, prove que continua representando isso.
-4. **Analise a complexidade.** Conte quantas vezes cada elemento/aresta/estado é processado. Uma solução correta que faz `O(n²)` pode falhar para `n=2e5`.
-5. **Trate os casos-limite.** Entrada vazia ou mínima, duplicatas, valores negativos, grafo desconexo, ciclos, limites de índice e overflow.
-
-## Modelo de implementação
-
-O esqueleto depende do problema concreto; não existe um único código que resolva todas as variantes. Em C++ competitivo, mantenha a implementação enxuta e explícita, no estilo deste material:
+## Código
 
 ```cpp
-#include <bits/stdc++.h>
-using namespace std;
-using ll = long long;
+using u64 = unsigned long long;
+using u128 = unsigned __int128;
 
-int main() {
-    ios::sync_with_stdio(false);
-    cin.tie(nullptr);
+u64 mulmod(u64 a, u64 b, u64 m) { return (u128)a * b % m; }
+u64 powmod(u64 a, u64 e, u64 m) {
+    u64 r = 1;
+    for (a %= m; e; e >>= 1, a = mulmod(a, a, m)) if (e & 1) r = mulmod(r, a, m);
+    return r;
+}
 
-    int n;
-    cin >> n;
-    vector<int> a(n);
-    for (int i = 0; i < n; i++) cin >> a[i];
-
-    // 1. Inicialize a estrutura/estado.
-    // 2. Processe os dados mantendo o invariante.
-    // 3. Extraia e imprima a resposta.
-    return 0;
+bool primo(u64 n) {
+    if (n < 2) return false;
+    for (u64 p : {2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37}) {
+        if (n % p == 0) return n == p;
+    }
+    u64 d = n - 1;
+    int s = 0;
+    while (!(d & 1)) d >>= 1, s++;
+    for (u64 a : {2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37}) {
+        u64 x = powmod(a, d, n);
+        if (x == 1 || x == n - 1) continue;
+        bool composto = true;
+        for (int r = 1; r < s && composto; r++) {
+            x = mulmod(x, x, n);
+            if (x == n - 1) composto = false;
+        }
+        if (composto) return false;
+    }
+    return true;
 }
 ```
 
-Não copie o esqueleto literalmente quando a técnica exigir DFS, recursão, uma estrutura persistente ou várias consultas. Use o código específico da seção como base e adapte os tipos aos limites do enunciado.
+## Complexidade e cuidados
 
-## Complexidade: como conferir
-
-- Um laço sobre `n` elementos é `O(n)`.
-- Dois laços aninhados sobre `n` normalmente são `O(n²)`.
-- Ordenar costuma custar `O(n log n)`.
-- Uma busca binária custa `O(log n)`; fazer isso para cada elemento dá `O(n log n)`.
-- Em grafos, a DFS/BFS com lista de adjacência custa `O(n+m)`.
-- Uma estrutura de consultas pode ter custo de construção diferente do custo de cada consulta; informe os dois.
-
-A complexidade indicada no cabeçalho é uma referência para a implementação padrão. Variantes do mesmo algoritmo podem ter custos diferentes conforme a estrutura auxiliar, o domínio dos valores e as operações exigidas.
-
-## Erros comuns
-
-- Usar a técnica só porque o nome aparece no enunciado, sem verificar suas pré-condições.
-- Não decidir se os intervalos são inclusivos `[l,r]` ou semiabertos `[l,r)`.
-- Misturar índices `0..n-1` com índices `1..n`.
-- Usar `int` para somas, distâncias ou produtos que podem ultrapassar `2^31-1`; use `long long` quando necessário.
-- Esquecer de limpar vetores globais entre casos de teste.
-- Não testar duplicatas, casos mínimos e o maior caso permitido.
-
-## Checklist de prova/contest
-
-- [ ] Sei explicar o que representa cada estado/estrutura?
-- [ ] Sei por que a transição/operação é correta?
-- [ ] Sei justificar a complexidade total, não apenas de uma operação?
-- [ ] Os limites e sentinelas estão corretos?
-- [ ] A solução trata o caso mínimo e os empates?
-- [ ] O tipo numérico comporta a resposta máxima?
+- Para `n` pequeno (até `1e6`) um crivo é mais simples; Miller-Rabin vale quando há muitas consultas ou `n` grande.
+- Com bases só `{2, 3, 5, 7}` o teste é exato apenas para `n < 3.2e9`; as 12 bases cobrem todo `u64`.
+- Sem `__int128` use multiplicação russa para `mulmod` quando `n > 2^32`.
+- É a base do Pollard rho: teste primalidade antes de tentar fatorar.

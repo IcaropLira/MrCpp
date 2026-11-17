@@ -1,75 +1,56 @@
 ---
 title: Pontos de articulação
-summary: Em breve.
+summary: Vértices cuja remoção aumenta o número de componentes, em uma DFS com tin/low.
 status: done
-complexity: tags:
-tags: ---
+complexity: O(V + E)
+tags: grafos, articulação, dfs, low-link
 ---
 
-## Ideia e quando usar
+## Ideia
 
-Pontos de articulação é uma técnica/estrutura que aparece quando o problema tem a seguinte necessidade: reconhecer o padrão pedido no enunciado, representar os estados relevantes e escolher uma operação que possa ser executada dentro do limite de tempo. Não decore só o código: identifique **o que cada variável significa**, qual é a condição de validade e qual é o custo de cada operação.
+Na árvore da DFS, um vértice `u` que não é raiz é ponto de articulação se algum filho `v` tem `low[v] >= tin[u]`: a subárvore de `v` não consegue chegar acima de `u` sem passar por ele. A raiz é ponto de articulação se tem dois ou mais filhos na árvore. Arestas paralelas não mudam nada aqui (diferente das pontes).
 
-## Como pensar na solução
-
-1. **Defina a entrada e a resposta.** Escreva em uma frase o que precisa ser calculado e quais restrições importam (`n`, número de arestas, tamanho das strings, valores máximos).
-2. **Escolha a representação.** Vetor, lista de adjacência, estado de DP, estrutura de dados ou ordenação devem refletir diretamente as operações necessárias.
-3. **Mantenha um invariante.** Antes de cada iteração/consulta, diga o que a estrutura representa. Depois da operação, prove que continua representando isso.
-4. **Analise a complexidade.** Conte quantas vezes cada elemento/aresta/estado é processado. Uma solução correta que faz `O(n²)` pode falhar para `n=2e5`.
-5. **Trate os casos-limite.** Entrada vazia ou mínima, duplicatas, valores negativos, grafo desconexo, ciclos, limites de índice e overflow.
-
-## Modelo de implementação
-
-O esqueleto depende do problema concreto; não existe um único código que resolva todas as variantes. Em C++ competitivo, mantenha a implementação enxuta e explícita, no estilo deste material:
+## Código
 
 ```cpp
-#include <bits/stdc++.h>
-using namespace std;
-using ll = long long;
-
-int main() {
-    ios::sync_with_stdio(false);
-    cin.tie(nullptr);
-
-    int n;
-    cin >> n;
-    vector<int> a(n);
-    for (int i = 0; i < n; i++) cin >> a[i];
-
-    // 1. Inicialize a estrutura/estado.
-    // 2. Processe os dados mantendo o invariante.
-    // 3. Extraia e imprima a resposta.
-    return 0;
+// vértices 0..n-1, grafo não dirigido. art[v] = 1 se v é ponto de articulação
+vector<char> pontos_articulacao(const vector<vector<int>>& g) {
+    int n = g.size(), timer = 0;
+    vector<int> tin(n, -1), low(n, 0), it(n, 0), pai(n, -1);
+    vector<char> art(n, 0);
+    for (int s = 0; s < n; s++) {
+        if (tin[s] != -1) continue;
+        vector<int> chamada = {s};
+        tin[s] = low[s] = timer++;
+        int filhosRaiz = 0;
+        while (!chamada.empty()) {
+            int u = chamada.back();
+            if (it[u] < (int)g[u].size()) {
+                int v = g[u][it[u]++];
+                if (v == pai[u]) continue;
+                if (tin[v] != -1) low[u] = min(low[u], tin[v]);
+                else {
+                    pai[v] = u; tin[v] = low[v] = timer++;
+                    chamada.push_back(v);
+                }
+            } else {
+                chamada.pop_back();
+                if (chamada.empty()) break;
+                int p = chamada.back();
+                low[p] = min(low[p], low[u]);
+                if (pai[p] == -1) filhosRaiz++;
+                else if (low[u] >= tin[p]) art[p] = 1;
+            }
+        }
+        art[s] = filhosRaiz >= 2;
+    }
+    return art;
 }
 ```
 
-Não copie o esqueleto literalmente quando a técnica exigir DFS, recursão, uma estrutura persistente ou várias consultas. Use o código específico da seção como base e adapte os tipos aos limites do enunciado.
+## Complexidade e cuidados
 
-## Complexidade: como conferir
-
-- Um laço sobre `n` elementos é `O(n)`.
-- Dois laços aninhados sobre `n` normalmente são `O(n²)`.
-- Ordenar costuma custar `O(n log n)`.
-- Uma busca binária custa `O(log n)`; fazer isso para cada elemento dá `O(n log n)`.
-- Em grafos, a DFS/BFS com lista de adjacência custa `O(n+m)`.
-- Uma estrutura de consultas pode ter custo de construção diferente do custo de cada consulta; informe os dois.
-
-A complexidade indicada no cabeçalho é uma referência para a implementação padrão. Variantes do mesmo algoritmo podem ter custos diferentes conforme a estrutura auxiliar, o domínio dos valores e as operações exigidas.
-
-## Erros comuns
-
-- Usar a técnica só porque o nome aparece no enunciado, sem verificar suas pré-condições.
-- Não decidir se os intervalos são inclusivos `[l,r]` ou semiabertos `[l,r)`.
-- Misturar índices `0..n-1` com índices `1..n`.
-- Usar `int` para somas, distâncias ou produtos que podem ultrapassar `2^31-1`; use `long long` quando necessário.
-- Esquecer de limpar vetores globais entre casos de teste.
-- Não testar duplicatas, casos mínimos e o maior caso permitido.
-
-## Checklist de prova/contest
-
-- [ ] Sei explicar o que representa cada estado/estrutura?
-- [ ] Sei por que a transição/operação é correta?
-- [ ] Sei justificar a complexidade total, não apenas de uma operação?
-- [ ] Os limites e sentinelas estão corretos?
-- [ ] A solução trata o caso mínimo e os empates?
-- [ ] O tipo numérico comporta a resposta máxima?
+- Pular todas as arestas para o pai é correto aqui; para *pontes* com arestas paralelas é preciso pular só a aresta exata (por id).
+- Uma árvore de `n >= 3` vértices tem como pontos de articulação todos os vértices internos.
+- Remover um ponto de articulação deixa pelo menos 2 componentes; a árvore bloco-cut organiza isso.
+- Vértice isolado ou grafo com 1-2 vértices não tem pontos de articulação.

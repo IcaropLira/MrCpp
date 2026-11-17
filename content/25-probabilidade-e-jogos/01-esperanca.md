@@ -1,75 +1,58 @@
 ---
 title: Esperança
-summary: Em breve.
+summary: Linearidade da esperança, coupon collector e esperança por DP, em double e em módulo primo.
 status: done
-complexity: tags:
-tags: ---
+complexity: O(S · F) no exemplo do dado
+tags: probabilidade, esperança, dp
 ---
 
-## Ideia e quando usar
+## Ideia
 
-Esperança é uma técnica/estrutura que aparece quando o problema tem a seguinte necessidade: reconhecer o padrão pedido no enunciado, representar os estados relevantes e escolher uma operação que possa ser executada dentro do limite de tempo. Não decore só o código: identifique **o que cada variável significa**, qual é a condição de validade e qual é o custo de cada operação.
+A esperança é linear: `E[X + Y] = E[X] + E[Y]` mesmo com dependência. Para contar algo, escreva-o como soma de indicadores e some as probabilidades. Exemplos: o número esperado de pontos fixos de uma permutação aleatória é `n · (1/n) = 1`; o coupon collector (juntar os `n` cupons) leva `n · H_n` sorteios. Quando o processo tem estados, `E[estado] = 1 + sum p · E[próximo]` e a DP é resolvida de trás para frente.
 
-## Como pensar na solução
-
-1. **Defina a entrada e a resposta.** Escreva em uma frase o que precisa ser calculado e quais restrições importam (`n`, número de arestas, tamanho das strings, valores máximos).
-2. **Escolha a representação.** Vetor, lista de adjacência, estado de DP, estrutura de dados ou ordenação devem refletir diretamente as operações necessárias.
-3. **Mantenha um invariante.** Antes de cada iteração/consulta, diga o que a estrutura representa. Depois da operação, prove que continua representando isso.
-4. **Analise a complexidade.** Conte quantas vezes cada elemento/aresta/estado é processado. Uma solução correta que faz `O(n²)` pode falhar para `n=2e5`.
-5. **Trate os casos-limite.** Entrada vazia ou mínima, duplicatas, valores negativos, grafo desconexo, ciclos, limites de índice e overflow.
-
-## Modelo de implementação
-
-O esqueleto depende do problema concreto; não existe um único código que resolva todas as variantes. Em C++ competitivo, mantenha a implementação enxuta e explícita, no estilo deste material:
+## Código
 
 ```cpp
-#include <bits/stdc++.h>
-using namespace std;
-using ll = long long;
+// coupon collector: sorteios esperados para ver os n cupons, n * H_n
+double coupon(int n) {
+    double h = 0;
+    for (int i = 1; i <= n; i++) h += 1.0 / i;
+    return n * h;
+}
 
-int main() {
-    ios::sync_with_stdio(false);
-    cin.tie(nullptr);
+// lançamentos esperados de um dado justo de F faces até a soma chegar a pelo menos S
+double lancamentos_ate_soma(int F, int S) {
+    vector<double> E(S + F + 1, 0.0);  // E[s] = 0 para s >= S
+    for (int s = S - 1; s >= 0; s--) {
+        double t = 0;
+        for (int f = 1; f <= F; f++) t += E[s + f];
+        E[s] = 1 + t / F;
+    }
+    return E[0];
+}
 
-    int n;
-    cin >> n;
-    vector<int> a(n);
-    for (int i = 0; i < n; i++) cin >> a[i];
-
-    // 1. Inicialize a estrutura/estado.
-    // 2. Processe os dados mantendo o invariante.
-    // 3. Extraia e imprima a resposta.
-    return 0;
+// o mesmo valor como fração P/Q reduzida módulo MOD (primo)
+const ll MOD = 998244353;
+ll pw(ll a, ll e) {
+    ll r = 1;
+    for (a %= MOD; e; e >>= 1, a = a * a % MOD) if (e & 1) r = r * a % MOD;
+    return r;
+}
+ll lancamentos_ate_soma_mod(int F, int S) {
+    vector<ll> E(S + F + 1, 0);
+    ll invF = pw(F, MOD - 2);
+    for (int s = S - 1; s >= 0; s--) {
+        ll t = 0;
+        for (int f = 1; f <= F; f++) t = (t + E[s + f]) % MOD;
+        E[s] = (1 + t * invF) % MOD;
+    }
+    return E[0];
 }
 ```
 
-Não copie o esqueleto literalmente quando a técnica exigir DFS, recursão, uma estrutura persistente ou várias consultas. Use o código específico da seção como base e adapte os tipos aos limites do enunciado.
+## Complexidade e cuidados
 
-## Complexidade: como conferir
-
-- Um laço sobre `n` elementos é `O(n)`.
-- Dois laços aninhados sobre `n` normalmente são `O(n²)`.
-- Ordenar costuma custar `O(n log n)`.
-- Uma busca binária custa `O(log n)`; fazer isso para cada elemento dá `O(n log n)`.
-- Em grafos, a DFS/BFS com lista de adjacência custa `O(n+m)`.
-- Uma estrutura de consultas pode ter custo de construção diferente do custo de cada consulta; informe os dois.
-
-A complexidade indicada no cabeçalho é uma referência para a implementação padrão. Variantes do mesmo algoritmo podem ter custos diferentes conforme a estrutura auxiliar, o domínio dos valores e as operações exigidas.
-
-## Erros comuns
-
-- Usar a técnica só porque o nome aparece no enunciado, sem verificar suas pré-condições.
-- Não decidir se os intervalos são inclusivos `[l,r]` ou semiabertos `[l,r)`.
-- Misturar índices `0..n-1` com índices `1..n`.
-- Usar `int` para somas, distâncias ou produtos que podem ultrapassar `2^31-1`; use `long long` quando necessário.
-- Esquecer de limpar vetores globais entre casos de teste.
-- Não testar duplicatas, casos mínimos e o maior caso permitido.
-
-## Checklist de prova/contest
-
-- [ ] Sei explicar o que representa cada estado/estrutura?
-- [ ] Sei por que a transição/operação é correta?
-- [ ] Sei justificar a complexidade total, não apenas de uma operação?
-- [ ] Os limites e sentinelas estão corretos?
-- [ ] A solução trata o caso mínimo e os empates?
-- [ ] O tipo numérico comporta a resposta máxima?
+- Em módulo, a esperança é um racional `P/Q` e a saída é `P · Q^{-1} mod p`: exige `Q` não divisível por `p`.
+- Linearidade dispensa independência; já o produto `E[XY] = E[X] E[Y]` exige.
+- Para somas parciais (`t`) em DP com janela, use soma de prefixos e fique em `O(S)`.
+- `n · H_n ≈ n (ln n + 0,577)`: para `n = 100` são cerca de 518 sorteios.
