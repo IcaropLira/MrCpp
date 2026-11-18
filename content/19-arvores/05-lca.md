@@ -1,70 +1,121 @@
 ---
 title: LCA (binary lifting)
-summary: Menor ancestral comum com binary lifting.
+summary: Menor ancestral comum, k-ésimo ancestral, distância e k-ésimo vértice no caminho.
 status: done
-complexity: O(n log n) + O(log n)
-tags: árvores, lca
+complexity: O(n log n) construção; O(log n) por consulta
+tags: árvores, lca, binary lifting, distância, caminhos
 ---
 
 ## Ideia
 
-`up[j][u]` é o ancestral de `u` a `2^j` passos. Iguala as profundidades e sobe os dois juntos.
+`up[j][v]` é o ancestral de `v` a `2^j` arestas de distância. A recorrência é:
+
+- `up[0][v] = pai[v]`;
+- `up[j][v] = up[j-1][up[j-1][v]]`.
+
+Para consultar o LCA, primeiro igualamos as profundidades. Depois subimos os dois vértices do maior salto para o menor, sempre que seus ancestrais forem diferentes.
 
 ## Código
 
+Árvore não direcionada, conexa, com vértices `0..n-1`. A DFS é iterativa para evitar estouro de pilha em árvores profundas. Métodos de k-ésimo ancestral e caminho devolvem `-1` quando `k` é inválido.
+
 ```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
 struct LCA {
-    int LOG; vector<int> depth; vector<vector<int>> up;
+    int LOG;
+    vector<int> depth;
+    vector<vector<int>> up;
+
     LCA(const vector<vector<int>>& g, int root = 0) {
-        int n = g.size(); LOG = __lg(n) + 1;
-        depth.assign(n, 0); up.assign(LOG, vector<int>(n, root));
-        function<void(int, int)> dfs = [&](int u, int p) {
-            up[0][u] = p;
-            for (int j = 1; j < LOG; j++) up[j][u] = up[j-1][up[j-1][u]];
-            for (int v : g[u]) if (v != p) depth[v] = depth[u] + 1, dfs(v, u);
-        };
-        dfs(root, root);
+        int n = (int)g.size();
+        assert(n > 0 && 0 <= root && root < n);
+
+        LOG = 1;
+        while ((1LL << LOG) <= n) LOG++;
+
+        depth.assign(n, 0);
+        up.assign(LOG, vector<int>(n, root));
+
+        vector<int> pai(n, -1), st = {root};
+        pai[root] = root;
+
+        while (!st.empty()) {
+            int u = st.back();
+            st.pop_back();
+
+            for (int v : g[u]) {
+                if (pai[v] != -1) continue;
+                pai[v] = u;
+                depth[v] = depth[u] + 1;
+                st.push_back(v);
+            }
+        }
+
+        for (int v = 0; v < n; v++) up[0][v] = pai[v];
+
+        for (int j = 1; j < LOG; j++)
+            for (int v = 0; v < n; v++)
+                up[j][v] = up[j-1][up[j-1][v]];
     }
-    int query(int a, int b) {
+
+    int kth_ancestor(int v, int k) const {
+        if (k < 0 || k > depth[v]) return -1;
+
+        for (int j = 0; j < LOG; j++)
+            if (k & (1LL << j)) v = up[j][v];
+
+        return v;
+    }
+
+    int query(int a, int b) const {
         if (depth[a] < depth[b]) swap(a, b);
-        for (int j = LOG - 1; j >= 0; j--) if (depth[a] - (1 << j) >= depth[b]) a = up[j][a];
+
+        int diff = depth[a] - depth[b];
+        for (int j = 0; j < LOG; j++)
+            if (diff & (1LL << j)) a = up[j][a];
+
         if (a == b) return a;
-        for (int j = LOG - 1; j >= 0; j--) if (up[j][a] != up[j][b]) a = up[j][a], b = up[j][b];
+
+        for (int j = LOG - 1; j >= 0; j--)
+            if (up[j][a] != up[j][b])
+                a = up[j][a], b = up[j][b];
+
         return up[0][a];
+    }
+
+    int distance(int a, int b) const {
+        int w = query(a, b);
+        return depth[a] + depth[b] - 2 * depth[w];
+    }
+
+    // k=0 devolve a; -1 indica k fora do caminho.
+    int kth_on_path(int a, int b, int k) const {
+        int w = query(a, b);
+        int x = depth[a] - depth[w];
+        int y = depth[b] - depth[w];
+
+        if (k < 0 || k > x + y) return -1;
+        if (k <= x) return kth_ancestor(a, k);
+        return kth_ancestor(b, x + y - k);
     }
 };
 ```
 
-## Outras consultas que saem da mesma tabela
+Uso: `LCA lca(g, 0)`, `lca.query(u, v)`, `lca.distance(u, v)` e `lca.kth_on_path(u, v, k)`.
 
-Não pare no LCA. Com `depth` e `up`, você ganha de graça:
+## Consultas derivadas
 
-- **K-ésimo ancestral:** subir `k` níveis usando os bits de `k`.
-- **Distância entre dois vértices:** `depth[u] + depth[v] - 2*depth[w]`, onde `w = LCA(u,v)`.
-- **K-ésimo vértice no caminho:** encontre `w = LCA(u,v)`. Seja `a = depth[u]-depth[w]` e `b = depth[v]-depth[w]`. Se `k <= a`, suba `k` a partir de `u`; caso contrário, suba `a+b-k` a partir de `v`. Aqui `k=0` representa o próprio `u`.
-- **Ancestralidade:** com tempos de entrada/saída da DFS, confira se `tin[u] <= tin[v] && tout[v] <= tout[u]`.
+- **K-ésimo ancestral:** `kth_ancestor(v, k)`, em `O(log n)`.
+- **Distância em arestas:** `depth[u] + depth[v] - 2 * depth[lca(u,v)]`.
+- **K-ésimo vértice no caminho:** `k` é 0-indexado a partir de `u`; se `w = LCA(u,v)`, `a = depth[u]-depth[w]` e `b = depth[v]-depth[w]`, subimos `k` a partir de `u` quando `k <= a`; caso contrário, `a+b-k` a partir de `v`.
 
-Adicione estes métodos ao struct, mantendo `up[j][v]` como o ancestral a `2^j` passos:
+## Complexidade e cuidados
 
-```cpp
-int kth_ancestor(int v, int k) {
-    for (int j = 0; j < LOG; j++)
-        if (k & (1 << j)) v = up[j][v];
-    return v;
-}
-
-int distance(int u, int v) {
-    int w = query(u, v);
-    return depth[u] + depth[v] - 2 * depth[w];
-}
-
-int kth_on_path(int u, int v, int k) {
-    int w = query(u, v);
-    int a = depth[u] - depth[w];
-    int b = depth[v] - depth[w];
-    if (k <= a) return kth_ancestor(u, k);
-    return kth_ancestor(v, a + b - k);
-}
-```
-
-Para `n` grande, considere DFS iterativa para evitar estouro de pilha. Se `k` ou a profundidade puderem alcançar valores que não cabem em `int`, ajuste o tipo e o número de níveis.
+- Construção: `O(n log n)`; memória: `O(n log n)`.
+- LCA, k-ésimo ancestral, distância e k-ésimo vértice: `O(log n)` por consulta.
+- A árvore deve ser não vazia, conexa e sem ciclos; os índices precisam estar em `0..n-1`.
+- A raiz é ancestral de si mesma. `kth_ancestor(v, k)` devolve `-1` se `k > depth[v]`.
+- `kth_on_path(u, v, k)` exige `0 <= k <= distance(u,v)`; fora desse intervalo devolve `-1`.
+- A DFS iterativa evita a profundidade de recursão `O(n)` que poderia estourar a pilha.
