@@ -116,6 +116,23 @@ Cada aula tem uma **ficha teórica** (seções `60–66`, aba *Material teórico
 - Polygons — https://codeforces.com/problemset/problem/166/B
 - Para ir além: CSES 2190 (interseção de segmentos), 2193 (Pick), 2194 (par mais próximo)
 
+## Além das aulas
+
+| Tema | Teoria | Código |
+|---|---|---|
+| Fluxo, cortes, matching (König, Hall, Dilworth, Menger, MCMF) | Grafos → Fluxo e emparelhamento | Complementos: fluxo, cortes e árvores geradoras (Gomory-Hu, König, cobertura por caminhos) + seções 20/21 |
+| Caminhos mínimos, MST, DSU | Grafos → Caminhos mínimos e árvores geradoras | seções 15, 16 + 2ª melhor MST, k menores caminhos |
+| SCC, 2-SAT, articulações, biconexas | Grafos → SCC, 2-SAT, articulações | seção 18 |
+| Fatos de grafos (Euler, Hamilton, planar, coloração, Erdős–Gallai) | Grafos → Fatos e teoremas | Kirchhoff (complementos) |
+| HLD, centroid, virtual tree | Grafos → Técnicas em árvores | seções 10, 29 |
+| KMP, Z, Manacher, SA, SAM, Aho | Strings → Algoritmos de strings | seções 21, 26, 35, 41 |
+| Escolha de estrutura, pilha monotônica, Mo, √ | Estruturas → Escolhendo a estrutura | seções 08–10, 32 + merge sort tree, ordered_set |
+| DPs clássicas e otimizações | DP → DPs clássicas | seções 11, 12 + Knuth, SOS, bitset, Aliens |
+| Álgebra linear, FFT, Lagrange, funções geradoras | Matemática → Álgebra linear e polinômios | seções 22, 24, 33 + Berlekamp-Massey |
+| Busca binária/ternária, offline, aleatorização | Prova → Busca binária e técnicas | seções 03, 06 |
+| C++/STL, flags, debug, stress test | Prova → C++ e STL | Ferramentas de prova |
+| Precisão e 3D | Geometria → Ponto flutuante e 3D | seções 34, 40 |
+
 ## Pegadinhas encontradas nos slides (já corrigidas nos códigos)
 
 - **Segtree**: o slide dá build O(N log N); o exato é O(N) (2N − 1 nós).
