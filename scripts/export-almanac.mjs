@@ -49,7 +49,7 @@ try {
     const sectionName = splitName(dir);
     if (!sections.has(sectionName.slug)) {
       sections.set(sectionName.slug, {
-        slug: sectionName.slug, title: sectionName.slug, part: '', summary: '',
+        slug: sectionName.slug, title: sectionName.slug, part: '', kind: 'codigo', summary: '',
         order: sectionName.order, topics: []
       });
     }
@@ -59,6 +59,7 @@ try {
       Object.assign(section, {
         title: parsed.data.title ?? section.title,
         part: parsed.data.part ?? '',
+        kind: parsed.data.kind === 'teoria' ? 'teoria' : 'codigo',
         summary: parsed.data.summary ?? ''
       });
       continue;

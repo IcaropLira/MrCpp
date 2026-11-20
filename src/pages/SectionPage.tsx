@@ -11,7 +11,7 @@ export default function SectionPage() {
   return (
     <div className="w page">
       <Link className="back" to="/">← Todas as seções</Link>
-      <div className="k">{section.part}</div>
+      <div className="k">{section.kind === 'teoria' ? 'Material teórico · ' : ''}{section.part}</div>
       <h1>{section.title}</h1>
       <p className="lead">{section.summary}</p>
       <div className="rows">{section.topics.map((t) => <TopicRow key={t.slug} topic={t} />)}</div>

@@ -47,6 +47,10 @@ export default function ExportLibraryDialog({ sections, onClose }: Props) {
   const [format, setFormat] = useState<'library' | 'almanac'>('almanac');
   const chosen = useMemo(() => sections.filter((s) => selected.includes(s.slug)).map((s) => ({ ...s, topics: s.topics.filter((t) => includeTodo || t.status === 'done') })).filter((s) => s.topics.length), [sections, selected, includeTodo]);
 
+  const only = (k: 'codigo' | 'teoria') => {
+    const want = sections.filter((s) => s.kind === k).map((s) => s.slug);
+    return want.length === selected.length && want.every((x) => selected.includes(x));
+  };
   const toggle = (slug: string) => setSelected((old) => old.includes(slug) ? old.filter((x) => x !== slug) : [...old, slug]);
   const almanacLatex = () => buildAlmanacLatex(chosen, title, author);
 
@@ -97,8 +101,13 @@ export default function ExportLibraryDialog({ sections, onClose }: Props) {
         <label><input type="checkbox" checked={pageNumbers} onChange={(e) => setPageNumbers(e.target.checked)} /> Número das páginas</label>
       </div>
       <label className="export-check"><input type="checkbox" checked={includeTodo} onChange={(e) => setIncludeTodo(e.target.checked)} /> Incluir tópicos em desenvolvimento</label>
+      <div className="export-material" role="group" aria-label="Material">
+        <button className={selected.length === sections.length ? 'on' : ''} onClick={() => setSelected(sections.map((s) => s.slug))}>Tudo</button>
+        <button className={only('codigo') ? 'on' : ''} onClick={() => setSelected(sections.filter((s) => s.kind === 'codigo').map((s) => s.slug))}>Só material de código</button>
+        <button className={only('teoria') ? 'on' : ''} onClick={() => setSelected(sections.filter((s) => s.kind === 'teoria').map((s) => s.slug))}>Só material teórico</button>
+      </div>
       <div className="export-select-head"><b>Conteúdo</b><span>{chosen.reduce((n,s)=>n+s.topics.length,0)} tópicos selecionados</span><button onClick={() => setSelected(selected.length === sections.length ? [] : sections.map((s)=>s.slug))}>{selected.length === sections.length ? 'Limpar' : 'Selecionar tudo'}</button></div>
-      <div className="export-sections">{sections.map((s) => <label key={s.slug}><input type="checkbox" checked={selected.includes(s.slug)} onChange={() => toggle(s.slug)} /><span>{String(s.order).padStart(2,'0')} · {s.title}</span><small>{s.topics.length}</small></label>)}</div>
+      <div className="export-sections">{sections.map((s) => <label key={s.slug}><input type="checkbox" checked={selected.includes(s.slug)} onChange={() => toggle(s.slug)} /><span>{String(s.order).padStart(2,'0')} · {s.kind === 'teoria' ? '📘 ' : ''}{s.title}</span><small>{s.topics.length}</small></label>)}</div>
       <div className="export-actions"><button className="secondary" onClick={downloadTex} disabled={!chosen.length}>Baixar LaTeX compilável (.tex)</button><button className="primary" onClick={exportPdf} disabled={!chosen.length}>Gerar e baixar PDF ↓</button></div>
     </section>
   </div>;

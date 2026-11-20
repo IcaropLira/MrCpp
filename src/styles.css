@@ -66,3 +66,9 @@ footer{border-top:1px solid var(--line);padding:30px 0;color:var(--mut);font-siz
 .export-actions{display:flex;justify-content:flex-end;gap:10px;border-top:1px solid var(--line);padding-top:18px}.export-actions button{border-radius:999px;padding:10px 16px;font:12px 'Fira Code',monospace;cursor:pointer}.export-actions button:disabled{opacity:.4;cursor:not-allowed}.export-actions .secondary{background:transparent;border:1px solid var(--line);color:var(--mut)}.export-actions .primary{background:var(--grad);border:0;color:white}
 @media(max-width:620px){.nav-export{padding:6px 9px;font-size:10px}.export-dialog{padding:22px 16px}.export-options{grid-template-columns:1fr}.export-sections{grid-template-columns:1fr}.export-actions{flex-direction:column}.export-actions button{width:100%}}
 @media print{.nav-export,.export-overlay{display:none!important}}
+.kind-tabs{display:inline-flex;gap:6px;margin:26px auto 0;padding:5px;border:1px solid var(--line);border-radius:999px;background:var(--card)}
+.kind-tabs button{border:0;border-radius:999px;padding:9px 18px;background:none;color:var(--mut);font:13px 'Fira Code',monospace;cursor:pointer;transition:.2s}
+.kind-tabs button:hover{color:var(--tx)}.kind-tabs button.on{background:var(--grad);color:#fff}
+.kind-hint{color:var(--mut);font-size:13px;margin:10px auto 0;max-width:560px}
+.export-material{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 14px}.export-material button{border:1px solid var(--line);background:#0d0817;color:var(--mut);border-radius:999px;padding:7px 13px;font:12px 'Fira Code',monospace;cursor:pointer}.export-material button.on{border-color:var(--pk);color:var(--pk2);background:#ee0f7f14}
+@media(max-width:620px){.kind-tabs button{padding:8px 11px;font-size:11px}}

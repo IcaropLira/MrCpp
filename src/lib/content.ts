@@ -1,4 +1,4 @@
-import type { Section, Status, Topic } from '../types';
+import type { Kind, Section, Status, Topic } from '../types';
 
 const files = import.meta.glob('/content/**/*.md', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
 
@@ -24,7 +24,7 @@ function build(): Section[] {
   const get = (dir: string): Section => {
     const { order, slug } = splitName(dir);
     let s = sections.get(slug);
-    if (!s) { s = { slug, title: slug, part: '', summary: '', order, topics: [] }; sections.set(slug, s); }
+    if (!s) { s = { slug, title: slug, part: '', kind: 'codigo', summary: '', order, topics: [] }; sections.set(slug, s); }
     return s;
   };
   for (const [path, src] of Object.entries(files)) {
@@ -33,7 +33,10 @@ function build(): Section[] {
     const { data, body } = parse(src);
     const section = get(dir);
     if (name === '_section') {
-      Object.assign(section, { title: data.title ?? section.title, part: data.part ?? '', summary: data.summary ?? '' });
+      Object.assign(section, {
+        title: data.title ?? section.title, part: data.part ?? '', summary: data.summary ?? '',
+        kind: (data.kind === 'teoria' ? 'teoria' : 'codigo') as Kind,
+      });
       continue;
     }
     const { order, slug } = splitName(name);
@@ -57,5 +60,6 @@ function build(): Section[] {
 
 export const sections: Section[] = build();
 export const allTopics: Topic[] = sections.flatMap((s) => s.topics);
+export const kindOf = (t: Topic): Kind => getSection(t.section)?.kind ?? 'codigo';
 export const getSection = (slug: string) => sections.find((s) => s.slug === slug);
 export const getTopic = (section: string, slug: string) => getSection(section)?.topics.find((t) => t.slug === slug);
