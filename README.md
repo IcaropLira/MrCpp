@@ -8,7 +8,8 @@ Biblioteca de algoritmos para programação competitiva, em React + TypeScript (
 
 ## Como editar
 
-- `content/NN-secao/_section.md`: dados da seção (`title`, `part`, `summary`).
+- `content/NN-secao/_section.md`: dados da seção (`title`, `part`, `summary` e, opcionalmente, `kind`).
+- `kind: teoria` coloca a seção no **material teórico** (fórmulas, conceitos, macetes, pegadinhas); sem `kind` (ou `kind: codigo`) ela fica no **material de código**. A home tem uma aba para cada um, e a exportação permite gerar só um deles.
 - `content/NN-secao/NN-topico.md`: um tópico. Frontmatter: `title`, `summary`, `status` (`done` ou `todo`), `complexity`, `tags`.
 - O número no nome do arquivo define a ordem. A parte depois do número vira o endereço (`/secao/topico`).
 
@@ -41,3 +42,8 @@ O conteúdo é organizado por assunto e os tópicos usam Markdown com frontmatte
 - Vértices normalmente `1..n` nas implementações de grafos; vetores de entrada frequentemente `0..n-1`. Confira cada tópico.
 - As estruturas com `N` fixo precisam de um limite coerente com o enunciado. Se o domínio for grande ou desconhecido, prefira `vector`.
 - Recursão em árvores profundas pode estourar a pilha; considere DFS iterativa para limites próximos de `2e5`.
+
+## Material teórico e aulas
+
+- Seções `60`–`67` (`kind: teoria`): limites e complexidade, checklist de pegadinhas, paradigmas, fatos/paradoxos, teoria de cada aula (Segtree, Lazy, BIT, DP, DP em árvore, Euler Tour, LCA, Small to Large, Topológica, Pontes, Vértices Auxiliares, Hashing, Trie, Geometria), formulário de matemática e o mapa das aulas.
+- Seções `42`–`47`: códigos das aulas em C++ com todos os exercícios dos slides resolvidos; cada solução foi compilada e testada com o exemplo do enunciado (o exemplo está logo abaixo do código).

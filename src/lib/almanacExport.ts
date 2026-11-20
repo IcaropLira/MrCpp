@@ -288,6 +288,66 @@ function referenceSheetsLatex(): string {
   }).join('\\clearpage\n');
 }
 
+
+/* ───────────── Saneamento Unicode para pdflatex ─────────────
+ * pdflatex + inputenc não conhece muitos símbolos (Ω, ⌊, ⇔, ₖ, ✓…). Em texto corrido,
+ * cada caractere fora do Latin-1 recebe um \DeclareUnicodeCharacter; dentro de lstlisting
+ * (que lê byte a byte) ele é trocado por um equivalente ASCII. */
+const MATH_CHARS: Record<string, string> = {
+  'Ω': '\\Omega', 'Δ': '\\Delta', 'Σ': '\\Sigma', 'Π': '\\Pi', 'Φ': '\\Phi', 'Γ': '\\Gamma', 'Λ': '\\Lambda',
+  'α': '\\alpha', 'β': '\\beta', 'γ': '\\gamma', 'δ': '\\delta', 'ε': '\\varepsilon', 'θ': '\\theta', 'λ': '\\lambda',
+  'μ': '\\mu', 'π': '\\pi', 'ρ': '\\rho', 'σ': '\\sigma', 'τ': '\\tau', 'φ': '\\varphi', 'ω': '\\omega', 'χ': '\\chi',
+  '⌊': '\\lfloor', '⌋': '\\rfloor', '⌈': '\\lceil', '⌉': '\\rceil', '⊕': '\\oplus', '⊗': '\\otimes',
+  '⇔': '\\Leftrightarrow', '⇒': '\\Rightarrow', '⇐': '\\Leftarrow', '↔': '\\leftrightarrow', '→': '\\to', '←': '\\leftarrow',
+  '↑': '\\uparrow', '↓': '\\downarrow', '≠': '\\ne', '≡': '\\equiv', '≈': '\\approx', '≤': '\\le', '≥': '\\ge',
+  '∈': '\\in', '∉': '\\notin', '∪': '\\cup', '∩': '\\cap', '⊂': '\\subset', '⊆': '\\subseteq', '∑': '\\sum', '∏': '\\prod',
+  '√': '\\surd', '∞': '\\infty', '∗': '\\ast', '∘': '\\circ', '−': '-', '±': '\\pm', '∝': '\\propto', '∀': '\\forall',
+  '∃': '\\exists', '∅': '\\emptyset', '✓': '\\checkmark', '✔': '\\checkmark', '✗': '\\times', '✘': '\\times',
+  '•': '\\bullet', '●': '\\bullet', '…': '\\ldots', '⋯': '\\cdots', '′': "'", '⁻': '^{-}', '⁺': '^{+}',
+  '⁰': '^{0}', '¹': '^{1}', '²': '^{2}', '³': '^{3}', '⁴': '^{4}', '⁵': '^{5}', '⁶': '^{6}', '⁷': '^{7}', '⁸': '^{8}', '⁹': '^{9}',
+  'ⁿ': '^{n}', 'ᵏ': '^{k}', 'ⁱ': '^{i}', 'ᵃ': '^{a}', 'ᵇ': '^{b}',
+  '₀': '_{0}', '₁': '_{1}', '₂': '_{2}', '₃': '_{3}', '₄': '_{4}', '₅': '_{5}', '₆': '_{6}', '₇': '_{7}', '₈': '_{8}', '₉': '_{9}',
+  'ᵢ': '_{i}', 'ⱼ': '_{j}', 'ₖ': '_{k}', 'ₙ': '_{n}', 'ₘ': '_{m}', 'ₚ': '_{p}', 'ₓ': '_{x}', 'ₑ': '_{e}', 'ₐ': '_{a}',
+};
+const TEXT_CHARS: Record<string, string> = { '–': '--', '—': '---', '━': '---', '“': '``', '”': "''", '‘': '`', '’': "'", '″': "''" };
+const CODE_CHARS: Record<string, string> = {
+  '−': '-', '–': '-', '—': '-', '━': '-', '≤': '<=', '≥': '>=', '≠': '!=', '≈': '~', '→': '->', '←': '<-', '⇔': '<=>',
+  '⇒': '=>', '↔': '<->', '·': '*', '×': 'x', '⌊': 'floor(', '⌋': ')', '⌈': 'ceil(', '⌉': ')', '⊕': '^', '∑': 'sum',
+  'Σ': 'sum', 'Π': 'prod', '√': 'sqrt', '∞': 'inf', '…': '...', '“': '"', '”': '"', '‘': "'", '’': "'", '•': '*', '●': '*',
+  '²': '^2', '³': '^3', '⁹': '^9', 'ⁿ': '^n', 'ᵏ': '^k', '₀': '0', '₁': '1', '₂': '2', 'ᵢ': 'i', 'ₖ': 'k', 'ₙ': 'n',
+  'α': 'alpha', 'β': 'beta', 'π': 'pi', 'θ': 'theta', 'ε': 'eps', 'φ': 'phi', 'μ': 'mu', 'Ω': 'Omega', 'Δ': 'Delta',
+  '✓': 'ok', '✗': 'x', '∈': 'in',
+};
+const LITERATE_OK = new Set([...'áãéíóõúçÁÉÍÓÚàâêôÀÂÃÇÊÔÕ⁹–—≈≤≥×·→∞√']);
+
+function codeSafe(code: string): string {
+  return [...code].map((ch) => {
+    if (ch.charCodeAt(0) < 128 || LITERATE_OK.has(ch)) return ch;
+    const mapped = CODE_CHARS[ch];
+    if (mapped !== undefined) return mapped;
+    const base = ch.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    return /^[\x20-\x7e]+$/.test(base) ? base : '?';
+  }).join('');
+}
+
+function latexSafe(doc: string): string {
+  doc = doc.replace(/[\u{10000}-\u{10FFFF}]/gu, '');                 // emojis e afins
+  const parts = doc.split(/(\\begin\{lstlisting\}[\s\S]*?\\end\{lstlisting\})/g);
+  const needed = new Set<string>();
+  const out = parts.map((part, i) => {
+    if (i % 2) return codeSafe(part);
+    for (const ch of part) if (ch.charCodeAt(0) > 0xff) needed.add(ch);
+    return part;
+  }).join('');
+  const decls = [...needed].map((ch) => {
+    const hex = ch.charCodeAt(0).toString(16).toUpperCase().padStart(4, '0');
+    const math = MATH_CHARS[ch];
+    const body = math !== undefined ? '\\ensuremath{' + math + '}' : (TEXT_CHARS[ch] ?? '?');
+    return '\\DeclareUnicodeCharacter{' + hex + '}{' + body + '}';
+  }).join('\n');
+  return decls ? out.replace('\\begin{document}\n', decls + '\n\\begin{document}\n') : out;
+}
+
 export function buildAlmanacLatex(sections: Section[], title: string, author: string): string {
   const body = sections.map((s) => {
     const entries = s.topics.map((topic) => {
@@ -313,9 +373,9 @@ export function buildAlmanacLatex(sections: Section[], title: string, author: st
     '\\lstset{language=C++,basicstyle=\\ttfamily\\footnotesize\\color{codefg},keywordstyle=\\color{codekeyword}\\bfseries,stringstyle=\\color{codestring},commentstyle=\\color{codecomment}\\itshape,breaklines=true,showstringspaces=false,tabsize=2,columns=fullflexible,keepspaces=true,frame=single,rulecolor=\\color{paleblueborder},backgroundcolor=\\color{codebg},aboveskip=3pt,belowskip=3pt,extendedchars=true,literate={á}{{\\\'a}}1 {ã}{{\\~a}}1 {é}{{\\\'e}}1 {í}{{\\\'i}}1 {ó}{{\\\'o}}1 {õ}{{\\~o}}1 {ú}{{\\\'u}}1 {ç}{{\\c c}}1 {Á}{{\\\'A}}1 {É}{{\\\'E}}1 {Í}{{\\\'I}}1 {Ó}{{\\\'O}}1 {Ú}{{\\\'U}}1 {à}{{\\`a}}1 {â}{{\\^a}}1 {ê}{{\\^e}}1 {ô}{{\\^o}}1 {À}{{\\`A}}1 {Â}{{\\^A}}1 {Ã}{{\\~A}}1 {Ç}{{\\c C}}1 {Ê}{{\\^E}}1 {Ô}{{\\^O}}1 {Õ}{{\\~O}}1 {⁹}{{\\ensuremath{^9}}}1 {–}{{--}}1 {—}{{---}}1 {≈}{{\\ensuremath{\\approx}}}1 {≤}{{\\ensuremath{\\le}}}1 {≥}{{\\ensuremath{\\ge}}}1 {×}{{\\ensuremath{\\times}}}1 {·}{{\\ensuremath{\\cdot}}}1 {→}{{\\ensuremath{\\to}}}1 {∞}{{\\ensuremath{\\infty}}}1 {√}{{\\ensuremath{\\surd}}}1}\n' +
     '\\titleformat{\\section}{\\Large\\bfseries\\color{navy}}{}{0pt}{}\\titlespacing*{\\section}{0pt}{8pt}{5pt}\n' +
     '\\begin{document}\n';
-  return preamble + '\\begin{center}{\\Huge\\bfseries\\color{navy}' + texText(title) +
+  return latexSafe(preamble + '\\begin{center}{\\Huge\\bfseries\\color{navy}' + texText(title) +
     '}\\\\[3pt]{\\small\\color{gold}' + texText(author) + '}\\\\[5pt]{\\footnotesize ' +
     sections.length + ' seções · ' + sections.reduce((n, s) => n + s.topics.length, 0) +
     ' tópicos · fórmulas · diagramas vetoriais · códigos essenciais}\\end{center}\\hrule\\vspace{6pt}\n' +
-    '\\tableofcontents\\clearpage\n' + body + '\n\\clearpage\n' + referenceSheetsLatex() + '\n\\end{document}\n';
+    '\\tableofcontents\\clearpage\n' + body + '\n\\clearpage\n' + referenceSheetsLatex() + '\n\\end{document}\n');
 }
