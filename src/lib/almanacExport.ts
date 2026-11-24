@@ -355,7 +355,7 @@ export function buildAlmanacLatex(sections: Section[], title: string, author: st
         n.lines.map(texInline).join(' · ') + '\\par\n').join('');
       const diagrams = diagramFor(topic).map((d) => '\\begin{center}\n' + d.tikz + '\n\\end{center}\n').join('');
       const codes = codeOf(topic).map((c) => { const lang = c.language === 'python' ? '[language=Python]' : c.language === 'text' ? '' : '[language=C++]'; return '\\textbf{IMPLEMENTAÇÃO}\\par\\begin{lstlisting}' + lang + '\n' + c.code + '\n\\end{lstlisting}\n'; }).join('');
-      return '\\Needspace{0.35\\textheight}\n\\begin{tcolorbox}[breakable,colback=white,colframe=paleblueborder,boxrule=0.35pt,left=4pt,right=4pt,top=3pt,bottom=3pt,before skip=4pt,after skip=4pt]\n' +
+      return '\\Needspace{0.35\\textheight}\n\\phantomsection\\addcontentsline{toc}{subsection}{' + texText(topic.title) + '}\n\\begin{tcolorbox}[breakable,colback=white,colframe=paleblueborder,boxrule=0.35pt,left=4pt,right=4pt,top=3pt,bottom=3pt,before skip=4pt,after skip=4pt]\n' +
         '\\noindent\\textbf{\\color{navy}' + texText(topic.title) + '}\\hfill{\\scriptsize\\color{gold}' + texText(topic.complexity || '—') + '}\\\\[-2pt]\n' +
         '{\\footnotesize ' + texInline(topic.summary) + '}\\par\n' + notes + diagrams + codes + '\\end{tcolorbox}\n';
     }).join('\n');
@@ -372,6 +372,7 @@ export function buildAlmanacLatex(sections: Section[], title: string, author: st
     '\\setlength{\\parindent}{0pt}\\setlength{\\parskip}{2pt}\\setlength{\\columnsep}{7mm}\n' +
     '\\lstset{language=C++,basicstyle=\\ttfamily\\footnotesize\\color{codefg},keywordstyle=\\color{codekeyword}\\bfseries,stringstyle=\\color{codestring},commentstyle=\\color{codecomment}\\itshape,breaklines=true,showstringspaces=false,tabsize=2,columns=fullflexible,keepspaces=true,frame=single,rulecolor=\\color{paleblueborder},backgroundcolor=\\color{codebg},aboveskip=3pt,belowskip=3pt,extendedchars=true,literate={á}{{\\\'a}}1 {ã}{{\\~a}}1 {é}{{\\\'e}}1 {í}{{\\\'i}}1 {ó}{{\\\'o}}1 {õ}{{\\~o}}1 {ú}{{\\\'u}}1 {ç}{{\\c c}}1 {Á}{{\\\'A}}1 {É}{{\\\'E}}1 {Í}{{\\\'I}}1 {Ó}{{\\\'O}}1 {Ú}{{\\\'U}}1 {à}{{\\`a}}1 {â}{{\\^a}}1 {ê}{{\\^e}}1 {ô}{{\\^o}}1 {À}{{\\`A}}1 {Â}{{\\^A}}1 {Ã}{{\\~A}}1 {Ç}{{\\c C}}1 {Ê}{{\\^E}}1 {Ô}{{\\^O}}1 {Õ}{{\\~O}}1 {⁹}{{\\ensuremath{^9}}}1 {–}{{--}}1 {—}{{---}}1 {≈}{{\\ensuremath{\\approx}}}1 {≤}{{\\ensuremath{\\le}}}1 {≥}{{\\ensuremath{\\ge}}}1 {×}{{\\ensuremath{\\times}}}1 {·}{{\\ensuremath{\\cdot}}}1 {→}{{\\ensuremath{\\to}}}1 {∞}{{\\ensuremath{\\infty}}}1 {√}{{\\ensuremath{\\surd}}}1}\n' +
     '\\titleformat{\\section}{\\Large\\bfseries\\color{navy}}{}{0pt}{}\\titlespacing*{\\section}{0pt}{8pt}{5pt}\n' +
+    '\\setcounter{tocdepth}{2}\\usepackage[hidelinks]{hyperref}\n' +
     '\\begin{document}\n';
   return latexSafe(preamble + '\\begin{center}{\\Huge\\bfseries\\color{navy}' + texText(title) +
     '}\\\\[3pt]{\\small\\color{gold}' + texText(author) + '}\\\\[5pt]{\\footnotesize ' +

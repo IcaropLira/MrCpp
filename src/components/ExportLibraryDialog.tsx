@@ -17,8 +17,8 @@ function toLatex(topic: Topic) {
   return chunks.map((part, i) => i % 2
     ? `\\begin{lstlisting}\n${part.trim()}\n\\end{lstlisting}\n`
     : part.split('\n').map((line) => {
-      if (line.startsWith('## ')) return `\\subsection{${tex(line.slice(3))}}\n`;
-      if (line.startsWith('### ')) return `\\subsubsection{${tex(line.slice(4))}}\n`;
+      if (line.startsWith('## ')) return `\\subsubsection*{${tex(line.slice(3))}}\n`;
+      if (line.startsWith('### ')) return `\\paragraph*{${tex(line.slice(4))}}\n`;
       if (line.startsWith('- ')) return `\\noindent\\textbullet\\ ${tex(line.slice(2))}\\\\\n`;
       if (/^\d+\. /.test(line)) return `\\noindent ${tex(line)}\\\\\n`;
       if (!line.trim()) return '\n';
@@ -28,7 +28,7 @@ function toLatex(topic: Topic) {
 
 function makeLatex(selected: Section[], title: string, author: string, orientation: 'landscape' | 'portrait', columns: string, fontSize: string) {
   const body = selected.map((s) => `\\section{${tex(s.title)}}\n\\textit{${tex(s.summary)}}\\par\\medskip\n${s.topics.map((t) => `\\subsection{${tex(t.title)}}\n\\textit{${tex(t.summary)}}\\par\\smallskip\n${toLatex(t)}`).join('\n')}`).join('\n');
-  return `% Mr. C++ — biblioteca personalizada\n% Compile com XeLaTeX ou LuaLaTeX\n\\documentclass[${fontSize}pt,a4paper,${orientation}]{extarticle}\n\\usepackage[margin=12mm,headheight=14pt]{geometry}\n\\usepackage{fontspec}\n\\setmainfont{TeX Gyre Heros}\n\\usepackage{xcolor,multicol,listings,fancyhdr,hyperref}\n\\definecolor{codebg}{HTML}{F2F3F5}\n\\definecolor{codefg}{HTML}{20242B}\n\\lstset{language=C++,basicstyle=\\ttfamily\\footnotesize,backgroundcolor=\\color{codebg},commentstyle=\\color{gray},keywordstyle=\\color{blue!65!black},stringstyle=\\color{red!60!black},breaklines=true,showstringspaces=false,frame=single,rulecolor=\\color{black!12},columns=fullflexible,keepspaces=true,aboveskip=5pt,belowskip=8pt}\n\\pagestyle{fancy}\\fancyhf{}\\lhead{Mr. C++ — ${tex(title)}}\\rhead{\\thepage}\\renewcommand{\\headrulewidth}{0.3pt}\n\\setlength{\\columnsep}{8mm}\\setlength{\\parindent}{0pt}\\setlength{\\parskip}{3pt}\n\\begin{document}\n\\begin{center}{\\LARGE\\bfseries ${tex(title)}}\\\\[3pt]{\\small ${tex(author)} · Biblioteca de programação competitiva}\\end{center}\\vspace{4mm}\n\\begin{multicols}{${columns}}\n${body}\n\\end{multicols}\n\\end{document}\n`;
+  return `% Mr. C++ — biblioteca personalizada\n% Compile com XeLaTeX ou LuaLaTeX\n\\documentclass[${fontSize}pt,a4paper,${orientation}]{extarticle}\n\\usepackage[margin=12mm,headheight=14pt]{geometry}\n\\usepackage{fontspec}\n\\setmainfont{TeX Gyre Heros}\n\\usepackage{xcolor,multicol,listings,fancyhdr,hyperref}\n\\definecolor{codebg}{HTML}{F2F3F5}\n\\definecolor{codefg}{HTML}{20242B}\n\\lstset{language=C++,basicstyle=\\ttfamily\\footnotesize,backgroundcolor=\\color{codebg},commentstyle=\\color{gray},keywordstyle=\\color{blue!65!black},stringstyle=\\color{red!60!black},breaklines=true,showstringspaces=false,frame=single,rulecolor=\\color{black!12},columns=fullflexible,keepspaces=true,aboveskip=5pt,belowskip=8pt}\n\\pagestyle{fancy}\\fancyhf{}\\lhead{Mr. C++ — ${tex(title)}}\\rhead{\\thepage}\\renewcommand{\\headrulewidth}{0.3pt}\n\\setlength{\\columnsep}{8mm}\\setlength{\\parindent}{0pt}\\setlength{\\parskip}{3pt}\n\\begin{document}\n\\begin{center}{\\LARGE\\bfseries ${tex(title)}}\\\\[3pt]{\\small ${tex(author)} · Biblioteca de programação competitiva}\\end{center}\\vspace{4mm}\n\\setcounter{tocdepth}{2}\\tableofcontents\\clearpage\n\\begin{multicols}{${columns}}\n${body}\n\\end{multicols}\n\\end{document}\n`;
 }
 
 export default function ExportLibraryDialog({ sections, onClose }: Props) {

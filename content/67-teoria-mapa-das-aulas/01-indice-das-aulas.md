@@ -132,6 +132,15 @@ Cada aula tem uma **ficha teórica** (seções `60–66`, aba *Material teórico
 | Busca binária/ternária, offline, aleatorização | Prova → Busca binária e técnicas | seções 03, 06 |
 | C++/STL, flags, debug, stress test | Prova → C++ e STL | Ferramentas de prova |
 | Precisão e 3D | Geometria → Ponto flutuante e 3D | seções 34, 40 |
+| DP em árvore (todos os padrões) | DP → DP em árvore — catálogo de padrões | DP em árvore — padrões avançados (seção 53) |
+| Tabelas (primos, fatoriais, Catalan, Stirling, divisores) | Matemática → Tabelas numéricas | — |
+| Identidades, desigualdades, piso/teto | Matemática → Identidades e desigualdades | — |
+| Raiz primitiva, resíduos, somas de quadrados, Frobenius | Matemática → Teoria dos números — avançado | seções 33, 37 |
+| Bolas e caixas, reflexão, LGV, Pólya | Matemática → Contagem avançada | seção 23 |
+| Distribuições, Markov, passeios | Matemática → Probabilidade — avançado | seção 25 |
+| Trigonometria, pontos notáveis, analítica | Geometria → Trigonometria; Euclidiana; Analítica | seções 27, 40 |
+| Construções de grafo, classes especiais | Grafos → Modelagem avançada; Grafos especiais | Vértices auxiliares (seção 45) |
+| Ler o enunciado e achar a técnica | Prova → Reconhecendo o problema | — |
 
 ## Pegadinhas encontradas nos slides (já corrigidas nos códigos)
 
