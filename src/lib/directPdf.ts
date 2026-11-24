@@ -19,7 +19,21 @@ const join = (...parts: Uint8Array[]) => {
   return out;
 };
 
-function pdf(images: Uint8Array[], w: number, h: number, pxW: number, pxH: number) {
+type PdfLink = { page: number; rect: [number, number, number, number]; target: number };
+type OutlineNode = { title: string; page: number; children: OutlineNode[] };
+
+/** Texto PDF em UTF-16BE (acentos e símbolos nos marcadores). */
+function pdfText(s: string) {
+  let hex = 'FEFF';
+  for (const ch of s) {
+    const cp = ch.codePointAt(0)!;
+    if (cp > 0xffff) { const v = cp - 0x10000; hex += (0xd800 + (v >> 10)).toString(16).padStart(4, '0') + (0xdc00 + (v & 0x3ff)).toString(16).padStart(4, '0'); }
+    else hex += cp.toString(16).padStart(4, '0');
+  }
+  return '<' + hex.toUpperCase() + '>';
+}
+
+function pdf(images: Uint8Array[], w: number, h: number, pxW: number, pxH: number, links: PdfLink[] = [], outline: OutlineNode[] = []) {
   const enc = new TextEncoder(), chunks: Uint8Array[] = [];
   let offset = 0;
   const offsets: number[] = [];
@@ -30,19 +44,54 @@ function pdf(images: Uint8Array[], w: number, h: number, pxW: number, pxH: numbe
   const obj = (id: number, body: string | Uint8Array) => {
     offsets[id] = offset; put(id + ' 0 obj\n'); put(body); put('\nendobj\n');
   };
-  const n = images.length, pageIds = images.map((_, i) => 3 + i * 3);
+  let next = 3;
+  const alloc = () => next++;
+  const n = images.length;
+  const pageIds = images.map(() => { const p = alloc(); alloc(); alloc(); return p; });
+  const linkIds = links.map(() => alloc());
+  // marcadores: árvore achatada com ids
+  type Flat = { id: number; node: OutlineNode; parent: number; prev?: number; next?: number; first?: number; last?: number; count: number };
+  const flat: Flat[] = [];
+  const outlineRoot = outline.length ? alloc() : 0;
+  const walk = (nodes: OutlineNode[], parent: number): Flat[] => {
+    const mine = nodes.map((node) => { const f: Flat = { id: alloc(), node, parent, count: 0 }; flat.push(f); return f; });
+    mine.forEach((f, i) => {
+      if (i > 0) f.prev = mine[i - 1]!.id;
+      if (i + 1 < mine.length) f.next = mine[i + 1]!.id;
+      const kids = walk(f.node.children, f.id);
+      if (kids.length) { f.first = kids[0]!.id; f.last = kids[kids.length - 1]!.id; f.count = -kids.length; } // fechado por padrão
+    });
+    return mine;
+  };
+  const top = walk(outline, outlineRoot);
+  const dest = (page: number) => '[' + pageIds[Math.max(0, Math.min(n - 1, page - 1))] + ' 0 R /XYZ null null null]';
+
   put('%PDF-1.4\n');
-  obj(1, '<< /Type /Catalog /Pages 2 0 R >>');
+  obj(1, '<< /Type /Catalog /Pages 2 0 R' + (outlineRoot ? ' /Outlines ' + outlineRoot + ' 0 R /PageMode /UseOutlines' : '') + ' >>');
   obj(2, '<< /Type /Pages /Count ' + n + ' /Kids [' + pageIds.map(x => x + ' 0 R').join(' ') + '] >>');
   images.forEach((bytes, i) => {
     const p = pageIds[i]!;
     const c = p + 1, im = p + 2;
-    obj(p, '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ' + w + ' ' + h + '] /Resources << /XObject << /Im0 ' + im + ' 0 R >> >> /Contents ' + c + ' 0 R >>');
+    const annots = links.map((l, k) => l.page === i + 1 ? linkIds[k] + ' 0 R' : '').filter(Boolean);
+    obj(p, '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ' + w + ' ' + h + '] /Resources << /XObject << /Im0 ' + im + ' 0 R >> >> /Contents ' + c + ' 0 R' + (annots.length ? ' /Annots [' + annots.join(' ') + ']' : '') + ' >>');
     const stream = enc.encode('q\n' + w + ' 0 0 ' + h + ' 0 0 cm\n/Im0 Do\nQ');
     obj(c, join(enc.encode('<< /Length ' + stream.length + ' >>\nstream\n'), stream, enc.encode('\nendstream')));
     obj(im, join(enc.encode('<< /Type /XObject /Subtype /Image /Width ' + pxW + ' /Height ' + pxH + ' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ' + bytes.length + ' >>\nstream\n'), bytes, enc.encode('\nendstream')));
   });
-  const xref = offset, total = 3 + n * 3;
+  links.forEach((l, k) => {
+    const [x1, y1, x2, y2] = l.rect;   // em pontos, origem no topo -> converter para baixo
+    obj(linkIds[k]!, '<< /Type /Annot /Subtype /Link /Rect [' + [x1, h - y2, x2, h - y1].map((v) => v.toFixed(2)).join(' ') + '] /Border [0 0 0] /Dest ' + dest(l.target) + ' >>');
+  });
+  if (outlineRoot) {
+    obj(outlineRoot, '<< /Type /Outlines /First ' + top[0]!.id + ' 0 R /Last ' + top[top.length - 1]!.id + ' 0 R /Count ' + top.length + ' >>');
+    for (const f of flat) {
+      obj(f.id, '<< /Title ' + pdfText(f.node.title) + ' /Parent ' + f.parent + ' 0 R' +
+        (f.prev ? ' /Prev ' + f.prev + ' 0 R' : '') + (f.next ? ' /Next ' + f.next + ' 0 R' : '') +
+        (f.first ? ' /First ' + f.first + ' 0 R /Last ' + f.last + ' 0 R /Count ' + f.count : '') +
+        ' /Dest ' + dest(f.node.page) + ' >>');
+    }
+  }
+  const xref = offset, total = next;
   put('xref\n0 ' + total + '\n0000000000 65535 f \n');
   for (let i = 1; i < total; i++) put(String(offsets[i]).padStart(10, '0') + ' 00000 n \n');
   put('trailer\n<< /Size ' + total + ' /Root 1 0 R >>\nstartxref\n' + xref + '\n%%EOF');
@@ -338,8 +387,9 @@ export async function downloadDirectPdf(sections: Section[], title: string, auth
   const margin = Math.max(24, Math.min(60, o.margin * 2.8346));
   const gap = 16, cw = (w - margin * 2 - gap * (o.columns - 1)) / o.columns;
   const top = margin + 10, bottom = h - margin;
-  const pages: Uint8Array[] = [];
+  let pages: Uint8Array[] = [];
   let y = top, col = 0, page = 0;
+  let dry = false;                       // 1ª passada: só mede onde cada tópico cai
 
   /* — primitivas de desenho (tudo em pontos; o canvas é desenhado a `scale`x) — */
   const setFace = (f: Face) => {
@@ -384,6 +434,7 @@ export async function downloadDirectPdf(sections: Section[], title: string, auth
       fill(label, w - margin - width(label), h - 14, '#777');
     }
     ctx.restore();
+    if (dry) { pages.push(new Uint8Array(0)); return; }
     const b64 = canvas.toDataURL('image/jpeg', 0.92).split(',')[1];
     if (!b64) throw new Error('Não foi possível codificar a página do PDF.');
     const bin = atob(b64), bytes = new Uint8Array(bin.length);
@@ -597,43 +648,92 @@ export async function downloadDirectPdf(sections: Section[], title: string, auth
     });
   };
 
-  /* — montagem do documento — */
-  startPage();
-  if (o.cover) {
-    const maxW = w - margin * 2 - 32, ts = 44, tlh = ts * 1.15;
-    const titleLines = layout(atomsOf(plain(title), ts, '#171923', true), maxW);
-    const barTop = h * 0.25, kicker = h * 0.25 + 36;
-    const titleTop = kicker + 22, authorY = titleTop + titleLines.length * tlh + 26;
-    ctx.fillStyle = '#d41478'; ctx.fillRect(margin * scale, barTop * scale, 5 * scale, (authorY + 14 - barTop) * scale);
-    setFace({ size: 14, bold: true }); fill('COMPETITIVE PROGRAMMING NOTEBOOK', margin + 16, kicker, '#a10d5c');
-    titleLines.forEach((line, k) => drawLine(line, margin + 16, titleTop + k * tlh, tlh, ts));
-    setFace({ size: 20 }); fill(author, margin + 16, authorY, '#606774', maxW);
-    finishPage(); startPage();
-  }
-  if (o.index) {
-    para(plain('ÍNDICE'), fs + 10, '#a10d5c', { bold: true });
-    y += 4;
-    sections.forEach((s) => para(plain(String(s.order).padStart(2, '0') + ' · ' + s.title + ' (' + s.topics.length + ')'), fs, '#252a33', { keep: 1 }));
-    finishPage(); startPage();
-  }
-  for (const section of sections) {
-    if (y > top + 1) newColumn();
-    para(plain(section.title), fs + 6, '#a10d5c', { bold: true });
-    y += 1; hline(left(), left() + cw, y, '#d41478', 1); y += 6;
-    if (section.summary) { para(plain(section.summary, true), fs, '#626975'); y += fs * 0.5; }
-    for (const topic of section.topics) {
-      if (y > top + 1) y += fs * 0.8;
-      ensure((fs + 2.5) * 1.45 + fs * 1.45 * 3);
-      para(plain(topic.title), fs + 2.5, '#171923', { bold: true, keep: 2 });
-      const meta = [topic.complexity, topic.tags.join(' / ')].filter((s) => s && !/^(tags:?|---)$/i.test(s.trim())).join(' · ');
-      if (meta) para(plain(meta), Math.max(6, fs - 2), '#777f8b', { keep: 1 });
-      if (topic.summary) para(plain(topic.summary, true), fs, '#626975');
-      y += fs * 0.5;
-      body(topic.body);
+  /* — índice com número de página (sumário) — */
+  type Entry = { key: string; text: string; level: 0 | 1 };
+  const entries: Entry[] = [];
+  sections.forEach((s) => {
+    entries.push({ key: 's:' + s.slug, text: String(s.order).padStart(2, '0') + ' · ' + s.title, level: 0 });
+    s.topics.forEach((t) => entries.push({ key: 't:' + s.slug + '/' + t.slug, text: t.title, level: 1 }));
+  });
+  let links: PdfLink[] = [];
+  const pageOf = new Map<string, number>();
+  const indexEntry = (e: Entry, target: number | undefined) => {
+    const size = e.level === 0 ? fs + 0.5 : fs - 0.5, lh = size * 1.42, bold = e.level === 0;
+    const indent = e.level === 0 ? 0 : 10;
+    setFace({ size, bold });
+    const numW = width('0000');
+    const color = e.level === 0 ? '#a10d5c' : '#303642';
+    const lines = layout(atomsOf(plain(e.text), size, color, bold), cw - indent - numW - 6);
+    if (e.level === 0) y += size * 0.35;
+    ensure(lines.length * lh + (e.level === 0 ? lh : 0));
+    const y0 = y, x0 = left() + indent;
+    lines.forEach((line, k) => {
+      drawLine(line, x0, y, lh, size);
+      if (k === lines.length - 1) {
+        const label = target ? String(target) : '';
+        setFace({ size, bold });
+        const lw = width(label), xr = left() + cw;
+        const base = y + lh / 2 + size * 0.35;
+        fill(label, xr - lw, base, e.level === 0 ? '#a10d5c' : '#252a33');
+        setFace({ size: size * 0.9 });
+        const dotW = width('. ');
+        let xd = x0 + lineWidth(line) + 4;
+        ctx.fillStyle = '#b3b8c2';
+        while (xd + dotW < xr - lw - 3) { ctx.fillText('.', xd * scale, base * scale); xd += dotW; }
+      }
+      y += lh;
+    });
+    if (target) links.push({ page, rect: [left(), y0, left() + cw, y], target });
+  };
+
+  /* — montagem do documento (2 passadas: a 1ª descobre as páginas) — */
+  const assemble = () => {
+    pages = []; links = []; page = 0; y = top; col = 0;
+    startPage();
+    if (o.cover) {
+      const maxW = w - margin * 2 - 32, ts = 44, tlh = ts * 1.15;
+      const titleLines = layout(atomsOf(plain(title), ts, '#171923', true), maxW);
+      const barTop = h * 0.25, kicker = h * 0.25 + 36;
+      const titleTop = kicker + 22, authorY = titleTop + titleLines.length * tlh + 26;
+      ctx.fillStyle = '#d41478'; ctx.fillRect(margin * scale, barTop * scale, 5 * scale, (authorY + 14 - barTop) * scale);
+      setFace({ size: 14, bold: true }); fill('COMPETITIVE PROGRAMMING NOTEBOOK', margin + 16, kicker, '#a10d5c');
+      titleLines.forEach((line, k) => drawLine(line, margin + 16, titleTop + k * tlh, tlh, ts));
+      setFace({ size: 20 }); fill(author, margin + 16, authorY, '#606774', maxW);
+      finishPage(); startPage();
     }
-  }
-  finishPage();
-  const blob = pdf(pages, w, h, canvas.width, canvas.height);
+    if (o.index) {
+      para(plain('SUMÁRIO'), fs + 10, '#a10d5c', { bold: true });
+      y += 4;
+      entries.forEach((e) => indexEntry(e, pageOf.get(e.key) ?? (dry ? 999 : undefined)));
+      finishPage(); startPage();
+    }
+    for (const section of sections) {
+      if (y > top + 1) newColumn();
+      pageOf.set('s:' + section.slug, page);
+      para(plain(section.title), fs + 6, '#a10d5c', { bold: true });
+      y += 1; hline(left(), left() + cw, y, '#d41478', 1); y += 6;
+      if (section.summary) { para(plain(section.summary, true), fs, '#626975'); y += fs * 0.5; }
+      for (const topic of section.topics) {
+        if (y > top + 1) y += fs * 0.8;
+        ensure((fs + 2.5) * 1.45 + fs * 1.45 * 3);
+        pageOf.set('t:' + section.slug + '/' + topic.slug, page);
+        para(plain(topic.title), fs + 2.5, '#171923', { bold: true, keep: 2 });
+        const meta = [topic.complexity, topic.tags.join(' / ')].filter((s) => s && !/^(tags:?|---)$/i.test(s.trim())).join(' · ');
+        if (meta) para(plain(meta), Math.max(6, fs - 2), '#777f8b', { keep: 1 });
+        if (topic.summary) para(plain(topic.summary, true), fs, '#626975');
+        y += fs * 0.5;
+        body(topic.body);
+      }
+    }
+    finishPage();
+  };
+  if (o.index) { dry = true; assemble(); dry = false; }   // a 1ª passada preenche pageOf
+  assemble();
+  const outline: OutlineNode[] = sections.map((s) => ({
+    title: String(s.order).padStart(2, '0') + ' · ' + s.title, page: pageOf.get('s:' + s.slug) ?? 1,
+    children: s.topics.map((t) => ({ title: t.title, page: pageOf.get('t:' + s.slug + '/' + t.slug) ?? 1, children: [] })),
+  }));
+  const blob = pdf(pages, w, h, canvas.width, canvas.height, links, outline);
   const url = URL.createObjectURL(blob), a = document.createElement('a');
   a.href = url; a.download = 'mr-cpp-biblioteca.pdf'; a.click();
   window.setTimeout(() => URL.revokeObjectURL(url), 1000);
